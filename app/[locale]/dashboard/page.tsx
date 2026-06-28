@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase-server";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { fetchUserConnectedAccounts } from "@/lib/connected-accounts";
 import { getDisplayName } from "@/lib/dashboard-data";
 
 type Props = {
@@ -15,6 +16,7 @@ export default async function DashboardPage({ params }: Props) {
 
   let displayName = t("defaultUser");
   let avatarUrl: string | null = null;
+  let accounts;
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -29,9 +31,17 @@ export default async function DashboardPage({ params }: Props) {
     );
     avatarUrl =
       (user?.user_metadata?.avatar_url as string | undefined) ?? null;
+
+    if (user) {
+      accounts = await fetchUserConnectedAccounts(supabase, user.id);
+    }
   }
 
   return (
-    <DashboardView displayName={displayName} avatarUrl={avatarUrl} />
+    <DashboardView
+      displayName={displayName}
+      avatarUrl={avatarUrl}
+      accounts={accounts}
+    />
   );
 }

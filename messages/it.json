@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "Sto pensando...",
-    "chatError": "Impossibile contattare Claude. Riprova."
+    "chatError": "Impossibile contattare Claude. Riprova.",
+    "connectInstagram": "Connetti Instagram",
+    "connectedAs": "Connesso come @{name}",
+    "instagramConnected": "Instagram connesso con successo!",
+    "instagramDenied": "Autorizzazione Instagram annullata.",
+    "instagramInvalidState": "Autorizzazione Instagram non riuscita. Riprova.",
+    "instagramNoBusinessAccount": "Nessun account Instagram Business trovato. Collegalo a una pagina Facebook.",
+    "instagramNotConfigured": "OAuth Instagram non configurato sul server.",
+    "instagramSaveFailed": "Impossibile salvare l'account Instagram. Esegui la migrazione Supabase.",
+    "instagramTokenFailed": "Impossibile completare l'autorizzazione Instagram."
   },
   "profile": {
     "backToDashboard": "Torna alla dashboard",

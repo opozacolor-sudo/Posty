@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "सोच रहा है...",
-    "chatError": "Claude तक नहीं पहुँच सका। फिर से प्रयास करें।"
+    "chatError": "Claude तक नहीं पहुँच सका। फिर से प्रयास करें।",
+    "connectInstagram": "Instagram कनेक्ट करें",
+    "connectedAs": "@{name} के रूप में कनेक्ट",
+    "instagramConnected": "Instagram सफलतापूर्वक कनेक्ट हुआ!",
+    "instagramDenied": "Instagram प्राधिकरण रद्द कर दिया गया।",
+    "instagramInvalidState": "Instagram प्राधिकरण विफल। फिर से प्रयास करें।",
+    "instagramNoBusinessAccount": "कोई Instagram Business खाता नहीं मिला। इसे Facebook Page से लिंक करें।",
+    "instagramNotConfigured": "सर्वर पर Instagram OAuth कॉन्फ़िगर नहीं है।",
+    "instagramSaveFailed": "Instagram खाता सहेजा नहीं जा सका। Supabase migration चलाएँ।",
+    "instagramTokenFailed": "Instagram प्राधिकरण पूरा नहीं हो सका।"
   },
   "profile": {
     "backToDashboard": "डैशबोर्ड पर वापस",

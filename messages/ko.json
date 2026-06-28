@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "생각 중...",
-    "chatError": "Claude에 연결할 수 없습니다. 다시 시도해 주세요."
+    "chatError": "Claude에 연결할 수 없습니다. 다시 시도해 주세요.",
+    "connectInstagram": "Instagram 연결",
+    "connectedAs": "@{name}으로 연결됨",
+    "instagramConnected": "Instagram 연결 성공!",
+    "instagramDenied": "Instagram 인증이 취소되었습니다.",
+    "instagramInvalidState": "Instagram 인증에 실패했습니다. 다시 시도해 주세요.",
+    "instagramNoBusinessAccount": "Instagram 비즈니스 계정을 찾을 수 없습니다. Facebook 페이지에 연결하세요.",
+    "instagramNotConfigured": "서버에 Instagram OAuth가 구성되지 않았습니다.",
+    "instagramSaveFailed": "Instagram 계정을 저장할 수 없습니다. Supabase 마이그레이션을 실행하세요.",
+    "instagramTokenFailed": "Instagram 인증을 완료할 수 없습니다."
   },
   "profile": {
     "backToDashboard": "대시보드로 돌아가기",

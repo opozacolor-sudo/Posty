@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "思考中...",
-    "chatError": "无法连接 Claude，请重试。"
+    "chatError": "无法连接 Claude，请重试。",
+    "connectInstagram": "连接 Instagram",
+    "connectedAs": "已连接 @{name}",
+    "instagramConnected": "Instagram 连接成功！",
+    "instagramDenied": "Instagram 授权已取消。",
+    "instagramInvalidState": "Instagram 授权失败，请重试。",
+    "instagramNoBusinessAccount": "未找到 Instagram 商业账户。请先将其关联到 Facebook 页面。",
+    "instagramNotConfigured": "服务器未配置 Instagram OAuth。",
+    "instagramSaveFailed": "无法保存 Instagram 账户。请先运行 Supabase 迁移。",
+    "instagramTokenFailed": "无法完成 Instagram 授权。"
   },
   "profile": {
     "backToDashboard": "返回仪表盘",

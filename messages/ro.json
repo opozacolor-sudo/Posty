@@ -91,7 +91,16 @@
       "sun": "Du"
     },
     "chatThinking": "Se gândește...",
-    "chatError": "Nu s-a putut contacta Claude. Încearcă din nou."
+    "chatError": "Nu s-a putut contacta Claude. Încearcă din nou.",
+    "connectInstagram": "Conectează Instagram",
+    "connectedAs": "Conectat ca @{name}",
+    "instagramConnected": "Instagram conectat cu succes!",
+    "instagramDenied": "Autorizarea Instagram a fost anulată.",
+    "instagramInvalidState": "Autorizarea Instagram a eșuat. Încearcă din nou.",
+    "instagramNoBusinessAccount": "Nu s-a găsit cont Instagram Business. Conectează unul la o pagină Facebook.",
+    "instagramNotConfigured": "OAuth Instagram nu este configurat pe server.",
+    "instagramSaveFailed": "Contul Instagram nu a putut fi salvat. Rulează migrarea Supabase.",
+    "instagramTokenFailed": "Autorizarea Instagram nu s-a putut finaliza."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",

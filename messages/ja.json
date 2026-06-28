@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "考え中...",
-    "chatError": "Claude に接続できませんでした。もう一度お試しください。"
+    "chatError": "Claude に接続できませんでした。もう一度お試しください。",
+    "connectInstagram": "Instagramを接続",
+    "connectedAs": "@{name} として接続済み",
+    "instagramConnected": "Instagramの接続に成功しました！",
+    "instagramDenied": "Instagramの認可がキャンセルされました。",
+    "instagramInvalidState": "Instagramの認可に失敗しました。もう一度お試しください。",
+    "instagramNoBusinessAccount": "Instagramビジネスアカウントが見つかりません。Facebookページにリンクしてください。",
+    "instagramNotConfigured": "サーバーでInstagram OAuthが設定されていません。",
+    "instagramSaveFailed": "Instagramアカウントを保存できませんでした。Supabaseマイグレーションを実行してください。",
+    "instagramTokenFailed": "Instagramの認可を完了できませんでした。"
   },
   "profile": {
     "backToDashboard": "ダッシュボードに戻る",

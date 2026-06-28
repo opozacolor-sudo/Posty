@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "Denkt nach...",
-    "chatError": "Claude konnte nicht erreicht werden. Bitte erneut versuchen."
+    "chatError": "Claude konnte nicht erreicht werden. Bitte erneut versuchen.",
+    "connectInstagram": "Instagram verbinden",
+    "connectedAs": "Verbunden als @{name}",
+    "instagramConnected": "Instagram erfolgreich verbunden!",
+    "instagramDenied": "Instagram-Autorisierung wurde abgebrochen.",
+    "instagramInvalidState": "Instagram-Autorisierung fehlgeschlagen. Bitte erneut versuchen.",
+    "instagramNoBusinessAccount": "Kein Instagram-Business-Konto gefunden. Verknüpfe es mit einer Facebook-Seite.",
+    "instagramNotConfigured": "Instagram OAuth ist auf dem Server nicht konfiguriert.",
+    "instagramSaveFailed": "Instagram-Konto konnte nicht gespeichert werden. Führe die Supabase-Migration aus.",
+    "instagramTokenFailed": "Instagram-Autorisierung konnte nicht abgeschlossen werden."
   },
   "profile": {
     "backToDashboard": "Zurück zum Dashboard",

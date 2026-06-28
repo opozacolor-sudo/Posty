@@ -12,6 +12,7 @@ export type SocialPlatform =
 export type ConnectedAccount = {
   platform: SocialPlatform;
   connected: boolean;
+  accountName?: string;
 };
 
 export type ScheduledPost = {

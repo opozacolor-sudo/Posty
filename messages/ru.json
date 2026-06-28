@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "Думаю...",
-    "chatError": "Не удалось связаться с Claude. Попробуйте снова."
+    "chatError": "Не удалось связаться с Claude. Попробуйте снова.",
+    "connectInstagram": "Подключить Instagram",
+    "connectedAs": "Подключено как @{name}",
+    "instagramConnected": "Instagram успешно подключён!",
+    "instagramDenied": "Авторизация Instagram отменена.",
+    "instagramInvalidState": "Ошибка авторизации Instagram. Попробуйте снова.",
+    "instagramNoBusinessAccount": "Instagram Business аккаунт не найден. Привяжите его к странице Facebook.",
+    "instagramNotConfigured": "OAuth Instagram не настроен на сервере.",
+    "instagramSaveFailed": "Не удалось сохранить аккаунт Instagram. Выполните миграцию Supabase.",
+    "instagramTokenFailed": "Не удалось завершить авторизацию Instagram."
   },
   "profile": {
     "backToDashboard": "Назад к панели",

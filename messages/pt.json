@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "Pensando...",
-    "chatError": "Não foi possível contactar o Claude. Tente novamente."
+    "chatError": "Não foi possível contactar o Claude. Tente novamente.",
+    "connectInstagram": "Conectar Instagram",
+    "connectedAs": "Conectado como @{name}",
+    "instagramConnected": "Instagram conectado com sucesso!",
+    "instagramDenied": "Autorização do Instagram cancelada.",
+    "instagramInvalidState": "Falha na autorização do Instagram. Tente novamente.",
+    "instagramNoBusinessAccount": "Nenhuma conta Instagram Business encontrada. Vincule-a a uma página do Facebook.",
+    "instagramNotConfigured": "OAuth do Instagram não está configurado no servidor.",
+    "instagramSaveFailed": "Não foi possível salvar a conta do Instagram. Execute a migração do Supabase.",
+    "instagramTokenFailed": "Não foi possível concluir a autorização do Instagram."
   },
   "profile": {
     "backToDashboard": "Voltar ao painel",

@@ -1,10 +1,18 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { ConnectPlatformButton } from "@/components/accounts/connect-platform-button";
+import { OAuthStatusBanner } from "@/components/dashboard/oauth-status-banner";
 import {
   PlatformIcon,
   PLATFORM_COLORS,
 } from "@/components/dashboard/platform-icon";
-import { MOCK_CONNECTED_ACCOUNTS } from "@/lib/dashboard-data";
+import { createClient } from "@/lib/supabase-server";
+import { isSupabaseConfigured } from "@/lib/supabase-env";
+import {
+  fetchUserConnectedAccounts,
+  getFallbackConnectedAccounts,
+} from "@/lib/connected-accounts";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -15,6 +23,19 @@ export default async function AccountsPage({ params }: Props) {
   setRequestLocale(locale);
 
   const t = await getTranslations("dashboard");
+
+  let accounts = getFallbackConnectedAccounts();
+
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      accounts = await fetchUserConnectedAccounts(supabase, user.id);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background px-4 py-6 sm:px-6">
@@ -29,8 +50,12 @@ export default async function AccountsPage({ params }: Props) {
         <h1 className="text-3xl font-bold tracking-tight">{t("accounts")}</h1>
         <p className="mt-2 text-muted-foreground">{t("accountsSubtitle")}</p>
 
+        <Suspense fallback={null}>
+          <OAuthStatusBanner />
+        </Suspense>
+
         <ul className="mt-6 flex flex-col gap-3">
-          {MOCK_CONNECTED_ACCOUNTS.map(({ platform, connected }) => (
+          {accounts.map(({ platform, connected, accountName }) => (
             <li
               key={platform}
               className="dashboard-card flex items-center gap-4 p-4"
@@ -52,20 +77,15 @@ export default async function AccountsPage({ params }: Props) {
                     connected ? "text-green" : "text-muted-foreground"
                   }`}
                 >
-                  {connected ? t("connected") : t("notConnected")}
+                  {connected
+                    ? accountName
+                      ? t("connectedAs", { name: accountName })
+                      : t("connected")
+                    : t("notConnected")}
                 </p>
               </div>
 
-              <button
-                type="button"
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                  connected
-                    ? "border border-border bg-white text-foreground"
-                    : "btn-primary py-2"
-                }`}
-              >
-                {connected ? t("disconnect") : t("connect")}
-              </button>
+              <ConnectPlatformButton platform={platform} connected={connected} />
             </li>
           ))}
         </ul>

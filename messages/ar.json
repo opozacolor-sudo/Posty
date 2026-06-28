@@ -91,7 +91,16 @@
     },
     "assistantName": "Claude",
     "chatThinking": "يفكر...",
-    "chatError": "تعذر الوصول إلى Claude. حاول مرة أخرى."
+    "chatError": "تعذر الوصول إلى Claude. حاول مرة أخرى.",
+    "connectInstagram": "ربط Instagram",
+    "connectedAs": "متصل باسم @{name}",
+    "instagramConnected": "تم ربط Instagram بنجاح!",
+    "instagramDenied": "تم إلغاء تفويض Instagram.",
+    "instagramInvalidState": "فشل تفويض Instagram. حاول مرة أخرى.",
+    "instagramNoBusinessAccount": "لم يتم العثور على حساب Instagram Business. اربطه بصفحة Facebook.",
+    "instagramNotConfigured": "OAuth لـ Instagram غير مُعد على الخادم.",
+    "instagramSaveFailed": "تعذر حفظ حساب Instagram. نفّذ ترحيل Supabase.",
+    "instagramTokenFailed": "تعذر إكمال تفويض Instagram."
   },
   "profile": {
     "backToDashboard": "العودة إلى لوحة التحكم",
