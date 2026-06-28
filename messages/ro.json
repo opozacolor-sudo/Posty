@@ -116,7 +116,17 @@
     "youtubeServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY în variabilele de mediu Vercel, apoi redeploy.",
     "disconnectedSuccess": "{platform} deconectat cu succes.",
     "disconnectFailed": "Contul nu a putut fi deconectat. Încearcă din nou.",
-    "disconnectInvalidPlatform": "Platformă invalidă."
+    "disconnectInvalidPlatform": "Platformă invalidă.",
+    "facebookConnected": "Facebook conectat cu succes!",
+    "facebookDenied": "Autorizarea Facebook a fost anulată.",
+    "facebookInvalidState": "Autorizarea Facebook a eșuat. Încearcă din nou.",
+    "facebookNoPage": "Nu s-a găsit nicio Pagină Facebook. Creează una și încearcă din nou.",
+    "facebookNotConfigured": "OAuth Facebook nu este configurat pe server.",
+    "facebookSaveFailed": "Contul Facebook nu a putut fi salvat. Rulează setup-ul Supabase.",
+    "facebookSavePermission": "Contul Facebook nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
+    "facebookSaveUnknown": "Contul Facebook nu a putut fi salvat. Încearcă din nou.",
+    "facebookServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
+    "facebookTokenFailed": "Autorizarea Facebook nu s-a putut finaliza."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",

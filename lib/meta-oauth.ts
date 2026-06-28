@@ -1,14 +1,27 @@
 import { assertMetaConfigured } from "./meta-env";
 
-export const INSTAGRAM_OAUTH_SCOPES = ["public_profile"] as const;
+export const INSTAGRAM_OAUTH_SCOPES = [
+  "instagram_basic",
+  "instagram_content_publish",
+  "instagram_manage_insights",
+  "pages_show_list",
+  "pages_read_engagement",
+] as const;
+
+export const FACEBOOK_OAUTH_SCOPES = [
+  "pages_show_list",
+  "pages_manage_posts",
+  "pages_read_engagement",
+] as const;
 
 const GRAPH_API_VERSION = "v21.0";
 
-export function buildInstagramOAuthUrl(
+export function buildMetaOAuthUrl(
   state: string,
-  scopes: readonly string[] = INSTAGRAM_OAUTH_SCOPES,
+  scopes: readonly string[],
+  platform: "instagram" | "facebook" = "instagram",
 ): string {
-  const { appId, redirectUri } = assertMetaConfigured();
+  const { appId, redirectUri } = assertMetaConfigured(platform);
 
   const params = new URLSearchParams({
     client_id: appId,
@@ -21,6 +34,20 @@ export function buildInstagramOAuthUrl(
   return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params.toString()}`;
 }
 
+export function buildInstagramOAuthUrl(
+  state: string,
+  scopes: readonly string[] = INSTAGRAM_OAUTH_SCOPES,
+): string {
+  return buildMetaOAuthUrl(state, scopes, "instagram");
+}
+
+export function buildFacebookOAuthUrl(
+  state: string,
+  scopes: readonly string[] = FACEBOOK_OAUTH_SCOPES,
+): string {
+  return buildMetaOAuthUrl(state, scopes, "facebook");
+}
+
 type TokenResponse = {
   access_token?: string;
   token_type?: string;
@@ -30,8 +57,9 @@ type TokenResponse = {
 
 export async function exchangeCodeForToken(
   code: string,
+  platform: "instagram" | "facebook" = "instagram",
 ): Promise<{ accessToken: string; expiresIn?: number }> {
-  const { appId, appSecret, redirectUri } = assertMetaConfigured();
+  const { appId, appSecret, redirectUri } = assertMetaConfigured(platform);
 
   const params = new URLSearchParams({
     client_id: appId,
@@ -84,49 +112,75 @@ export async function exchangeForLongLivedToken(
   };
 }
 
-type InstagramAccountResult = {
+type MetaPageAccount = {
   accountName: string;
+  pageId: string;
+  accessToken: string;
+  expiresIn?: number;
+};
+
+type InstagramAccountResult = MetaPageAccount & {
   instagramUserId: string;
 };
 
-export async function fetchInstagramAccount(
-  accessToken: string,
-): Promise<InstagramAccountResult | null> {
-  const pagesResponse = await fetch(
+type FacebookPageResult = MetaPageAccount;
+
+type PagesResponse = {
+  data?: Array<{
+    id?: string;
+    name?: string;
+    access_token?: string;
+    instagram_business_account?: { id: string };
+  }>;
+  error?: { message: string; code?: number };
+};
+
+async function fetchManagedPages(accessToken: string): Promise<PagesResponse> {
+  const response = await fetch(
     `https://graph.facebook.com/${GRAPH_API_VERSION}/me/accounts?` +
       new URLSearchParams({
-        fields: "name,instagram_business_account",
+        fields: "id,name,access_token,instagram_business_account",
         access_token: accessToken,
       }),
   );
 
-  const pagesData = (await pagesResponse.json()) as {
-    data?: Array<{
-      name?: string;
-      instagram_business_account?: { id: string };
-    }>;
-    error?: { message: string };
-  };
+  return (await response.json()) as PagesResponse;
+}
 
-  if (!pagesResponse.ok || !pagesData.data?.length) {
+async function resolvePageAccessToken(
+  pageAccessToken: string,
+): Promise<{ accessToken: string; expiresIn?: number }> {
+  return exchangeForLongLivedToken(pageAccessToken);
+}
+
+export async function fetchInstagramAccount(
+  userAccessToken: string,
+): Promise<InstagramAccountResult | null> {
+  const pagesData = await fetchManagedPages(userAccessToken);
+
+  if (pagesData.error || !pagesData.data?.length) {
     return null;
   }
 
   const pageWithInstagram = pagesData.data.find(
-    (page) => page.instagram_business_account?.id,
+    (page) => page.instagram_business_account?.id && page.access_token,
   );
 
-  if (!pageWithInstagram?.instagram_business_account?.id) {
+  if (
+    !pageWithInstagram?.instagram_business_account?.id ||
+    !pageWithInstagram.access_token
+  ) {
     return null;
   }
 
   const instagramId = pageWithInstagram.instagram_business_account.id;
+  const pageToken = await resolvePageAccessToken(pageWithInstagram.access_token);
 
   const profileResponse = await fetch(
     `https://graph.facebook.com/${GRAPH_API_VERSION}/${instagramId}?` +
       new URLSearchParams({
         fields: "username,name",
-        access_token: accessToken,
+        access_token: pageToken.accessToken,
       }),
   );
 
@@ -136,13 +190,6 @@ export async function fetchInstagramAccount(
     error?: { message: string };
   };
 
-  if (!profileResponse.ok) {
-    return {
-      accountName: pageWithInstagram.name ?? "Instagram",
-      instagramUserId: instagramId,
-    };
-  }
-
   const accountName =
     profileData.username ??
     profileData.name ??
@@ -151,6 +198,34 @@ export async function fetchInstagramAccount(
 
   return {
     accountName,
+    pageId: pageWithInstagram.id ?? instagramId,
     instagramUserId: instagramId,
+    accessToken: pageToken.accessToken,
+    expiresIn: pageToken.expiresIn,
+  };
+}
+
+export async function fetchFacebookPage(
+  userAccessToken: string,
+): Promise<FacebookPageResult | null> {
+  const pagesData = await fetchManagedPages(userAccessToken);
+
+  if (pagesData.error || !pagesData.data?.length) {
+    return null;
+  }
+
+  const page = pagesData.data.find((item) => item.access_token && item.id);
+
+  if (!page?.access_token || !page.id) {
+    return null;
+  }
+
+  const pageToken = await resolvePageAccessToken(page.access_token);
+
+  return {
+    accountName: page.name ?? "Facebook",
+    pageId: page.id,
+    accessToken: pageToken.accessToken,
+    expiresIn: pageToken.expiresIn,
   };
 }

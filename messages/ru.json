@@ -109,7 +109,17 @@
     "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
     "disconnectedSuccess": "{platform} успешно отключён.",
     "disconnectFailed": "Не удалось отключить аккаунт. Попробуйте снова.",
-    "disconnectInvalidPlatform": "Недопустимая платформа."
+    "disconnectInvalidPlatform": "Недопустимая платформа.",
+    "facebookConnected": "Facebook connected successfully!",
+    "facebookDenied": "Facebook authorization was cancelled.",
+    "facebookInvalidState": "Facebook authorization failed. Please try again.",
+    "facebookNoPage": "No Facebook Page found. Create a Page and try again.",
+    "facebookNotConfigured": "Facebook OAuth is not configured on the server.",
+    "facebookSaveFailed": "Could not save Facebook account. Run the Supabase setup SQL first.",
+    "facebookSavePermission": "Could not save Facebook account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
+    "facebookSaveUnknown": "Could not save Facebook account. Try again or check /api/setup/connected-accounts.",
+    "facebookServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
+    "facebookTokenFailed": "Facebook authorization could not be completed."
   },
   "profile": {
     "backToDashboard": "Назад к панели",

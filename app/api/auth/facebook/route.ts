@@ -1,16 +1,16 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { buildInstagramOAuthUrl } from "@/lib/meta-oauth";
+import { buildFacebookOAuthUrl } from "@/lib/meta-oauth";
 import {
   getMetaEnvDebug,
   isMetaConfigured,
   logMetaEnvAtStartup,
 } from "@/lib/meta-env";
 import {
-  redirectToAccounts,
+  redirectToAccountsAfterFacebook,
   resolveOAuthLocale,
-  setInstagramOAuthCookies,
-} from "@/lib/instagram-oauth-session";
+  setFacebookOAuthCookies,
+} from "@/lib/facebook-oauth-session";
 import { createClient } from "@/lib/supabase-server";
 
 function redirectToLogin(request: NextRequest, locale: ReturnType<typeof resolveOAuthLocale>) {
@@ -20,25 +20,16 @@ function redirectToLogin(request: NextRequest, locale: ReturnType<typeof resolve
 export async function GET(request: NextRequest) {
   logMetaEnvAtStartup();
 
-  const metaEnv = getMetaEnvDebug();
-  console.log("[posty/instagram-oauth] GET /api/auth/instagram env:", {
-    META_APP_ID: metaEnv.appId,
-    META_APP_SECRET: metaEnv.appSecretPreview,
-    META_APP_SECRET_present: metaEnv.appSecretPresent,
-    META_REDIRECT_URI: metaEnv.instagramRedirectUri,
-    configured: metaEnv.configured,
-    missing: metaEnv.missing,
-  });
-
   const locale = resolveOAuthLocale(request.nextUrl.searchParams.get("locale"));
 
   if (!isMetaConfigured()) {
+    const metaEnv = getMetaEnvDebug();
     console.warn(
-      "[posty/instagram-oauth] Blocked — missing:",
+      "[posty/facebook-oauth] Blocked — missing:",
       metaEnv.missing.join(", ") || "unknown",
     );
-    return redirectToAccounts(request, locale, {
-      error: "instagram_not_configured",
+    return redirectToAccountsAfterFacebook(request, locale, {
+      error: "facebook_not_configured",
     });
   }
 
@@ -52,8 +43,8 @@ export async function GET(request: NextRequest) {
   }
 
   const state = randomUUID();
-  const response = NextResponse.redirect(buildInstagramOAuthUrl(state));
-  setInstagramOAuthCookies(response, state, locale);
+  const response = NextResponse.redirect(buildFacebookOAuthUrl(state));
+  setFacebookOAuthCookies(response, state, locale);
 
   return response;
 }

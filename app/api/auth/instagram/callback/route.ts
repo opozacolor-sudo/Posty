@@ -62,9 +62,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const shortLived = await exchangeCodeForToken(code);
-    const longLived = await exchangeForLongLivedToken(shortLived.accessToken);
-    const instagramAccount = await fetchInstagramAccount(longLived.accessToken);
+    const shortLived = await exchangeCodeForToken(code, "instagram");
+    const longLivedUser = await exchangeForLongLivedToken(shortLived.accessToken);
+    const instagramAccount = await fetchInstagramAccount(longLivedUser.accessToken);
 
     if (!instagramAccount) {
       return redirectToAccounts(request, locale, {
@@ -72,7 +72,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const expiresIn = longLived.expiresIn ?? shortLived.expiresIn;
+    const expiresIn =
+      instagramAccount.expiresIn ?? longLivedUser.expiresIn ?? shortLived.expiresIn;
     const tokenExpiresAt = expiresIn
       ? new Date(Date.now() + expiresIn * 1000).toISOString()
       : null;
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
       user_id: user.id,
       platform: "instagram",
       account_name: instagramAccount.accountName,
-      access_token: longLived.accessToken,
+      access_token: instagramAccount.accessToken,
       refresh_token: null,
       token_expires_at: tokenExpiresAt,
       is_active: true,
@@ -96,7 +97,8 @@ export async function GET(request: NextRequest) {
     return redirectToAccounts(request, locale, {
       connected: "instagram",
     });
-  } catch {
+  } catch (error) {
+    console.error("[posty/instagram-oauth] Callback failed:", error);
     return redirectToAccounts(request, locale, {
       error: "instagram_token_failed",
     });

@@ -9,11 +9,21 @@ import { PLATFORMS } from "@/lib/dashboard-data";
 const SUCCESS_KEYS: Record<string, string> = {
   instagram: "instagramConnected",
   youtube: "youtubeConnected",
+  facebook: "facebookConnected",
 };
 
 const ERROR_KEYS: Record<string, string> = {
   disconnect_failed: "disconnectFailed",
   disconnect_invalid_platform: "disconnectInvalidPlatform",
+  facebook_denied: "facebookDenied",
+  facebook_invalid_state: "facebookInvalidState",
+  facebook_no_page: "facebookNoPage",
+  facebook_not_configured: "facebookNotConfigured",
+  facebook_save_failed: "facebookSaveFailed",
+  facebook_save_permission: "facebookSavePermission",
+  facebook_save_unknown: "facebookSaveUnknown",
+  facebook_service_role_missing: "facebookServiceRoleMissing",
+  facebook_token_failed: "facebookTokenFailed",
   instagram_denied: "instagramDenied",
   instagram_invalid_state: "instagramInvalidState",
   instagram_no_business_account: "instagramNoBusinessAccount",
