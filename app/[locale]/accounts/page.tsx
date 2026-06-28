@@ -86,9 +86,16 @@ export default async function AccountsPage({ params }: Props) {
 
               <div className="relative z-10 shrink-0">
                 {connected ? (
-                  <span className="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground">
-                    {t("disconnect")}
-                  </span>
+                  <form action="/api/accounts/disconnect" method="POST">
+                    <input type="hidden" name="platform" value={platform} />
+                    <input type="hidden" name="locale" value={locale} />
+                    <button
+                      type="submit"
+                      className="inline-flex cursor-pointer rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                    >
+                      {t("disconnect")}
+                    </button>
+                  </form>
                 ) : (
                   <a
                     href={`/api/auth/${platform}?locale=${locale}`}

@@ -106,7 +106,10 @@
     "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
     "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
     "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
-    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "disconnectedSuccess": "{platform} 已成功断开连接。",
+    "disconnectFailed": "无法断开此账户。请重试。",
+    "disconnectInvalidPlatform": "无效的平台。"
   },
   "profile": {
     "backToDashboard": "返回仪表盘",

@@ -8,7 +8,8 @@ const intlMiddleware = createIntlMiddleware(routing);
 export async function middleware(request: NextRequest) {
   if (
     request.nextUrl.pathname.startsWith("/auth") ||
-    request.nextUrl.pathname.startsWith("/api/auth")
+    request.nextUrl.pathname.startsWith("/api/auth") ||
+    request.nextUrl.pathname.startsWith("/api/accounts")
   ) {
     return updateSession(request);
   }
@@ -28,5 +29,6 @@ export const config = {
     "/(en|ro|es|fr|de|it|pt|ru|ar|zh|ja|ko|hi)/:path*",
     "/auth/:path*",
     "/api/auth/:path*",
+    "/api/accounts/:path*",
   ],
 };

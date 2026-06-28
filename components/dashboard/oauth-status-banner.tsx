@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import { PLATFORMS } from "@/lib/dashboard-data";
 
 const SUCCESS_KEYS: Record<string, string> = {
   instagram: "instagramConnected",
@@ -11,6 +12,8 @@ const SUCCESS_KEYS: Record<string, string> = {
 };
 
 const ERROR_KEYS: Record<string, string> = {
+  disconnect_failed: "disconnectFailed",
+  disconnect_invalid_platform: "disconnectInvalidPlatform",
   instagram_denied: "instagramDenied",
   instagram_invalid_state: "instagramInvalidState",
   instagram_no_business_account: "instagramNoBusinessAccount",
@@ -42,6 +45,7 @@ export function OAuthStatusBanner() {
 
   useEffect(() => {
     const connected = searchParams.get("connected");
+    const disconnected = searchParams.get("disconnected");
     const error = searchParams.get("error");
 
     let nextMessage: { type: "success" | "error"; text: string } | null = null;
@@ -50,6 +54,16 @@ export function OAuthStatusBanner() {
       nextMessage = {
         type: "success",
         text: t(SUCCESS_KEYS[connected]),
+      };
+    } else if (
+      disconnected &&
+      (PLATFORMS as readonly string[]).includes(disconnected)
+    ) {
+      nextMessage = {
+        type: "success",
+        text: t("disconnectedSuccess", {
+          platform: t(`platforms.${disconnected}`),
+        }),
       };
     } else if (error && error in ERROR_KEYS) {
       nextMessage = {

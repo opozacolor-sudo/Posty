@@ -106,7 +106,10 @@
     "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
     "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
     "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
-    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "disconnectedSuccess": "{platform} 연결이 해제되었습니다.",
+    "disconnectFailed": "계정 연결을 해제할 수 없습니다. 다시 시도하세요.",
+    "disconnectInvalidPlatform": "잘못된 플랫폼입니다."
   },
   "profile": {
     "backToDashboard": "대시보드로 돌아가기",

@@ -106,7 +106,10 @@
     "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
     "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
     "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
-    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "disconnectedSuccess": "{platform} erfolgreich getrennt.",
+    "disconnectFailed": "Konto konnte nicht getrennt werden. Versuche es erneut.",
+    "disconnectInvalidPlatform": "Ungültige Plattform."
   },
   "profile": {
     "backToDashboard": "Zurück zum Dashboard",
