@@ -1,6 +1,6 @@
 import { assertTikTokConfigured } from "./tiktok-env";
 
-export const TIKTOK_OAUTH_SCOPES = ["user.info.basic", "video.publish"] as const;
+export const TIKTOK_OAUTH_SCOPES = ["user.info.basic"] as const;
 
 type TokenResponse = {
   access_token?: string;
