@@ -2,8 +2,11 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { SignOutButton } from "@/components/sign-out-button";
+import { DeleteAccountButton } from "@/components/delete-account-button";
 import { LanguageSelector } from "@/components/language-selector";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { BrandProfileForm } from "@/components/profile/brand-profile-form";
+import { parseBrandProfile } from "@/lib/brand-profile";
 import {
   getDisplayName,
   getInitials,
@@ -67,6 +70,7 @@ export default async function ProfilePage({ params }: Props) {
     user?.user_metadata?.full_name as string | undefined,
   );
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  const brandProfile = parseBrandProfile(user?.user_metadata?.brand_profile);
   const memberSince = user?.created_at
     ? format.dateTime(new Date(user.created_at), {
         month: "long",
@@ -130,15 +134,15 @@ export default async function ProfilePage({ params }: Props) {
           <ProfileForm initialName={displayName} />
         </div>
 
+        <div className="dashboard-card p-4">
+          <h2 className="mb-3 text-sm font-bold">{t("brandProfile")}</h2>
+          <BrandProfileForm initialProfile={brandProfile} />
+        </div>
+
         <div className="dashboard-card p-3">
           <h2 className="mb-2 px-1 text-sm font-bold">{t("settings")}</h2>
           <div className="flex flex-col gap-1.5">
             <LanguageSelector />
-            <MenuRow
-              href="/accounts"
-              label={tDashboard("accounts")}
-              description={tDashboard("accountsSubtitle")}
-            />
             <MenuRow
               href="/privacy"
               label={tDashboard("privacyPolicy")}
@@ -150,8 +154,11 @@ export default async function ProfilePage({ params }: Props) {
           </div>
         </div>
 
-        <div className="flex justify-center pb-6">
-          <SignOutButton />
+        <div className="flex flex-col items-center gap-3 pb-6">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <SignOutButton />
+            <DeleteAccountButton />
+          </div>
         </div>
       </div>
     </div>

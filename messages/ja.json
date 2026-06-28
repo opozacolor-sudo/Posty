@@ -89,7 +89,9 @@
       "sat": "土",
       "sun": "日"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "考え中...",
+    "chatError": "Claude に接続できませんでした。もう一度お試しください。"
   },
   "profile": {
     "backToDashboard": "ダッシュボードに戻る",
@@ -103,7 +105,31 @@
     "saveError": "プロフィールを更新できませんでした",
     "settings": "設定",
     "statsScheduled": "予定済み投稿",
-    "statsConnected": "接続済みアカウント"
+    "statsConnected": "接続済みアカウント",
+    "brandProfile": "ブランドプロフィール",
+    "brandNiche": "ブランド名 / ニッチ",
+    "brandNichePlaceholder": "例：ファッション、フード、テック、フィットネス...",
+    "voiceTone": "トーン",
+    "voiceToneProfessional": "プロフェッショナル",
+    "voiceToneCasual": "カジュアル",
+    "voiceToneFunny": "ユーモラス",
+    "voiceToneInspirational": "インスピレーショナル",
+    "voiceToneEducational": "教育的",
+    "targetAudience": "ターゲット層",
+    "targetAudiencePlaceholder": "例：25-35歳女性、起業家、ゲーマー...",
+    "aiContentLanguage": "AI生成説明文の優先言語",
+    "favoriteHashtags": "お気に入りハッシュタグ",
+    "hashtagPlaceholder": "ハッシュタグを入力して Enter",
+    "claudeNote": "Claudeへのメモ",
+    "claudeNotePlaceholder": "Claudeに知っておいてほしいブランド情報...",
+    "saveBrandProfile": "ブランドプロフィールを保存",
+    "deleteAccount": "アカウントを削除",
+    "deleteAccountConfirmTitle": "アカウントを削除しますか？",
+    "deleteAccountConfirmMessage": "この操作は取り消せません。すべてのデータが永久に削除されます。",
+    "deleteAccountConfirmButton": "はい、削除します",
+    "deleteAccountCancel": "キャンセル",
+    "deleteAccountError": "アカウントを削除できませんでした。もう一度お試しください。",
+    "deleting": "削除中..."
   },
   "language": {
     "label": "言語",

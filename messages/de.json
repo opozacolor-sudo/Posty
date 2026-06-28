@@ -89,7 +89,9 @@
       "sat": "Sa",
       "sun": "So"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "Denkt nach...",
+    "chatError": "Claude konnte nicht erreicht werden. Bitte erneut versuchen."
   },
   "profile": {
     "backToDashboard": "Zurück zum Dashboard",
@@ -103,7 +105,31 @@
     "saveError": "Profil konnte nicht aktualisiert werden",
     "settings": "Einstellungen",
     "statsScheduled": "Geplante Beiträge",
-    "statsConnected": "Verbundene Konten"
+    "statsConnected": "Verbundene Konten",
+    "brandProfile": "Mein Markenprofil",
+    "brandNiche": "Markenname / Nische",
+    "brandNichePlaceholder": "z. B. Fashion, Food, Tech, Fitness...",
+    "voiceTone": "Tonfall",
+    "voiceToneProfessional": "Professionell",
+    "voiceToneCasual": "Locker",
+    "voiceToneFunny": "Lustig",
+    "voiceToneInspirational": "Inspirierend",
+    "voiceToneEducational": "Lehrreich",
+    "targetAudience": "Zielgruppe",
+    "targetAudiencePlaceholder": "z. B. Frauen 25-35, Unternehmer, Gamer...",
+    "aiContentLanguage": "Bevorzugte Sprache für KI-generierte Beschreibungen",
+    "favoriteHashtags": "Lieblings-Hashtags",
+    "hashtagPlaceholder": "Hashtag eingeben und Enter drücken",
+    "claudeNote": "Notiz für Claude",
+    "claudeNotePlaceholder": "Alles, was Claude über deine Marke wissen sollte...",
+    "saveBrandProfile": "Markenprofil speichern",
+    "deleteAccount": "Konto löschen",
+    "deleteAccountConfirmTitle": "Konto löschen?",
+    "deleteAccountConfirmMessage": "Diese Aktion ist dauerhaft. Alle deine Daten werden gelöscht und können nicht wiederhergestellt werden.",
+    "deleteAccountConfirmButton": "Ja, Konto löschen",
+    "deleteAccountCancel": "Abbrechen",
+    "deleteAccountError": "Konto konnte nicht gelöscht werden. Bitte erneut versuchen.",
+    "deleting": "Wird gelöscht..."
   },
   "language": {
     "label": "Sprache",

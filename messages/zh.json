@@ -89,7 +89,9 @@
       "sat": "六",
       "sun": "日"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "思考中...",
+    "chatError": "无法连接 Claude，请重试。"
   },
   "profile": {
     "backToDashboard": "返回仪表盘",
@@ -103,7 +105,31 @@
     "saveError": "无法更新资料",
     "settings": "设置",
     "statsScheduled": "已排程帖子",
-    "statsConnected": "已连接账户"
+    "statsConnected": "已连接账户",
+    "brandProfile": "我的品牌档案",
+    "brandNiche": "品牌名称 / 领域",
+    "brandNichePlaceholder": "例如：时尚、美食、科技、健身...",
+    "voiceTone": "语气风格",
+    "voiceToneProfessional": "专业",
+    "voiceToneCasual": "休闲",
+    "voiceToneFunny": "幽默",
+    "voiceToneInspirational": "励志",
+    "voiceToneEducational": "教育",
+    "targetAudience": "目标受众",
+    "targetAudiencePlaceholder": "例如：25-35岁女性、创业者、游戏玩家...",
+    "aiContentLanguage": "AI 生成描述的首选语言",
+    "favoriteHashtags": "常用话题标签",
+    "hashtagPlaceholder": "输入标签后按 Enter",
+    "claudeNote": "给 Claude 的备注",
+    "claudeNotePlaceholder": "任何你希望 Claude 了解的品牌信息...",
+    "saveBrandProfile": "保存品牌档案",
+    "deleteAccount": "删除账户",
+    "deleteAccountConfirmTitle": "删除账户？",
+    "deleteAccountConfirmMessage": "此操作不可撤销。所有数据将被永久删除。",
+    "deleteAccountConfirmButton": "是的，删除我的账户",
+    "deleteAccountCancel": "取消",
+    "deleteAccountError": "无法删除账户，请重试。",
+    "deleting": "正在删除..."
   },
   "language": {
     "label": "语言",

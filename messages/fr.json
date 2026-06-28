@@ -89,7 +89,9 @@
       "sat": "Sa",
       "sun": "Di"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "Réflexion...",
+    "chatError": "Impossible de joindre Claude. Veuillez réessayer."
   },
   "profile": {
     "backToDashboard": "Retour au tableau de bord",
@@ -103,7 +105,31 @@
     "saveError": "Impossible de mettre à jour le profil",
     "settings": "Paramètres",
     "statsScheduled": "Publications planifiées",
-    "statsConnected": "Comptes connectés"
+    "statsConnected": "Comptes connectés",
+    "brandProfile": "Mon profil de marque",
+    "brandNiche": "Nom de marque / niche",
+    "brandNichePlaceholder": "ex : mode, food, tech, fitness...",
+    "voiceTone": "Ton de voix",
+    "voiceToneProfessional": "Professionnel",
+    "voiceToneCasual": "Décontracté",
+    "voiceToneFunny": "Drôle",
+    "voiceToneInspirational": "Inspirant",
+    "voiceToneEducational": "Éducatif",
+    "targetAudience": "Public cible",
+    "targetAudiencePlaceholder": "ex : femmes 25-35, entrepreneurs, gamers...",
+    "aiContentLanguage": "Langue préférée pour les descriptions générées par l'IA",
+    "favoriteHashtags": "Hashtags favoris",
+    "hashtagPlaceholder": "Saisissez un hashtag et appuyez sur Entrée",
+    "claudeNote": "Note pour Claude",
+    "claudeNotePlaceholder": "Tout ce que Claude doit savoir sur votre marque...",
+    "saveBrandProfile": "Enregistrer le profil de marque",
+    "deleteAccount": "Supprimer le compte",
+    "deleteAccountConfirmTitle": "Supprimer votre compte ?",
+    "deleteAccountConfirmMessage": "Cette action est permanente. Toutes vos données seront supprimées et ne pourront pas être récupérées.",
+    "deleteAccountConfirmButton": "Oui, supprimer mon compte",
+    "deleteAccountCancel": "Annuler",
+    "deleteAccountError": "Impossible de supprimer le compte. Veuillez réessayer.",
+    "deleting": "Suppression..."
   },
   "language": {
     "label": "Langue",

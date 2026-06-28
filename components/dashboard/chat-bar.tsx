@@ -21,14 +21,15 @@ export function ChatBar() {
   ]);
   const [input, setInput] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  function getClaudeReply(userMessage: string): string {
+  function getLocalReply(userMessage: string): string {
     const lower = userMessage.toLowerCase();
 
     if (lower.includes("instagram") || lower.includes("post")) {
@@ -44,25 +45,69 @@ export function ChatBar() {
     return t("chatReplyDefault");
   }
 
-  function sendMessage(text: string) {
+  async function fetchReply(
+    history: Array<{ role: "user" | "assistant"; content: string }>,
+  ): Promise<string> {
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
+
+      const data = (await response.json()) as {
+        reply?: string;
+        error?: string;
+      };
+
+      if (data.reply) {
+        return data.reply;
+      }
+    } catch {
+      // Fall back to local replies when the API is unavailable.
+    }
+
+    const lastUser = [...history].reverse().find((m) => m.role === "user");
+    return getLocalReply(lastUser?.content ?? "");
+  }
+
+  async function sendMessage(text: string) {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: trimmed,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    const history = [...messages, userMessage]
+      .filter((message) => message.id !== "welcome")
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+      }));
+
+    const reply = await fetchReply(history);
 
     setMessages((prev) => [
       ...prev,
-      { id: `user-${Date.now()}`, role: "user", content: trimmed },
       {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        content: getClaudeReply(trimmed),
+        content: reply,
       },
     ]);
-    setInput("");
+    setIsLoading(false);
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    sendMessage(input);
+    void sendMessage(input);
   }
 
   function toggleVoice() {
@@ -70,7 +115,7 @@ export function ChatBar() {
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      sendMessage(t("voiceNotSupported"));
+      void sendMessage(t("voiceNotSupported"));
       return;
     }
 
@@ -92,7 +137,7 @@ export function ChatBar() {
       const transcript = event.results[0]?.[0]?.transcript;
       if (transcript) {
         setInput(transcript);
-        sendMessage(transcript);
+        void sendMessage(transcript);
       }
     };
 
@@ -120,7 +165,9 @@ export function ChatBar() {
         </div>
         <div>
           <p className="text-xs font-bold leading-tight">{t("assistantName")}</p>
-          <p className="text-[10px] text-green">{t("chatOnline")}</p>
+          <p className="text-[10px] text-green">
+            {isLoading ? t("chatThinking") : t("chatOnline")}
+          </p>
         </div>
       </div>
 
@@ -142,6 +189,13 @@ export function ChatBar() {
               </div>
             </div>
           ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="rounded-2xl bg-card px-3 py-1.5 text-xs text-muted-foreground">
+                {t("chatThinking")}
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -156,13 +210,15 @@ export function ChatBar() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t("chatPlaceholder")}
-            className="input-field flex-1 rounded-full px-4 py-2.5 text-sm"
+            disabled={isLoading}
+            className="input-field flex-1 rounded-full px-4 py-2.5 text-sm disabled:opacity-60"
           />
 
           <button
             type="button"
             onClick={toggleVoice}
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+            disabled={isLoading}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-60 ${
               isListening
                 ? "bg-coral text-white"
                 : "bg-card text-foreground hover:bg-border"
@@ -186,8 +242,8 @@ export function ChatBar() {
 
           <button
             type="submit"
-            disabled={!input.trim()}
-            className="btn-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
+            disabled={!input.trim() || isLoading}
+            className="btn-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0 disabled:opacity-60"
             aria-label={t("send")}
           >
             <svg

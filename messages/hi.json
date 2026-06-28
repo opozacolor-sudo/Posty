@@ -89,7 +89,9 @@
       "sat": "श",
       "sun": "र"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "सोच रहा है...",
+    "chatError": "Claude तक नहीं पहुँच सका। फिर से प्रयास करें।"
   },
   "profile": {
     "backToDashboard": "डैशबोर्ड पर वापस",
@@ -103,7 +105,31 @@
     "saveError": "प्रोफ़ाइल अपडेट नहीं हो सकी",
     "settings": "सेटिंग्स",
     "statsScheduled": "शेड्यूल पोस्ट",
-    "statsConnected": "कनेक्टेड अकाउंट"
+    "statsConnected": "कनेक्टेड अकाउंट",
+    "brandProfile": "मेरा ब्रांड प्रोफ़ाइल",
+    "brandNiche": "ब्रांड नाम / niche",
+    "brandNichePlaceholder": "जैसे: fashion, food, tech, fitness...",
+    "voiceTone": "आवाज़ का स्वर",
+    "voiceToneProfessional": "पेशेवर",
+    "voiceToneCasual": "आकस्मिक",
+    "voiceToneFunny": "मज़ेदार",
+    "voiceToneInspirational": "प्रेरणादायक",
+    "voiceToneEducational": "शैक्षिक",
+    "targetAudience": "लक्षित दर्शक",
+    "targetAudiencePlaceholder": "जैसे: 25-35 महिलाएँ, उद्यमी, gamers...",
+    "aiContentLanguage": "AI विवरण के लिए पसंदीदा भाषा",
+    "favoriteHashtags": "पसंदीदा हैशटैग",
+    "hashtagPlaceholder": "हैशटैग लिखें और Enter दबाएँ",
+    "claudeNote": "Claude के लिए नोट",
+    "claudeNotePlaceholder": "Claude को आपके ब्रांड के बारे में और क्या जानना चाहिए...",
+    "saveBrandProfile": "ब्रांड प्रोफ़ाइल सहेजें",
+    "deleteAccount": "खाता हटाएँ",
+    "deleteAccountConfirmTitle": "खाता हटाएँ?",
+    "deleteAccountConfirmMessage": "यह क्रिया स्थायी है। आपका सारा डेटा हटा दिया जाएगा और पुनर्प्राप्त नहीं किया जा सकता।",
+    "deleteAccountConfirmButton": "हाँ, मेरा खाता हटाएँ",
+    "deleteAccountCancel": "रद्द करें",
+    "deleteAccountError": "खाता हटाया नहीं जा सका। फिर से प्रयास करें।",
+    "deleting": "हटाया जा रहा है..."
   },
   "language": {
     "label": "भाषा",

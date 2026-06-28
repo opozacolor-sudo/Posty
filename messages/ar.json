@@ -89,7 +89,9 @@
       "sat": "سب",
       "sun": "أح"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "يفكر...",
+    "chatError": "تعذر الوصول إلى Claude. حاول مرة أخرى."
   },
   "profile": {
     "backToDashboard": "العودة إلى لوحة التحكم",
@@ -103,7 +105,31 @@
     "saveError": "تعذر تحديث الملف الشخصي",
     "settings": "الإعدادات",
     "statsScheduled": "منشورات مجدولة",
-    "statsConnected": "حسابات متصلة"
+    "statsConnected": "حسابات متصلة",
+    "brandProfile": "ملفي التجاري للعلامة",
+    "brandNiche": "اسم العلامة / المجال",
+    "brandNichePlaceholder": "مثال: أزياء، طعام، تقنية، لياقة...",
+    "voiceTone": "نبرة الصوت",
+    "voiceToneProfessional": "احترافي",
+    "voiceToneCasual": "عفوي",
+    "voiceToneFunny": "مرح",
+    "voiceToneInspirational": "ملهم",
+    "voiceToneEducational": "تعليمي",
+    "targetAudience": "الجمهور المستهدف",
+    "targetAudiencePlaceholder": "مثال: نساء 25-35، رواد أعمال، gamers...",
+    "aiContentLanguage": "اللغة المفضلة للوصف المُولَّد بالذكاء الاصطناعي",
+    "favoriteHashtags": "الوسوم المفضلة",
+    "hashtagPlaceholder": "اكتب وسمًا واضغط Enter",
+    "claudeNote": "ملاحظة لـ Claude",
+    "claudeNotePlaceholder": "أي شيء آخر تريد أن يعرفه Claude عن علامتك...",
+    "saveBrandProfile": "حفظ ملف العلامة",
+    "deleteAccount": "حذف الحساب",
+    "deleteAccountConfirmTitle": "حذف حسابك؟",
+    "deleteAccountConfirmMessage": "هذا الإجراء دائم. سيتم حذف جميع بياناتك ولا يمكن استعادتها.",
+    "deleteAccountConfirmButton": "نعم، احذف حسابي",
+    "deleteAccountCancel": "إلغاء",
+    "deleteAccountError": "تعذر حذف الحساب. حاول مرة أخرى.",
+    "deleting": "جارٍ الحذف..."
   },
   "language": {
     "label": "اللغة",

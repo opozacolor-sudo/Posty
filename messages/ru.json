@@ -89,7 +89,9 @@
       "sat": "Сб",
       "sun": "Вс"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "Думаю...",
+    "chatError": "Не удалось связаться с Claude. Попробуйте снова."
   },
   "profile": {
     "backToDashboard": "Назад к панели",
@@ -103,7 +105,31 @@
     "saveError": "Не удалось обновить профиль",
     "settings": "Настройки",
     "statsScheduled": "Запланировано",
-    "statsConnected": "Подключённые аккаунты"
+    "statsConnected": "Подключённые аккаунты",
+    "brandProfile": "Мой бренд-профиль",
+    "brandNiche": "Название бренда / ниша",
+    "brandNichePlaceholder": "напр.: мода, еда, tech, фитнес...",
+    "voiceTone": "Тон голоса",
+    "voiceToneProfessional": "Профессиональный",
+    "voiceToneCasual": "Неформальный",
+    "voiceToneFunny": "Юмористический",
+    "voiceToneInspirational": "Вдохновляющий",
+    "voiceToneEducational": "Образовательный",
+    "targetAudience": "Целевая аудитория",
+    "targetAudiencePlaceholder": "напр.: женщины 25-35, предприниматели, геймеры...",
+    "aiContentLanguage": "Предпочитаемый язык для описаний от ИИ",
+    "favoriteHashtags": "Любимые хэштеги",
+    "hashtagPlaceholder": "Введите хэштег и нажмите Enter",
+    "claudeNote": "Заметка для Claude",
+    "claudeNotePlaceholder": "Всё, что Claude должен знать о вашем бренде...",
+    "saveBrandProfile": "Сохранить бренд-профиль",
+    "deleteAccount": "Удалить аккаунт",
+    "deleteAccountConfirmTitle": "Удалить аккаунт?",
+    "deleteAccountConfirmMessage": "Это действие необратимо. Все ваши данные будут удалены без возможности восстановления.",
+    "deleteAccountConfirmButton": "Да, удалить аккаунт",
+    "deleteAccountCancel": "Отмена",
+    "deleteAccountError": "Не удалось удалить аккаунт. Попробуйте снова.",
+    "deleting": "Удаление..."
   },
   "language": {
     "label": "Язык",

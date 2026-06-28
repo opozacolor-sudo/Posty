@@ -89,7 +89,9 @@
       "fri": "Vi",
       "sat": "Sâ",
       "sun": "Du"
-    }
+    },
+    "chatThinking": "Se gândește...",
+    "chatError": "Nu s-a putut contacta Claude. Încearcă din nou."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",
@@ -103,7 +105,31 @@
     "saveError": "Profilul nu a putut fi actualizat",
     "settings": "Setări",
     "statsScheduled": "Postări programate",
-    "statsConnected": "Conturi conectate"
+    "statsConnected": "Conturi conectate",
+    "brandProfile": "Profilul meu de brand",
+    "brandNiche": "Numele brandului / nișa",
+    "brandNichePlaceholder": "ex: fashion, food, tech, fitness...",
+    "voiceTone": "Tonul vocii",
+    "voiceToneProfessional": "Profesional",
+    "voiceToneCasual": "Casual",
+    "voiceToneFunny": "Amuzant",
+    "voiceToneInspirational": "Inspirațional",
+    "voiceToneEducational": "Educațional",
+    "targetAudience": "Publicul țintă",
+    "targetAudiencePlaceholder": "ex: femei 25-35, antreprenori, gameri...",
+    "aiContentLanguage": "Limbă preferată pentru descrieri generate de AI",
+    "favoriteHashtags": "Hashtag-uri favorite",
+    "hashtagPlaceholder": "Scrie un hashtag și apasă Enter",
+    "claudeNote": "Notă pentru Claude",
+    "claudeNotePlaceholder": "Orice altceva vrei să știe Claude despre brandul tău...",
+    "saveBrandProfile": "Salvează profilul de brand",
+    "deleteAccount": "Șterge contul",
+    "deleteAccountConfirmTitle": "Ștergi contul?",
+    "deleteAccountConfirmMessage": "Această acțiune este permanentă. Toate datele tale vor fi șterse și nu pot fi recuperate.",
+    "deleteAccountConfirmButton": "Da, șterge contul",
+    "deleteAccountCancel": "Anulează",
+    "deleteAccountError": "Contul nu a putut fi șters. Încearcă din nou.",
+    "deleting": "Se șterge..."
   },
   "language": {
     "label": "Limbă",

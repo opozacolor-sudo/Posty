@@ -89,7 +89,9 @@
       "sat": "토",
       "sun": "일"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "생각 중...",
+    "chatError": "Claude에 연결할 수 없습니다. 다시 시도해 주세요."
   },
   "profile": {
     "backToDashboard": "대시보드로 돌아가기",
@@ -103,7 +105,31 @@
     "saveError": "프로필을 업데이트할 수 없습니다",
     "settings": "설정",
     "statsScheduled": "예약된 게시물",
-    "statsConnected": "연결된 계정"
+    "statsConnected": "연결된 계정",
+    "brandProfile": "내 브랜드 프로필",
+    "brandNiche": "브랜드명 / 니치",
+    "brandNichePlaceholder": "예: 패션, 푸드, 테크, 피트니스...",
+    "voiceTone": "톤",
+    "voiceToneProfessional": "전문적",
+    "voiceToneCasual": "캐주얼",
+    "voiceToneFunny": "유머",
+    "voiceToneInspirational": "영감",
+    "voiceToneEducational": "교육적",
+    "targetAudience": "타겟 고객",
+    "targetAudiencePlaceholder": "예: 25-35세 여성, 창업가, 게이머...",
+    "aiContentLanguage": "AI 생성 설명의 선호 언어",
+    "favoriteHashtags": "즐겨찾는 해시태그",
+    "hashtagPlaceholder": "해시태그 입력 후 Enter",
+    "claudeNote": "Claude에게 남기는 메모",
+    "claudeNotePlaceholder": "Claude가 알아야 할 브랜드 정보...",
+    "saveBrandProfile": "브랜드 프로필 저장",
+    "deleteAccount": "계정 삭제",
+    "deleteAccountConfirmTitle": "계정을 삭제하시겠습니까?",
+    "deleteAccountConfirmMessage": "이 작업은 되돌릴 수 없습니다. 모든 데이터가 영구적으로 삭제됩니다.",
+    "deleteAccountConfirmButton": "네, 계정 삭제",
+    "deleteAccountCancel": "취소",
+    "deleteAccountError": "계정을 삭제할 수 없습니다. 다시 시도해 주세요.",
+    "deleting": "삭제 중..."
   },
   "language": {
     "label": "언어",

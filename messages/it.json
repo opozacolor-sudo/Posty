@@ -89,7 +89,9 @@
       "sat": "Sab",
       "sun": "Dom"
     },
-    "assistantName": "Claude"
+    "assistantName": "Claude",
+    "chatThinking": "Sto pensando...",
+    "chatError": "Impossibile contattare Claude. Riprova."
   },
   "profile": {
     "backToDashboard": "Torna alla dashboard",
@@ -103,7 +105,31 @@
     "saveError": "Impossibile aggiornare il profilo",
     "settings": "Impostazioni",
     "statsScheduled": "Post programmati",
-    "statsConnected": "Account collegati"
+    "statsConnected": "Account collegati",
+    "brandProfile": "Il mio profilo brand",
+    "brandNiche": "Nome brand / nicchia",
+    "brandNichePlaceholder": "es: moda, food, tech, fitness...",
+    "voiceTone": "Tono di voce",
+    "voiceToneProfessional": "Professionale",
+    "voiceToneCasual": "Informale",
+    "voiceToneFunny": "Divertente",
+    "voiceToneInspirational": "Ispirazionale",
+    "voiceToneEducational": "Educativo",
+    "targetAudience": "Pubblico target",
+    "targetAudiencePlaceholder": "es: donne 25-35, imprenditori, gamer...",
+    "aiContentLanguage": "Lingua preferita per le descrizioni generate dall'IA",
+    "favoriteHashtags": "Hashtag preferiti",
+    "hashtagPlaceholder": "Digita un hashtag e premi Invio",
+    "claudeNote": "Nota per Claude",
+    "claudeNotePlaceholder": "Qualsiasi altra cosa Claude debba sapere sul tuo brand...",
+    "saveBrandProfile": "Salva profilo brand",
+    "deleteAccount": "Elimina account",
+    "deleteAccountConfirmTitle": "Eliminare il tuo account?",
+    "deleteAccountConfirmMessage": "Questa azione è permanente. Tutti i tuoi dati verranno eliminati e non potranno essere recuperati.",
+    "deleteAccountConfirmButton": "Sì, elimina il mio account",
+    "deleteAccountCancel": "Annulla",
+    "deleteAccountError": "Impossibile eliminare l'account. Riprova.",
+    "deleting": "Eliminazione..."
   },
   "language": {
     "label": "Lingua",
