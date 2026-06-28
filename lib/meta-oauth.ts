@@ -8,11 +8,9 @@ export const INSTAGRAM_OAUTH_SCOPES = [
   "pages_read_engagement",
 ] as const;
 
-export const FACEBOOK_OAUTH_SCOPES = [
-  "pages_show_list",
-  "pages_manage_posts",
-  "pages_read_engagement",
-] as const;
+// Minimal scopes for Facebook Login for Business in Development mode.
+// Publishing requires pages_manage_posts via App Review / Login config later.
+export const FACEBOOK_OAUTH_SCOPES = ["pages_show_list", "business_management"] as const;
 
 const GRAPH_API_VERSION = "v21.0";
 
