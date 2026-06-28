@@ -1,6 +1,6 @@
 import { assertMetaConfigured } from "./meta-env";
 
-export const INSTAGRAM_OAUTH_SCOPES = ["email", "public_profile"] as const;
+export const INSTAGRAM_OAUTH_SCOPES = ["public_profile"] as const;
 
 const GRAPH_API_VERSION = "v21.0";
 

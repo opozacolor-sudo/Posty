@@ -13,9 +13,7 @@ import {
 } from "@/lib/instagram-oauth-session";
 import { createClient } from "@/lib/supabase-server";
 
-// Development mode: only default Facebook Login scopes (no App Review required).
-// Content Publishing scopes (e.g. instagram_business_content_publish) require App Review.
-const INSTAGRAM_OAUTH_SCOPES = ["email", "public_profile"] as const;
+const INSTAGRAM_OAUTH_SCOPES = ["public_profile"] as const;
 
 function redirectToLogin(request: NextRequest, locale: ReturnType<typeof resolveOAuthLocale>) {
   return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
