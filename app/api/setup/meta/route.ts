@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   FACEBOOK_OAUTH_SCOPES,
-  INSTAGRAM_OAUTH_SCOPES,
 } from "@/lib/meta-oauth";
+import { getInstagramEnvDebug, isInstagramConfigured } from "@/lib/instagram-env";
+import { INSTAGRAM_BUSINESS_SCOPES } from "@/lib/instagram-business-oauth";
 import { getMetaEnvDebug, isMetaConfigured } from "@/lib/meta-env";
 import { createClient } from "@/lib/supabase-server";
 
@@ -16,15 +17,12 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const metaEnv = getMetaEnvDebug();
-
   return NextResponse.json({
-    configured: isMetaConfigured(),
-    appId: metaEnv.appId,
-    instagramRedirectUri: metaEnv.instagramRedirectUri,
-    facebookRedirectUri: metaEnv.facebookRedirectUri,
-    instagramScopes: INSTAGRAM_OAUTH_SCOPES,
+    metaConfigured: isMetaConfigured(),
+    instagramConfigured: isInstagramConfigured(),
+    meta: getMetaEnvDebug(),
+    instagram: getInstagramEnvDebug(),
+    instagramScopes: INSTAGRAM_BUSINESS_SCOPES,
     facebookScopes: FACEBOOK_OAUTH_SCOPES,
-    missing: metaEnv.missing,
   });
 }

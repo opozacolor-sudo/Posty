@@ -1,22 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  exchangeCodeForToken,
-  exchangeForLongLivedToken,
-  fetchInstagramAccount,
-} from "@/lib/meta-oauth";
-import { isMetaConfigured, logMetaEnvAtStartup, getMetaEnvDebug } from "@/lib/meta-env";
+  exchangeInstagramCodeForToken,
+  exchangeInstagramForLongLivedToken,
+  fetchInstagramUsername,
+} from "@/lib/instagram-business-oauth";
+import { getInstagramEnvDebug, isInstagramConfigured } from "@/lib/instagram-env";
 import {
   INSTAGRAM_OAUTH_LOCALE_COOKIE,
   INSTAGRAM_OAUTH_STATE_COOKIE,
   redirectToAccounts,
   resolveOAuthLocale,
 } from "@/lib/instagram-oauth-session";
-import { upsertConnectedAccount, mapSaveFailureToOAuthErrorKey } from "@/lib/save-connected-account";
+import {
+  mapSaveFailureToOAuthErrorKey,
+  upsertConnectedAccount,
+} from "@/lib/save-connected-account";
 import { createClient } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
-  logMetaEnvAtStartup();
-
   const locale = resolveOAuthLocale(
     request.cookies.get(INSTAGRAM_OAUTH_LOCALE_COOKIE)?.value,
   );
@@ -29,9 +30,12 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  if (!isMetaConfigured()) {
-    const metaEnv = getMetaEnvDebug();
-    console.warn("[posty/instagram-oauth] Callback blocked — missing:", metaEnv.missing);
+  if (!isInstagramConfigured()) {
+    const instagramEnv = getInstagramEnvDebug();
+    console.warn(
+      "[posty/instagram-oauth] Callback blocked — missing:",
+      instagramEnv.missing,
+    );
     return redirectToAccounts(request, locale, {
       error: "instagram_not_configured",
     });
@@ -62,27 +66,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const shortLived = await exchangeCodeForToken(code, "instagram");
-    const longLivedUser = await exchangeForLongLivedToken(shortLived.accessToken);
-    const instagramAccount = await fetchInstagramAccount(longLivedUser.accessToken);
+    const shortLived = await exchangeInstagramCodeForToken(code);
+    const longLived = await exchangeInstagramForLongLivedToken(shortLived.accessToken);
+    const username =
+      (await fetchInstagramUsername(longLived.accessToken)) ?? shortLived.userId;
 
-    if (!instagramAccount) {
-      return redirectToAccounts(request, locale, {
-        error: "instagram_no_business_account",
-      });
-    }
-
-    const expiresIn =
-      instagramAccount.expiresIn ?? longLivedUser.expiresIn ?? shortLived.expiresIn;
-    const tokenExpiresAt = expiresIn
-      ? new Date(Date.now() + expiresIn * 1000).toISOString()
+    const tokenExpiresAt = longLived.expiresIn
+      ? new Date(Date.now() + longLived.expiresIn * 1000).toISOString()
       : null;
 
     const saveResult = await upsertConnectedAccount({
       user_id: user.id,
       platform: "instagram",
-      account_name: instagramAccount.accountName,
-      access_token: instagramAccount.accessToken,
+      account_name: username,
+      access_token: longLived.accessToken,
       refresh_token: null,
       token_expires_at: tokenExpiresAt,
       is_active: true,

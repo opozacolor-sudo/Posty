@@ -1,11 +1,10 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { buildInstagramOAuthUrl } from "@/lib/meta-oauth";
+import { buildInstagramBusinessLoginUrl } from "@/lib/instagram-business-oauth";
 import {
-  getMetaEnvDebug,
-  isMetaConfigured,
-  logMetaEnvAtStartup,
-} from "@/lib/meta-env";
+  getInstagramEnvDebug,
+  isInstagramConfigured,
+} from "@/lib/instagram-env";
 import {
   redirectToAccounts,
   resolveOAuthLocale,
@@ -18,24 +17,13 @@ function redirectToLogin(request: NextRequest, locale: ReturnType<typeof resolve
 }
 
 export async function GET(request: NextRequest) {
-  logMetaEnvAtStartup();
-
-  const metaEnv = getMetaEnvDebug();
-  console.log("[posty/instagram-oauth] GET /api/auth/instagram env:", {
-    META_APP_ID: metaEnv.appId,
-    META_APP_SECRET: metaEnv.appSecretPreview,
-    META_APP_SECRET_present: metaEnv.appSecretPresent,
-    META_REDIRECT_URI: metaEnv.instagramRedirectUri,
-    configured: metaEnv.configured,
-    missing: metaEnv.missing,
-  });
-
   const locale = resolveOAuthLocale(request.nextUrl.searchParams.get("locale"));
 
-  if (!isMetaConfigured()) {
+  if (!isInstagramConfigured()) {
+    const instagramEnv = getInstagramEnvDebug();
     console.warn(
       "[posty/instagram-oauth] Blocked — missing:",
-      metaEnv.missing.join(", ") || "unknown",
+      instagramEnv.missing.join(", ") || "unknown",
     );
     return redirectToAccounts(request, locale, {
       error: "instagram_not_configured",
@@ -52,7 +40,7 @@ export async function GET(request: NextRequest) {
   }
 
   const state = randomUUID();
-  const response = NextResponse.redirect(buildInstagramOAuthUrl(state));
+  const response = NextResponse.redirect(buildInstagramBusinessLoginUrl(state));
   setInstagramOAuthCookies(response, state, locale);
 
   return response;
