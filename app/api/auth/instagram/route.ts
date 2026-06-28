@@ -1,7 +1,11 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { buildInstagramOAuthUrl } from "@/lib/meta-oauth";
-import { isMetaConfigured } from "@/lib/meta-env";
+import {
+  getMetaEnvDebug,
+  isMetaConfigured,
+  logMetaEnvAtStartup,
+} from "@/lib/meta-env";
 import {
   redirectToAccounts,
   resolveOAuthLocale,
@@ -11,9 +15,9 @@ import { createClient } from "@/lib/supabase-server";
 
 const INSTAGRAM_OAUTH_SCOPES = [
   "pages_show_list",
-  "pages_read_engagement",
-  "instagram_manage_comments",
-  "ads_management",
+  "instagram_basic",
+  "public_profile",
+  "email",
 ] as const;
 
 function redirectToLogin(request: NextRequest, locale: ReturnType<typeof resolveOAuthLocale>) {
@@ -21,9 +25,25 @@ function redirectToLogin(request: NextRequest, locale: ReturnType<typeof resolve
 }
 
 export async function GET(request: NextRequest) {
+  logMetaEnvAtStartup();
+
+  const metaEnv = getMetaEnvDebug();
+  console.log("[posty/instagram-oauth] GET /api/auth/instagram env:", {
+    META_APP_ID: metaEnv.appId,
+    META_APP_SECRET: metaEnv.appSecretPreview,
+    META_APP_SECRET_present: metaEnv.appSecretPresent,
+    META_REDIRECT_URI: metaEnv.redirectUri,
+    configured: metaEnv.configured,
+    missing: metaEnv.missing,
+  });
+
   const locale = resolveOAuthLocale(request.nextUrl.searchParams.get("locale"));
 
   if (!isMetaConfigured()) {
+    console.warn(
+      "[posty/instagram-oauth] Blocked — missing:",
+      metaEnv.missing.join(", ") || "unknown",
+    );
     return redirectToAccounts(request, locale, {
       error: "instagram_not_configured",
     });

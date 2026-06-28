@@ -2,9 +2,9 @@ import { assertMetaConfigured } from "./meta-env";
 
 export const INSTAGRAM_OAUTH_SCOPES = [
   "pages_show_list",
-  "pages_read_engagement",
-  "instagram_manage_comments",
-  "ads_management",
+  "instagram_basic",
+  "public_profile",
+  "email",
 ] as const;
 
 const GRAPH_API_VERSION = "v21.0";

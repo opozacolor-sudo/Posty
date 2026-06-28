@@ -4,7 +4,7 @@ import {
   exchangeForLongLivedToken,
   fetchInstagramAccount,
 } from "@/lib/meta-oauth";
-import { isMetaConfigured } from "@/lib/meta-env";
+import { isMetaConfigured, logMetaEnvAtStartup, getMetaEnvDebug } from "@/lib/meta-env";
 import {
   INSTAGRAM_OAUTH_LOCALE_COOKIE,
   INSTAGRAM_OAUTH_STATE_COOKIE,
@@ -14,6 +14,8 @@ import {
 import { createClient } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
+  logMetaEnvAtStartup();
+
   const locale = resolveOAuthLocale(
     request.cookies.get(INSTAGRAM_OAUTH_LOCALE_COOKIE)?.value,
   );
@@ -27,6 +29,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isMetaConfigured()) {
+    const metaEnv = getMetaEnvDebug();
+    console.warn("[posty/instagram-oauth] Callback blocked — missing:", metaEnv.missing);
     return redirectToAccounts(request, locale, {
       error: "instagram_not_configured",
     });
