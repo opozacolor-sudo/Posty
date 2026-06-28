@@ -10,6 +10,7 @@ const SUCCESS_KEYS: Record<string, string> = {
   instagram: "instagramConnected",
   youtube: "youtubeConnected",
   facebook: "facebookConnected",
+  threads: "threadsConnected",
 };
 
 const ERROR_KEYS: Record<string, string> = {
@@ -33,6 +34,14 @@ const ERROR_KEYS: Record<string, string> = {
   instagram_save_unknown: "instagramSaveUnknown",
   instagram_service_role_missing: "instagramServiceRoleMissing",
   instagram_token_failed: "instagramTokenFailed",
+  threads_denied: "threadsDenied",
+  threads_invalid_state: "threadsInvalidState",
+  threads_not_configured: "threadsNotConfigured",
+  threads_save_failed: "threadsSaveFailed",
+  threads_save_permission: "threadsSavePermission",
+  threads_save_unknown: "threadsSaveUnknown",
+  threads_service_role_missing: "threadsServiceRoleMissing",
+  threads_token_failed: "threadsTokenFailed",
   youtube_denied: "youtubeDenied",
   youtube_invalid_state: "youtubeInvalidState",
   youtube_no_channel: "youtubeNoChannel",

@@ -119,7 +119,16 @@
     "facebookSavePermission": "Could not save Facebook account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
     "facebookSaveUnknown": "Could not save Facebook account. Try again or check /api/setup/connected-accounts.",
     "facebookServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
-    "facebookTokenFailed": "Facebook authorization could not be completed."
+    "facebookTokenFailed": "Facebook authorization could not be completed.",
+    "threadsConnected": "Threads connected successfully!",
+    "threadsDenied": "Threads authorization was cancelled.",
+    "threadsInvalidState": "Threads authorization failed. Please try again.",
+    "threadsNotConfigured": "Threads OAuth is not configured on the server.",
+    "threadsSaveFailed": "Could not save Threads account. Run the Supabase setup SQL first.",
+    "threadsSavePermission": "Could not save Threads account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
+    "threadsSaveUnknown": "Could not save Threads account. Try again.",
+    "threadsServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
+    "threadsTokenFailed": "Threads authorization could not be completed."
   },
   "profile": {
     "backToDashboard": "Назад к панели",

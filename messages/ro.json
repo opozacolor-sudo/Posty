@@ -126,7 +126,16 @@
     "facebookSavePermission": "Contul Facebook nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
     "facebookSaveUnknown": "Contul Facebook nu a putut fi salvat. Încearcă din nou.",
     "facebookServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
-    "facebookTokenFailed": "Autorizarea Facebook nu s-a putut finaliza."
+    "facebookTokenFailed": "Autorizarea Facebook nu s-a putut finaliza.",
+    "threadsConnected": "Threads conectat cu succes!",
+    "threadsDenied": "Autorizarea Threads a fost anulată.",
+    "threadsInvalidState": "Autorizarea Threads a eșuat. Încearcă din nou.",
+    "threadsNotConfigured": "OAuth Threads nu este configurat pe server.",
+    "threadsSaveFailed": "Contul Threads nu a putut fi salvat. Rulează setup-ul Supabase.",
+    "threadsSavePermission": "Contul Threads nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
+    "threadsSaveUnknown": "Contul Threads nu a putut fi salvat. Încearcă din nou.",
+    "threadsServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
+    "threadsTokenFailed": "Autorizarea Threads nu s-a putut finaliza."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",
