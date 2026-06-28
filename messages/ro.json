@@ -100,7 +100,14 @@
     "instagramNoBusinessAccount": "Nu s-a găsit cont Instagram Business. Conectează unul la o pagină Facebook.",
     "instagramNotConfigured": "OAuth Instagram nu este configurat pe server.",
     "instagramSaveFailed": "Contul Instagram nu a putut fi salvat. Rulează migrarea Supabase.",
-    "instagramTokenFailed": "Autorizarea Instagram nu s-a putut finaliza."
+    "instagramTokenFailed": "Autorizarea Instagram nu s-a putut finaliza.",
+    "youtubeConnected": "YouTube conectat cu succes!",
+    "youtubeDenied": "Autorizarea YouTube a fost anulată.",
+    "youtubeInvalidState": "Autorizarea YouTube a eșuat. Încearcă din nou.",
+    "youtubeNoChannel": "Nu s-a găsit canal YouTube pentru acest cont Google.",
+    "youtubeNotConfigured": "OAuth YouTube nu este configurat pe server.",
+    "youtubeSaveFailed": "Contul YouTube nu a putut fi salvat. Rulează migrarea Supabase.",
+    "youtubeTokenFailed": "Autorizarea YouTube nu s-a putut finaliza."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",

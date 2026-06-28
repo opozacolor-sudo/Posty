@@ -42,17 +42,9 @@ export const PLATFORMS: SocialPlatform[] = [
   "bluesky",
 ];
 
-export const MOCK_CONNECTED_ACCOUNTS: ConnectedAccount[] = [
-  { platform: "instagram", connected: true },
-  { platform: "tiktok", connected: true },
-  { platform: "youtube", connected: false },
-  { platform: "facebook", connected: false },
-  { platform: "linkedin", connected: true },
-  { platform: "threads", connected: false },
-  { platform: "x", connected: false },
-  { platform: "pinterest", connected: false },
-  { platform: "bluesky", connected: false },
-];
+export const MOCK_CONNECTED_ACCOUNTS: ConnectedAccount[] = PLATFORMS.map(
+  (platform) => ({ platform, connected: false }),
+);
 
 export const MOCK_UPCOMING_POSTS: ScheduledPost[] = [
   {

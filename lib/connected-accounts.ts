@@ -3,8 +3,15 @@ import {
   MOCK_CONNECTED_ACCOUNTS,
   PLATFORMS,
   type ConnectedAccount,
-  type SocialPlatform,
 } from "./dashboard-data";
+
+export {
+  buildConnectUrl,
+  getOAuthPath,
+  INSTAGRAM_OAUTH_PATH,
+  YOUTUBE_OAUTH_PATH,
+  buildOAuthUrl,
+} from "./oauth-platforms";
 
 export type ConnectedAccountRow = {
   id: string;
@@ -44,14 +51,6 @@ export function getFallbackConnectedAccounts(): ConnectedAccount[] {
   }));
 }
 
-export function isOAuthPlatform(
-  platform: SocialPlatform,
-): platform is "instagram" {
-  return platform === "instagram";
-}
-
-export const INSTAGRAM_OAUTH_PATH = "/api/auth/instagram";
-
 export async function fetchUserConnectedAccounts(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
@@ -62,7 +61,7 @@ export async function fetchUserConnectedAccounts(
     .eq("user_id", userId);
 
   if (error || !data) {
-    return getFallbackConnectedAccounts();
+    return PLATFORMS.map((platform) => ({ platform, connected: false }));
   }
 
   return mergeConnectedAccounts(data);

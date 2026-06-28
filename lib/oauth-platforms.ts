@@ -1,0 +1,16 @@
+import type { SocialPlatform } from "./dashboard-data";
+
+export function buildConnectUrl(platform: SocialPlatform, locale: string): string {
+  return `/api/auth/${platform}?locale=${encodeURIComponent(locale)}`;
+}
+
+export const INSTAGRAM_OAUTH_PATH = "/api/auth/instagram";
+export const YOUTUBE_OAUTH_PATH = "/api/auth/youtube";
+
+export function getOAuthPath(platform: SocialPlatform): string {
+  return `/api/auth/${platform}`;
+}
+
+export function buildOAuthUrl(path: string, locale: string): string {
+  return `${path}?locale=${encodeURIComponent(locale)}`;
+}

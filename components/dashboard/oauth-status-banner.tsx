@@ -5,17 +5,25 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 
-const OAUTH_MESSAGE_KEYS = {
-  connected: "instagramConnected",
+const SUCCESS_KEYS: Record<string, string> = {
+  instagram: "instagramConnected",
+  youtube: "youtubeConnected",
+};
+
+const ERROR_KEYS: Record<string, string> = {
   instagram_denied: "instagramDenied",
   instagram_invalid_state: "instagramInvalidState",
   instagram_no_business_account: "instagramNoBusinessAccount",
   instagram_not_configured: "instagramNotConfigured",
   instagram_save_failed: "instagramSaveFailed",
   instagram_token_failed: "instagramTokenFailed",
-} as const;
-
-type OAuthMessageKey = keyof typeof OAUTH_MESSAGE_KEYS;
+  youtube_denied: "youtubeDenied",
+  youtube_invalid_state: "youtubeInvalidState",
+  youtube_no_channel: "youtubeNoChannel",
+  youtube_not_configured: "youtubeNotConfigured",
+  youtube_save_failed: "youtubeSaveFailed",
+  youtube_token_failed: "youtubeTokenFailed",
+};
 
 export function OAuthStatusBanner() {
   const searchParams = useSearchParams();
@@ -32,12 +40,15 @@ export function OAuthStatusBanner() {
 
     let nextMessage: { type: "success" | "error"; text: string } | null = null;
 
-    if (connected === "instagram") {
-      nextMessage = { type: "success", text: t(OAUTH_MESSAGE_KEYS.connected) };
-    } else if (error && error in OAUTH_MESSAGE_KEYS) {
+    if (connected && connected in SUCCESS_KEYS) {
+      nextMessage = {
+        type: "success",
+        text: t(SUCCESS_KEYS[connected]),
+      };
+    } else if (error && error in ERROR_KEYS) {
       nextMessage = {
         type: "error",
-        text: t(OAUTH_MESSAGE_KEYS[error as OAuthMessageKey]),
+        text: t(ERROR_KEYS[error]),
       };
     }
 

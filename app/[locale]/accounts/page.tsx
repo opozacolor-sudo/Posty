@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { ConnectPlatformButton } from "@/components/accounts/connect-platform-button";
 import { OAuthStatusBanner } from "@/components/dashboard/oauth-status-banner";
 import {
   PlatformIcon,
@@ -58,7 +57,7 @@ export default async function AccountsPage({ params }: Props) {
           {accounts.map(({ platform, connected, accountName }) => (
             <li
               key={platform}
-              className="dashboard-card flex items-center gap-4 p-4"
+              className="relative flex items-center gap-4 overflow-visible rounded-[14px] border border-border bg-card p-4 shadow-[var(--shadow)]"
             >
               <div
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
@@ -85,7 +84,20 @@ export default async function AccountsPage({ params }: Props) {
                 </p>
               </div>
 
-              <ConnectPlatformButton platform={platform} connected={connected} />
+              <div className="relative z-10 shrink-0">
+                {connected ? (
+                  <span className="inline-flex rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground">
+                    {t("disconnect")}
+                  </span>
+                ) : (
+                  <a
+                    href={`/api/auth/${platform}?locale=${locale}`}
+                    className="btn-primary inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold no-underline"
+                  >
+                    {t("connect")}
+                  </a>
+                )}
+              </div>
             </li>
           ))}
         </ul>
