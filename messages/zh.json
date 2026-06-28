@@ -100,7 +100,9 @@
     "instagramNoBusinessAccount": "未找到 Instagram 商业账户。请先将其关联到 Facebook 页面。",
     "instagramNotConfigured": "服务器未配置 Instagram OAuth。",
     "instagramSaveFailed": "无法保存 Instagram 账户。请先运行 Supabase 迁移。",
-    "instagramTokenFailed": "无法完成 Instagram 授权。"
+    "instagramTokenFailed": "无法完成 Instagram 授权。",
+    "instagramSavePermission": "无法保存 Instagram 账户。请在 Vercel 添加 SUPABASE_SERVICE_ROLE_KEY，并在 Supabase 运行 GRANT SQL。",
+    "youtubeSavePermission": "无法保存 YouTube 账户。请在 Vercel 添加 SUPABASE_SERVICE_ROLE_KEY，并在 Supabase 运行 GRANT SQL。"
   },
   "profile": {
     "backToDashboard": "返回仪表盘",

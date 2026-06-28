@@ -100,7 +100,9 @@
     "instagramNoBusinessAccount": "कोई Instagram Business खाता नहीं मिला। इसे Facebook Page से लिंक करें।",
     "instagramNotConfigured": "सर्वर पर Instagram OAuth कॉन्फ़िगर नहीं है।",
     "instagramSaveFailed": "Instagram खाता सहेजा नहीं जा सका। Supabase migration चलाएँ।",
-    "instagramTokenFailed": "Instagram प्राधिकरण पूरा नहीं हो सका।"
+    "instagramTokenFailed": "Instagram प्राधिकरण पूरा नहीं हो सका।",
+    "instagramSavePermission": "Instagram खाता सहेजा नहीं जा सका। Vercel में SUPABASE_SERVICE_ROLE_KEY जोड़ें और Supabase में GRANT SQL चलाएँ।",
+    "youtubeSavePermission": "YouTube खाता सहेजा नहीं जा सका। Vercel में SUPABASE_SERVICE_ROLE_KEY जोड़ें और Supabase में GRANT SQL चलाएँ।"
   },
   "profile": {
     "backToDashboard": "डैशबोर्ड पर वापस",

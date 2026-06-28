@@ -36,3 +36,6 @@ CREATE POLICY "Users can delete own connected accounts"
   ON connected_accounts
   FOR DELETE
   USING (auth.uid() = user_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON connected_accounts TO authenticated;
+GRANT ALL ON connected_accounts TO service_role;

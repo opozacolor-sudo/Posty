@@ -100,7 +100,9 @@
     "instagramNoBusinessAccount": "Instagram Business аккаунт не найден. Привяжите его к странице Facebook.",
     "instagramNotConfigured": "OAuth Instagram не настроен на сервере.",
     "instagramSaveFailed": "Не удалось сохранить аккаунт Instagram. Выполните миграцию Supabase.",
-    "instagramTokenFailed": "Не удалось завершить авторизацию Instagram."
+    "instagramTokenFailed": "Не удалось завершить авторизацию Instagram.",
+    "instagramSavePermission": "Не удалось сохранить аккаунт Instagram. Добавьте SUPABASE_SERVICE_ROLE_KEY в Vercel и выполните SQL GRANT в Supabase.",
+    "youtubeSavePermission": "Не удалось сохранить аккаунт YouTube. Добавьте SUPABASE_SERVICE_ROLE_KEY в Vercel и выполните SQL GRANT в Supabase."
   },
   "profile": {
     "backToDashboard": "Назад к панели",

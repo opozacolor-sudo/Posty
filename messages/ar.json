@@ -100,7 +100,9 @@
     "instagramNoBusinessAccount": "لم يتم العثور على حساب Instagram Business. اربطه بصفحة Facebook.",
     "instagramNotConfigured": "OAuth لـ Instagram غير مُعد على الخادم.",
     "instagramSaveFailed": "تعذر حفظ حساب Instagram. نفّذ ترحيل Supabase.",
-    "instagramTokenFailed": "تعذر إكمال تفويض Instagram."
+    "instagramTokenFailed": "تعذر إكمال تفويض Instagram.",
+    "instagramSavePermission": "تعذر حفظ حساب Instagram. أضف SUPABASE_SERVICE_ROLE_KEY إلى Vercel ونفّذ SQL GRANT في Supabase.",
+    "youtubeSavePermission": "تعذر حفظ حساب YouTube. أضف SUPABASE_SERVICE_ROLE_KEY إلى Vercel ونفّذ SQL GRANT في Supabase."
   },
   "profile": {
     "backToDashboard": "العودة إلى لوحة التحكم",

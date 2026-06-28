@@ -16,12 +16,14 @@ const ERROR_KEYS: Record<string, string> = {
   instagram_no_business_account: "instagramNoBusinessAccount",
   instagram_not_configured: "instagramNotConfigured",
   instagram_save_failed: "instagramSaveFailed",
+  instagram_save_permission: "instagramSavePermission",
   instagram_token_failed: "instagramTokenFailed",
   youtube_denied: "youtubeDenied",
   youtube_invalid_state: "youtubeInvalidState",
   youtube_no_channel: "youtubeNoChannel",
   youtube_not_configured: "youtubeNotConfigured",
   youtube_save_failed: "youtubeSaveFailed",
+  youtube_save_permission: "youtubeSavePermission",
   youtube_token_failed: "youtubeTokenFailed",
 };
 

@@ -11,6 +11,7 @@ import {
   redirectToAccounts,
   resolveOAuthLocale,
 } from "@/lib/instagram-oauth-session";
+import { upsertConnectedAccount } from "@/lib/save-connected-account";
 import { createClient } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
@@ -76,22 +77,26 @@ export async function GET(request: NextRequest) {
       ? new Date(Date.now() + expiresIn * 1000).toISOString()
       : null;
 
-    const { error: upsertError } = await supabase.from("connected_accounts").upsert(
-      {
-        user_id: user.id,
-        platform: "instagram",
-        account_name: instagramAccount.accountName,
-        access_token: longLived.accessToken,
-        refresh_token: null,
-        token_expires_at: tokenExpiresAt,
-        is_active: true,
-      },
-      { onConflict: "user_id,platform" },
-    );
+    const saveResult = await upsertConnectedAccount({
+      user_id: user.id,
+      platform: "instagram",
+      account_name: instagramAccount.accountName,
+      access_token: longLived.accessToken,
+      refresh_token: null,
+      token_expires_at: tokenExpiresAt,
+      is_active: true,
+    });
 
-    if (upsertError) {
+    if (!saveResult.ok) {
+      const errorKey =
+        saveResult.reason === "missing_table"
+          ? "instagram_save_failed"
+          : saveResult.reason === "permission"
+            ? "instagram_save_permission"
+            : "instagram_save_failed";
+
       return redirectToAccounts(request, locale, {
-        error: "instagram_save_failed",
+        error: errorKey,
       });
     }
 

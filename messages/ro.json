@@ -107,7 +107,9 @@
     "youtubeNoChannel": "Nu s-a găsit canal YouTube pentru acest cont Google.",
     "youtubeNotConfigured": "OAuth YouTube nu este configurat pe server.",
     "youtubeSaveFailed": "Contul YouTube nu a putut fi salvat. Rulează migrarea Supabase.",
-    "youtubeTokenFailed": "Autorizarea YouTube nu s-a putut finaliza."
+    "youtubeTokenFailed": "Autorizarea YouTube nu s-a putut finaliza.",
+    "instagramSavePermission": "Contul Instagram nu a putut fi salvat. Adaugă SUPABASE_SERVICE_ROLE_KEY în Vercel și rulează SQL-ul GRANT în Supabase.",
+    "youtubeSavePermission": "Contul YouTube nu a putut fi salvat. Adaugă SUPABASE_SERVICE_ROLE_KEY în Vercel și rulează SQL-ul GRANT în Supabase."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",

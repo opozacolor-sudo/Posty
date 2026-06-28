@@ -100,7 +100,9 @@
     "instagramNoBusinessAccount": "Instagramビジネスアカウントが見つかりません。Facebookページにリンクしてください。",
     "instagramNotConfigured": "サーバーでInstagram OAuthが設定されていません。",
     "instagramSaveFailed": "Instagramアカウントを保存できませんでした。Supabaseマイグレーションを実行してください。",
-    "instagramTokenFailed": "Instagramの認可を完了できませんでした。"
+    "instagramTokenFailed": "Instagramの認可を完了できませんでした。",
+    "instagramSavePermission": "Instagramアカウントを保存できませんでした。VercelにSUPABASE_SERVICE_ROLE_KEYを追加し、SupabaseでGRANT SQLを実行してください。",
+    "youtubeSavePermission": "YouTubeアカウントを保存できませんでした。VercelにSUPABASE_SERVICE_ROLE_KEYを追加し、SupabaseでGRANT SQLを実行してください。"
   },
   "profile": {
     "backToDashboard": "ダッシュボードに戻る",

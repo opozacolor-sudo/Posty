@@ -100,7 +100,9 @@
     "instagramNoBusinessAccount": "Nenhuma conta Instagram Business encontrada. Vincule-a a uma página do Facebook.",
     "instagramNotConfigured": "OAuth do Instagram não está configurado no servidor.",
     "instagramSaveFailed": "Não foi possível salvar a conta do Instagram. Execute a migração do Supabase.",
-    "instagramTokenFailed": "Não foi possível concluir a autorização do Instagram."
+    "instagramTokenFailed": "Não foi possível concluir a autorização do Instagram.",
+    "instagramSavePermission": "Não foi possível salvar a conta do Instagram. Adicione SUPABASE_SERVICE_ROLE_KEY na Vercel e execute o SQL GRANT no Supabase.",
+    "youtubeSavePermission": "Não foi possível salvar a conta do YouTube. Adicione SUPABASE_SERVICE_ROLE_KEY na Vercel e execute o SQL GRANT no Supabase."
   },
   "profile": {
     "backToDashboard": "Voltar ao painel",

@@ -107,7 +107,9 @@
       "fri": "Fri",
       "sat": "Sat",
       "sun": "Sun"
-    }
+    },
+    "instagramSavePermission": "Could not save Instagram account. Add SUPABASE_SERVICE_ROLE_KEY to Vercel and run the GRANT SQL in Supabase.",
+    "youtubeSavePermission": "Could not save YouTube account. Add SUPABASE_SERVICE_ROLE_KEY to Vercel and run the GRANT SQL in Supabase."
   },
   "profile": {
     "backToDashboard": "Back to dashboard",

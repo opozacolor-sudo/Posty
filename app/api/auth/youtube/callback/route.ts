@@ -10,6 +10,7 @@ import {
   redirectToAccountsAfterYouTube,
   resolveOAuthLocale,
 } from "@/lib/youtube-oauth-session";
+import { upsertConnectedAccount } from "@/lib/save-connected-account";
 import { createClient } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
@@ -74,22 +75,26 @@ export async function GET(request: NextRequest) {
       ? new Date(Date.now() + tokens.expiresIn * 1000).toISOString()
       : null;
 
-    const { error: upsertError } = await supabase.from("connected_accounts").upsert(
-      {
-        user_id: user.id,
-        platform: "youtube",
-        account_name: channelName,
-        access_token: tokens.accessToken,
-        refresh_token: tokens.refreshToken,
-        token_expires_at: tokenExpiresAt,
-        is_active: true,
-      },
-      { onConflict: "user_id,platform" },
-    );
+    const saveResult = await upsertConnectedAccount({
+      user_id: user.id,
+      platform: "youtube",
+      account_name: channelName,
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken ?? null,
+      token_expires_at: tokenExpiresAt,
+      is_active: true,
+    });
 
-    if (upsertError) {
+    if (!saveResult.ok) {
+      const errorKey =
+        saveResult.reason === "missing_table"
+          ? "youtube_save_failed"
+          : saveResult.reason === "permission"
+            ? "youtube_save_permission"
+            : "youtube_save_failed";
+
       return redirectToAccountsAfterYouTube(request, locale, {
-        error: "youtube_save_failed",
+        error: errorKey,
       });
     }
 
