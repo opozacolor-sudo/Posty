@@ -128,7 +128,16 @@
     "threadsSavePermission": "Could not save Threads account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
     "threadsSaveUnknown": "Could not save Threads account. Try again.",
     "threadsServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
-    "threadsTokenFailed": "Threads authorization could not be completed."
+    "threadsTokenFailed": "Threads authorization could not be completed.",
+    "tiktokConnected": "TikTok connected successfully!",
+    "tiktokDenied": "TikTok authorization was cancelled.",
+    "tiktokInvalidState": "TikTok authorization failed. Please try again.",
+    "tiktokNotConfigured": "TikTok OAuth is not configured on the server.",
+    "tiktokSaveFailed": "Could not save TikTok account.",
+    "tiktokSavePermission": "Could not save TikTok account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
+    "tiktokSaveUnknown": "Could not save TikTok account. Try again.",
+    "tiktokServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
+    "tiktokTokenFailed": "TikTok authorization could not be completed."
   },
   "profile": {
     "backToDashboard": "Назад к панели",

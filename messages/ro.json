@@ -135,7 +135,16 @@
     "threadsSavePermission": "Contul Threads nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
     "threadsSaveUnknown": "Contul Threads nu a putut fi salvat. Încearcă din nou.",
     "threadsServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
-    "threadsTokenFailed": "Autorizarea Threads nu s-a putut finaliza."
+    "threadsTokenFailed": "Autorizarea Threads nu s-a putut finaliza.",
+    "tiktokConnected": "TikTok conectat cu succes!",
+    "tiktokDenied": "Autorizarea TikTok a fost anulată.",
+    "tiktokInvalidState": "Autorizarea TikTok a eșuat. Încearcă din nou.",
+    "tiktokNotConfigured": "OAuth TikTok nu este configurat pe server.",
+    "tiktokSaveFailed": "Contul TikTok nu a putut fi salvat.",
+    "tiktokSavePermission": "Contul TikTok nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
+    "tiktokSaveUnknown": "Contul TikTok nu a putut fi salvat. Încearcă din nou.",
+    "tiktokServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
+    "tiktokTokenFailed": "Autorizarea TikTok nu s-a putut finaliza."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",
