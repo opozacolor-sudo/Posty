@@ -17,6 +17,8 @@ const ERROR_KEYS: Record<string, string> = {
   instagram_not_configured: "instagramNotConfigured",
   instagram_save_failed: "instagramSaveFailed",
   instagram_save_permission: "instagramSavePermission",
+  instagram_save_unknown: "instagramSaveUnknown",
+  instagram_service_role_missing: "instagramServiceRoleMissing",
   instagram_token_failed: "instagramTokenFailed",
   youtube_denied: "youtubeDenied",
   youtube_invalid_state: "youtubeInvalidState",
@@ -24,6 +26,8 @@ const ERROR_KEYS: Record<string, string> = {
   youtube_not_configured: "youtubeNotConfigured",
   youtube_save_failed: "youtubeSaveFailed",
   youtube_save_permission: "youtubeSavePermission",
+  youtube_save_unknown: "youtubeSaveUnknown",
+  youtube_service_role_missing: "youtubeServiceRoleMissing",
   youtube_token_failed: "youtubeTokenFailed",
 };
 

@@ -109,7 +109,11 @@
       "sun": "Sun"
     },
     "instagramSavePermission": "Could not save Instagram account. Add SUPABASE_SERVICE_ROLE_KEY to Vercel and run the GRANT SQL in Supabase.",
-    "youtubeSavePermission": "Could not save YouTube account. Add SUPABASE_SERVICE_ROLE_KEY to Vercel and run the GRANT SQL in Supabase."
+    "youtubeSavePermission": "Could not save YouTube account. Add SUPABASE_SERVICE_ROLE_KEY to Vercel and run the GRANT SQL in Supabase.",
+    "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
   },
   "profile": {
     "backToDashboard": "Back to dashboard",

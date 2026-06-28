@@ -102,7 +102,11 @@
     "instagramSaveFailed": "无法保存 Instagram 账户。请先运行 Supabase 迁移。",
     "instagramTokenFailed": "无法完成 Instagram 授权。",
     "instagramSavePermission": "无法保存 Instagram 账户。请在 Vercel 添加 SUPABASE_SERVICE_ROLE_KEY，并在 Supabase 运行 GRANT SQL。",
-    "youtubeSavePermission": "无法保存 YouTube 账户。请在 Vercel 添加 SUPABASE_SERVICE_ROLE_KEY，并在 Supabase 运行 GRANT SQL。"
+    "youtubeSavePermission": "无法保存 YouTube 账户。请在 Vercel 添加 SUPABASE_SERVICE_ROLE_KEY，并在 Supabase 运行 GRANT SQL。",
+    "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
   },
   "profile": {
     "backToDashboard": "返回仪表盘",

@@ -11,7 +11,7 @@ import {
   redirectToAccounts,
   resolveOAuthLocale,
 } from "@/lib/instagram-oauth-session";
-import { upsertConnectedAccount } from "@/lib/save-connected-account";
+import { upsertConnectedAccount, mapSaveFailureToOAuthErrorKey } from "@/lib/save-connected-account";
 import { createClient } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
@@ -88,15 +88,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!saveResult.ok) {
-      const errorKey =
-        saveResult.reason === "missing_table"
-          ? "instagram_save_failed"
-          : saveResult.reason === "permission"
-            ? "instagram_save_permission"
-            : "instagram_save_failed";
-
       return redirectToAccounts(request, locale, {
-        error: errorKey,
+        error: mapSaveFailureToOAuthErrorKey(saveResult.reason, "instagram"),
       });
     }
 

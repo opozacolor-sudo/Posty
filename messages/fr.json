@@ -102,7 +102,11 @@
     "instagramSaveFailed": "Impossible d'enregistrer le compte Instagram. Exécutez la migration Supabase.",
     "instagramTokenFailed": "Impossible de finaliser l'autorisation Instagram.",
     "instagramSavePermission": "Impossible d'enregistrer le compte Instagram. Ajoutez SUPABASE_SERVICE_ROLE_KEY sur Vercel et exécutez le SQL GRANT dans Supabase.",
-    "youtubeSavePermission": "Impossible d'enregistrer le compte YouTube. Ajoutez SUPABASE_SERVICE_ROLE_KEY sur Vercel et exécutez le SQL GRANT dans Supabase."
+    "youtubeSavePermission": "Impossible d'enregistrer le compte YouTube. Ajoutez SUPABASE_SERVICE_ROLE_KEY sur Vercel et exécutez le SQL GRANT dans Supabase.",
+    "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
   },
   "profile": {
     "backToDashboard": "Retour au tableau de bord",

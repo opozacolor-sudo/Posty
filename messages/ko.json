@@ -102,7 +102,11 @@
     "instagramSaveFailed": "Instagram 계정을 저장할 수 없습니다. Supabase 마이그레이션을 실행하세요.",
     "instagramTokenFailed": "Instagram 인증을 완료할 수 없습니다.",
     "instagramSavePermission": "Instagram 계정을 저장할 수 없습니다. Vercel에 SUPABASE_SERVICE_ROLE_KEY를 추가하고 Supabase에서 GRANT SQL을 실행하세요.",
-    "youtubeSavePermission": "YouTube 계정을 저장할 수 없습니다. Vercel에 SUPABASE_SERVICE_ROLE_KEY를 추가하고 Supabase에서 GRANT SQL을 실행하세요."
+    "youtubeSavePermission": "YouTube 계정을 저장할 수 없습니다. Vercel에 SUPABASE_SERVICE_ROLE_KEY를 추가하고 Supabase에서 GRANT SQL을 실행하세요.",
+    "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
   },
   "profile": {
     "backToDashboard": "대시보드로 돌아가기",

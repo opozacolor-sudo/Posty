@@ -109,7 +109,11 @@
     "youtubeSaveFailed": "Contul YouTube nu a putut fi salvat. Rulează migrarea Supabase.",
     "youtubeTokenFailed": "Autorizarea YouTube nu s-a putut finaliza.",
     "instagramSavePermission": "Contul Instagram nu a putut fi salvat. Adaugă SUPABASE_SERVICE_ROLE_KEY în Vercel și rulează SQL-ul GRANT în Supabase.",
-    "youtubeSavePermission": "Contul YouTube nu a putut fi salvat. Adaugă SUPABASE_SERVICE_ROLE_KEY în Vercel și rulează SQL-ul GRANT în Supabase."
+    "youtubeSavePermission": "Contul YouTube nu a putut fi salvat. Adaugă SUPABASE_SERVICE_ROLE_KEY în Vercel și rulează SQL-ul GRANT în Supabase.",
+    "instagramSaveUnknown": "Contul Instagram nu a putut fi salvat. Verifică logurile Vercel sau deschide /api/setup/connected-accounts când ești autentificat.",
+    "instagramServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY în variabilele de mediu Vercel, apoi redeploy.",
+    "youtubeSaveUnknown": "Contul YouTube nu a putut fi salvat. Verifică logurile Vercel sau deschide /api/setup/connected-accounts când ești autentificat.",
+    "youtubeServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY în variabilele de mediu Vercel, apoi redeploy."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",

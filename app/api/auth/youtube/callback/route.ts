@@ -10,7 +10,7 @@ import {
   redirectToAccountsAfterYouTube,
   resolveOAuthLocale,
 } from "@/lib/youtube-oauth-session";
-import { upsertConnectedAccount } from "@/lib/save-connected-account";
+import { upsertConnectedAccount, mapSaveFailureToOAuthErrorKey } from "@/lib/save-connected-account";
 import { createClient } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
@@ -86,15 +86,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!saveResult.ok) {
-      const errorKey =
-        saveResult.reason === "missing_table"
-          ? "youtube_save_failed"
-          : saveResult.reason === "permission"
-            ? "youtube_save_permission"
-            : "youtube_save_failed";
-
       return redirectToAccountsAfterYouTube(request, locale, {
-        error: errorKey,
+        error: mapSaveFailureToOAuthErrorKey(saveResult.reason, "youtube"),
       });
     }
 

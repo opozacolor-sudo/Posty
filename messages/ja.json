@@ -102,7 +102,11 @@
     "instagramSaveFailed": "Instagramアカウントを保存できませんでした。Supabaseマイグレーションを実行してください。",
     "instagramTokenFailed": "Instagramの認可を完了できませんでした。",
     "instagramSavePermission": "Instagramアカウントを保存できませんでした。VercelにSUPABASE_SERVICE_ROLE_KEYを追加し、SupabaseでGRANT SQLを実行してください。",
-    "youtubeSavePermission": "YouTubeアカウントを保存できませんでした。VercelにSUPABASE_SERVICE_ROLE_KEYを追加し、SupabaseでGRANT SQLを実行してください。"
+    "youtubeSavePermission": "YouTubeアカウントを保存できませんでした。VercelにSUPABASE_SERVICE_ROLE_KEYを追加し、SupabaseでGRANT SQLを実行してください。",
+    "instagramSaveUnknown": "Could not save Instagram account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "instagramServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy.",
+    "youtubeSaveUnknown": "Could not save YouTube account. Check Vercel logs or open /api/setup/connected-accounts while logged in.",
+    "youtubeServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables, then redeploy."
   },
   "profile": {
     "backToDashboard": "ダッシュボードに戻る",

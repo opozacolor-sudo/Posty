@@ -1,5 +1,5 @@
 import { createAdminClient, isSupabaseAdminConfigured } from "./supabase-admin";
-import { createClient } from "./supabase-server";
+import { assertSupabaseConfigured } from "./supabase-env";
 
 export type ConnectedAccountUpsert = {
   user_id: string;
@@ -11,49 +11,134 @@ export type ConnectedAccountUpsert = {
   is_active: boolean;
 };
 
+export type SaveConnectedAccountFailureReason =
+  | "missing_service_role"
+  | "missing_table"
+  | "permission"
+  | "unknown";
+
+export function mapSaveFailureToOAuthErrorKey(
+  reason: SaveConnectedAccountFailureReason,
+  platform: "youtube" | "instagram",
+): string {
+  if (reason === "missing_service_role") {
+    return `${platform}_service_role_missing`;
+  }
+  if (reason === "permission") {
+    return `${platform}_save_permission`;
+  }
+  if (reason === "missing_table") {
+    return `${platform}_save_failed`;
+  }
+  return `${platform}_save_unknown`;
+}
+
+export function getSupabaseProjectRef(): string | null {
+  const { url } = assertSupabaseConfigured();
+  const match = url.match(/https:\/\/([^.]+)\.supabase\.co/);
+  return match?.[1] ?? null;
+}
+
+export async function checkConnectedAccountsTable(): Promise<{
+  ready: boolean;
+  serviceRoleConfigured: boolean;
+  projectRef: string | null;
+  errorCode?: string;
+  errorMessage?: string;
+}> {
+  const projectRef = getSupabaseProjectRef();
+  const serviceRoleConfigured = isSupabaseAdminConfigured();
+
+  if (!serviceRoleConfigured) {
+    return {
+      ready: false,
+      serviceRoleConfigured: false,
+      projectRef,
+      errorCode: "missing_service_role",
+      errorMessage: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server.",
+    };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("connected_accounts").select("id").limit(1);
+
+  if (!error) {
+    return { ready: true, serviceRoleConfigured: true, projectRef };
+  }
+
+  return {
+    ready: false,
+    serviceRoleConfigured: true,
+    projectRef,
+    errorCode: error.code,
+    errorMessage: error.message,
+  };
+}
+
 export async function upsertConnectedAccount(
   data: ConnectedAccountUpsert,
-): Promise<{ ok: true } | { ok: false; reason: "missing_table" | "permission" | "unknown" }> {
-  const payload = { ...data };
+): Promise<{ ok: true } | { ok: false; reason: SaveConnectedAccountFailureReason }> {
+  if (!isSupabaseAdminConfigured()) {
+    console.error(
+      "[posty/connected-accounts] SUPABASE_SERVICE_ROLE_KEY missing on server",
+    );
+    return { ok: false, reason: "missing_service_role" };
+  }
 
-  const runUpsert = async (
-    client: ReturnType<typeof createAdminClient> | Awaited<ReturnType<typeof createClient>>,
-  ) =>
-    client.from("connected_accounts").upsert(payload, {
-      onConflict: "user_id,platform",
-    });
+  const admin = createAdminClient();
+  const { user_id, platform, ...fields } = data;
 
-  if (isSupabaseAdminConfigured()) {
-    const { error } = await runUpsert(createAdminClient());
+  const { data: existing, error: selectError } = await admin
+    .from("connected_accounts")
+    .select("id")
+    .eq("user_id", user_id)
+    .eq("platform", platform)
+    .maybeSingle();
 
-    if (!error) {
+  if (selectError) {
+    console.error("[posty/connected-accounts] Select failed:", selectError);
+    return { ok: false, reason: classifyUpsertError(selectError) };
+  }
+
+  const row = { user_id, platform, ...fields };
+
+  if (existing?.id) {
+    const { error: updateError } = await admin
+      .from("connected_accounts")
+      .update(row)
+      .eq("id", existing.id);
+
+    if (!updateError) {
       return { ok: true };
     }
 
-    console.error("[posty/connected-accounts] Admin upsert failed:", error);
-    return classifyUpsertError(error);
+    console.error("[posty/connected-accounts] Update failed:", updateError);
+    return { ok: false, reason: classifyUpsertError(updateError) };
   }
 
-  const supabase = await createClient();
-  const { error } = await runUpsert(supabase);
+  const { error: insertError } = await admin.from("connected_accounts").insert(row);
 
-  if (!error) {
+  if (!insertError) {
     return { ok: true };
   }
 
-  console.error("[posty/connected-accounts] Upsert failed:", error);
-  return classifyUpsertError(error);
+  console.error("[posty/connected-accounts] Insert failed:", insertError);
+  return { ok: false, reason: classifyUpsertError(insertError) };
 }
 
-function classifyUpsertError(error: { code?: string; message?: string }): {
-  ok: false;
-  reason: "missing_table" | "permission" | "unknown";
-} {
+function classifyUpsertError(error: { code?: string; message?: string }): SaveConnectedAccountFailureReason {
   const code = error.code ?? "";
   const message = error.message?.toLowerCase() ?? "";
 
-  if (code === "42P01" || message.includes("does not exist")) {
-    return { ok: false, reason: "missing_table" };
+  if (
+    code === "42P01" ||
+    code === "PGRST205" ||
+    code === "PGRST204" ||
+    message.includes("does not exist") ||
+    message.includes("could not find the table") ||
+    message.includes("schema cache")
+  ) {
+    return "missing_table";
   }
 
   if (
@@ -61,8 +146,8 @@ function classifyUpsertError(error: { code?: string; message?: string }): {
     message.includes("permission denied") ||
     message.includes("row-level security")
   ) {
-    return { ok: false, reason: "permission" };
+    return "permission";
   }
 
-  return { ok: false, reason: "unknown" };
+  return "unknown";
 }
