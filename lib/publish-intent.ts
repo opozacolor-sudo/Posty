@@ -15,7 +15,7 @@ type ChatMessage = {
 };
 
 const PUBLISH_KEYWORDS =
-  /\b(post(eaz|ez)?\s+acum|post\s+now|publish\s+now|public[aă]\s+acum|trimite\s+acum|posteaz[aă]\s+pe\s+toate|pe\s+toate\s+(re[tț]elele|platformele)|toate\s+(re[tț]elele|platformele|conturile)|all\s+(connected|networks|platforms)|post\s+to\s+all)\b/i;
+  /\b(post(eaz|ez)?\s+acum|post(eaz|ez)?\s+poza|posteaz[aă]\s+poza|poza anterioar[aă]|post\s+now|publish\s+now|public[aă]\s+acum|trimite\s+acum|posteaz[aă]\s+pe\s+toate|pe\s+toate\s+(re[tț]elele|platformele|conturile)|toate\s+(re[tț]elele|platformele|conturile)|all\s+(connected|networks|platforms)|post\s+to\s+all)\b/i;
 
 function isSocialPlatform(value: string): value is SocialPlatform {
   return PLATFORMS.includes(value as SocialPlatform);
@@ -37,7 +37,9 @@ function conversationHasPendingPublish(messages: ChatMessage[]): boolean {
   if (
     messages.some(
       (message) =>
-        message.role === "user" && userWantsPublishNow(message.content),
+        message.role === "user" &&
+        (userWantsPublishNow(message.content) ||
+          /\bpost(eaz|ez)?\s+poza\b/i.test(message.content)),
     )
   ) {
     return true;
@@ -46,9 +48,9 @@ function conversationHasPendingPublish(messages: ChatMessage[]): boolean {
   return [...messages]
     .reverse()
     .filter((message) => message.role === "assistant")
-    .slice(0, 2)
+    .slice(0, 3)
     .some((message) =>
-      /post(eaz|ez)?\s+acum|publish now|public[aă]\s+acum|spune ['"]da['"]\s*(ca\s*)?(sa\s*)?post/i.test(
+      /post(eaz|ez)?\s+acum|publish now|public[aă]\s+acum|pe ce platform|toate conturile|platforme.*(post|disponibile)/i.test(
         message.content,
       ),
     );
@@ -59,6 +61,17 @@ export function shouldAttemptPublish(
   messages: ChatMessage[],
 ): boolean {
   if (userWantsPublishNow(lastUserMessage)) {
+    return true;
+  }
+
+  if (/\bpost(eaz|ez)?\s+poza\b/i.test(lastUserMessage)) {
+    return true;
+  }
+
+  if (
+    /\bpe toate conturile\b/i.test(lastUserMessage) &&
+    conversationHasPendingPublish(messages)
+  ) {
     return true;
   }
 

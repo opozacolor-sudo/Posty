@@ -24,6 +24,10 @@ import {
   shouldAttemptPublish,
 } from "@/lib/publish-intent";
 import {
+  extractCaption,
+  findLatestMediaUrl,
+} from "@/lib/schedule-intent";
+import {
   formatPublishResultsSummary,
   publishToConnectedPlatforms,
   type PublishPlatformResult,
@@ -180,9 +184,16 @@ export async function POST(request: Request) {
           }
         } else {
           publishFailed = true;
+          const hasCaption = Boolean(extractCaption(history));
+          const hasMedia = Boolean(findLatestMediaUrl(history));
           mediaContext = [
-            "IMPORTANT: Could not publish — need a caption from the conversation.",
-            "Instagram also needs an uploaded image in the chat.",
+            "IMPORTANT: Could not publish — missing details from the conversation.",
+            hasCaption
+              ? "Caption was found."
+              : "Caption is missing — include text or ask Claude to draft one.",
+            hasMedia
+              ? "Image URL was found."
+              : "Image is missing — attach the photo with 📎 in chat (required for Instagram).",
             "Do NOT claim anything was published.",
           ].join("\n");
         }

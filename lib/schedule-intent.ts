@@ -162,6 +162,20 @@ function detectPlatform(
 }
 
 export function extractCaption(messages: ChatMessage[]): string | null {
+  for (const message of messages) {
+    if (message.role !== "user") {
+      continue;
+    }
+
+    const inlineCaption = message.content.match(
+      /\b(?:cu textul|with (?:the )?(?:text|caption)|captionul)[:\s]+([\s\S]+)$/i,
+    );
+
+    if (inlineCaption?.[1]?.trim()) {
+      return inlineCaption[1].trim();
+    }
+  }
+
   const userText = messages
     .filter((message) => message.role === "user")
     .map((message) => message.content)
@@ -178,6 +192,13 @@ export function extractCaption(messages: ChatMessage[]): string | null {
   for (const message of [...messages].reverse()) {
     if (message.role !== "assistant") {
       continue;
+    }
+
+    const blockquoteCaption = message.content.match(
+      /^>\s*\*?(.+?)\*?\s*$/m,
+    );
+    if (blockquoteCaption?.[1]?.trim()) {
+      return blockquoteCaption[1].trim();
     }
 
     const labeledCaption =
