@@ -1,7 +1,12 @@
 import { createHiggsfieldClient, type V2Response } from "@higgsfield/client/v2";
-import { getHiggsfieldCredentials, isHiggsfieldConfigured } from "./higgsfield-env";
+import { generateHiggsfieldImageViaCli } from "./higgsfield-cli";
+import { getHiggsfieldClientConfig } from "./higgsfield-intent";
+import {
+  isHiggsfieldCliEnabled,
+  isHiggsfieldSdkConfigured,
+} from "./higgsfield-env";
 
-/** CLI default: gpt_image_2 → flux kontext for server SDK */
+/** Platform API default for social images (matches Higgsfield docs). */
 const DEFAULT_IMAGE_ENDPOINT = "flux-pro/kontext/max/text-to-image";
 
 export type GenerateImageOptions = {
@@ -16,15 +21,17 @@ export type GenerateImageResult = {
 };
 
 function getClient() {
-  const credentials = getHiggsfieldCredentials();
-  if (!credentials) {
+  const creds = getHiggsfieldClientConfig();
+  if (!creds) {
     throw new Error("HIGGSFIELD_NOT_CONFIGURED");
   }
 
   return createHiggsfieldClient({
-    credentials,
-    maxPollTime: 120_000,
-    pollInterval: 3000,
+    apiKey: creds.apiKey,
+    apiSecret: creds.apiSecret,
+    maxPollTime: 110_000,
+    pollInterval: 2500,
+    timeout: 30_000,
   });
 }
 
@@ -47,10 +54,10 @@ export function extractMediaUrl(response: V2Response): GenerateImageResult | nul
   return { url, requestId: response.request_id };
 }
 
-export async function generateHiggsfieldImage(
+async function generateHiggsfieldImageViaSdk(
   options: GenerateImageOptions,
 ): Promise<GenerateImageResult> {
-  if (!isHiggsfieldConfigured()) {
+  if (!isHiggsfieldSdkConfigured()) {
     throw new Error("HIGGSFIELD_NOT_CONFIGURED");
   }
 
@@ -62,7 +69,7 @@ export async function generateHiggsfieldImage(
     input: {
       prompt: options.prompt,
       aspect_ratio: options.aspectRatio ?? "1:1",
-      safety_tolerance: 2,
+      safety_tolerance: 6,
     },
     withPolling: true,
   });
@@ -75,20 +82,24 @@ export async function generateHiggsfieldImage(
   return result;
 }
 
-export function userWantsImageGeneration(message: string): boolean {
-  const lower = message.toLowerCase();
-  return (
-    /\b(genereaz[aă]|creeaz[aă]|f[aă])\b.*\b(imagine|poz[aă]|photo|image|grafic)\b/i.test(
-      message,
-    ) ||
-    /\b(make|create|generate)\b.*\b(image|photo|picture)\b/i.test(lower) ||
-    /\b(imagine|poz[aă])\b.*\b(pentru|for|on)\b/i.test(lower)
-  );
+export async function generateHiggsfieldImage(
+  options: GenerateImageOptions,
+): Promise<GenerateImageResult> {
+  if (isHiggsfieldSdkConfigured()) {
+    return generateHiggsfieldImageViaSdk(options);
+  }
+
+  if (isHiggsfieldCliEnabled()) {
+    return generateHiggsfieldImageViaCli(options);
+  }
+
+  throw new Error("HIGGSFIELD_NOT_CONFIGURED");
 }
 
-export function userWantsVideoGeneration(message: string): boolean {
-  return (
-    /\b(genereaz[aă]|creeaz[aă]|f[aă])\b.*\b(video|clip|reel)\b/i.test(message) ||
-    /\b(make|create|generate)\b.*\b(video|clip|reel)\b/i.test(message.toLowerCase())
-  );
-}
+export {
+  buildImagePromptFromMessage,
+  formatHiggsfieldError,
+  resolveImageGenerationIntent,
+  userWantsImageGeneration,
+  userWantsVideoGeneration,
+} from "./higgsfield-intent";

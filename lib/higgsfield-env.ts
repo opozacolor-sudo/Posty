@@ -1,32 +1,96 @@
+import { getHiggsfieldClientConfig } from "./higgsfield-intent";
+
 export type HiggsfieldEnvDebug = {
   configured: boolean;
   missing: string[];
-  credentialSource: "hf_credentials" | "hf_key_secret" | "none";
+  credentialSource: "hf_credentials" | "hf_key_secret" | "cli" | "none";
+  cliEnabled?: boolean;
+  cliAvailable?: boolean;
 };
 
 export function getHiggsfieldCredentials(): string | null {
-  const combined = process.env.HF_CREDENTIALS?.trim();
-  if (combined && combined.includes(":")) {
-    return combined;
+  const creds = getHiggsfieldClientConfig();
+  if (!creds) {
+    return null;
   }
 
-  const apiKey = process.env.HF_API_KEY?.trim();
-  const apiSecret = process.env.HF_API_SECRET?.trim();
-  if (apiKey && apiSecret) {
-    return `${apiKey}:${apiSecret}`;
+  return `${creds.apiKey}:${creds.apiSecret}`;
+}
+
+export function isHiggsfieldCliEnabled(): boolean {
+  if (process.env.HIGGSFIELD_USE_CLI === "false") {
+    return false;
   }
 
-  // CLI-style single key (if user already set this from higgsfield auth docs)
-  const cliKey = process.env.HIGGSFIELD_API_KEY?.trim();
-  if (cliKey && cliKey.includes(":")) {
-    return cliKey;
+  if (process.env.HIGGSFIELD_USE_CLI === "true") {
+    return true;
   }
 
-  return null;
+  return !process.env.VERCEL;
+}
+
+export function isHiggsfieldSdkConfigured(): boolean {
+  return getHiggsfieldCredentials() !== null;
 }
 
 export function isHiggsfieldConfigured(): boolean {
-  return getHiggsfieldCredentials() !== null;
+  if (isHiggsfieldSdkConfigured()) {
+    return true;
+  }
+
+  return isHiggsfieldCliEnabled();
+}
+
+/** Image generation in chat/API — SDK on Vercel, SDK or CLI locally. */
+export function isHiggsfieldGenerationAvailable(): boolean {
+  if (isHiggsfieldSdkConfigured()) {
+    return true;
+  }
+
+  if (process.env.VERCEL) {
+    return false;
+  }
+
+  return isHiggsfieldCliEnabled();
+}
+
+export function isVercelDeployment(): boolean {
+  return Boolean(process.env.VERCEL);
+}
+
+export async function getHiggsfieldEnvDebugAsync(): Promise<HiggsfieldEnvDebug> {
+  const sdkConfigured = isHiggsfieldSdkConfigured();
+  const cliEnabled = isHiggsfieldCliEnabled();
+  const { isHiggsfieldCliAvailable } = await import("./higgsfield-cli");
+  const cliAvailable = cliEnabled ? await isHiggsfieldCliAvailable() : false;
+
+  if (sdkConfigured) {
+    return getHiggsfieldEnvDebug();
+  }
+
+  if (cliEnabled && cliAvailable) {
+    return {
+      configured: true,
+      missing: [],
+      credentialSource: "cli",
+      cliEnabled: true,
+      cliAvailable: true,
+    };
+  }
+
+  const debug = getHiggsfieldEnvDebug();
+  return {
+    ...debug,
+    cliEnabled,
+    cliAvailable,
+    configured: debug.configured || (cliEnabled && cliAvailable),
+    credentialSource:
+      cliEnabled && cliAvailable ? "cli" : debug.credentialSource,
+    missing:
+      cliEnabled && !cliAvailable
+        ? [...debug.missing, "higgsfield CLI (run: higgsfield auth login)"]
+        : debug.missing,
+  };
 }
 
 export function getHiggsfieldEnvDebug(): HiggsfieldEnvDebug {
@@ -58,6 +122,18 @@ export function getHiggsfieldEnvDebug(): HiggsfieldEnvDebug {
     };
   }
 
-  missing.push("HF_CREDENTIALS or HF_API_KEY+HF_API_SECRET");
-  return { configured: false, missing, credentialSource: "none" };
+  if (isHiggsfieldCliEnabled()) {
+    missing.push("higgsfield CLI (local: higgsfield auth login)");
+  } else if (process.env.VERCEL) {
+    missing.push("HF_CREDENTIALS (from https://cloud.higgsfield.ai/api-keys)");
+  } else {
+    missing.push("HF_CREDENTIALS or HF_API_KEY+HF_API_SECRET");
+  }
+
+  return {
+    configured: false,
+    missing,
+    credentialSource: "none",
+    cliEnabled: isHiggsfieldCliEnabled(),
+  };
 }

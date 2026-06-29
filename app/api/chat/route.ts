@@ -13,11 +13,12 @@ import {
 } from "@/lib/chat-context";
 import { fetchUserConnectedAccounts } from "@/lib/connected-accounts";
 import {
+  formatHiggsfieldError,
   generateHiggsfieldImage,
-  userWantsImageGeneration,
+  resolveImageGenerationIntent,
   userWantsVideoGeneration,
 } from "@/lib/higgsfield-generate";
-import { isHiggsfieldConfigured } from "@/lib/higgsfield-env";
+import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
 import { createClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -124,15 +125,13 @@ export async function POST(request: Request) {
     let mediaContext: string | undefined;
     let generatedImageUrl: string | undefined;
 
-    if (isHiggsfieldConfigured() && userWantsImageGeneration(lastUserMessage)) {
+    const imageIntent = resolveImageGenerationIntent(history, lastUserMessage);
+
+    if (isHiggsfieldGenerationAvailable() && imageIntent.shouldGenerate) {
       try {
-        const aspectRatio =
-          /instagram|povest|story|stories|9:16|vertical/i.test(lastUserMessage)
-            ? "9:16"
-            : "1:1";
         const image = await generateHiggsfieldImage({
-          prompt: lastUserMessage,
-          aspectRatio,
+          prompt: imageIntent.prompt,
+          aspectRatio: imageIntent.aspectRatio,
         });
         generatedImageUrl = image.url;
         mediaContext = [
@@ -142,7 +141,7 @@ export async function POST(request: Request) {
           "Also suggest a caption/hashtags for their target platform.",
         ].join("\n");
       } catch (error) {
-        const detail = error instanceof Error ? error.message : String(error);
+        const detail = formatHiggsfieldError(error);
         console.error("[posty/chat] Higgsfield image failed:", detail);
         mediaContext = `Image generation was requested but failed (${detail}). Apologize briefly and offer to retry with a clearer prompt.`;
       }
@@ -156,7 +155,7 @@ export async function POST(request: Request) {
       userName,
       brandContext,
       connectedAccounts,
-      higgsfieldConfigured: isHiggsfieldConfigured(),
+      higgsfieldConfigured: isHiggsfieldGenerationAvailable(),
       mediaContext,
     });
 

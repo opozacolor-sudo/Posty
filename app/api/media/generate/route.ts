@@ -5,8 +5,8 @@ import {
   userWantsVideoGeneration,
 } from "@/lib/higgsfield-generate";
 import {
-  getHiggsfieldEnvDebug,
-  isHiggsfieldConfigured,
+  getHiggsfieldEnvDebugAsync,
+  isHiggsfieldGenerationAvailable,
 } from "@/lib/higgsfield-env";
 import { createClient } from "@/lib/supabase-server";
 
@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  if (!isHiggsfieldConfigured()) {
+  if (!isHiggsfieldGenerationAvailable()) {
     return NextResponse.json(
-      { error: "higgsfield_not_configured", debug: getHiggsfieldEnvDebug() },
+      { error: "higgsfield_not_configured", debug: await getHiggsfieldEnvDebugAsync() },
       { status: 503 },
     );
   }
@@ -94,5 +94,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ wantsImage: false, wantsVideo: true });
   }
 
-  return NextResponse.json(getHiggsfieldEnvDebug());
+  return NextResponse.json(await getHiggsfieldEnvDebugAsync());
 }
