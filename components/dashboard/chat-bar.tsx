@@ -30,38 +30,29 @@ export function ChatBar() {
   const [chatModeNotice, setChatModeNotice] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
+  const messagesRef = useRef(messages);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  const getLocalReply = useCallback(
-    (userMessage: string): string => {
-      const lower = userMessage.toLowerCase();
-
-      if (lower.includes("instagram") || lower.includes("post")) {
-        return t("chatReplyPost");
-      }
-      if (lower.includes("schedule") || lower.includes("program")) {
-        return t("chatReplySchedule");
-      }
-      if (lower.includes("stat") || lower.includes("analiz")) {
-        return t("chatReplyStats");
-      }
-
-      return t("chatReplyDefault");
-    },
-    [t],
-  );
-
   const fetchReply = useCallback(
     async (
       history: Array<{ role: "user" | "assistant"; content: string }>,
     ): Promise<string> => {
+      if (history.length === 0) {
+        return t("chatError");
+      }
+
       try {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
           body: JSON.stringify({ messages: history, locale }),
         });
 
@@ -78,21 +69,20 @@ export function ChatBar() {
           setChatModeNotice(null);
         }
 
-        if (data.reply) {
+        if (response.ok && data.reply) {
           return data.reply;
         }
 
-        if (data.error) {
-          return data.error;
+        if (data.source === "mock" && data.reply) {
+          return data.reply;
         }
       } catch {
-        // Fall back to local replies when the API is unavailable.
+        // Network failure — show translated error below.
       }
 
-      const lastUser = [...history].reverse().find((m) => m.role === "user");
-      return getLocalReply(lastUser?.content ?? "");
+      return t("chatError");
     },
-    [getLocalReply, locale, t],
+    [locale, t],
   );
 
   const sendMessage = useCallback(
@@ -111,18 +101,15 @@ export function ChatBar() {
         content: trimmed,
       };
 
-      let history: Array<{ role: "user" | "assistant"; content: string }> = [];
+      const nextMessages = [...messagesRef.current, userMessage];
+      const history = nextMessages
+        .filter((message) => message.id !== "welcome")
+        .map((message) => ({
+          role: message.role,
+          content: message.content,
+        }));
 
-      setMessages((prev) => {
-        const next = [...prev, userMessage];
-        history = next
-          .filter((message) => message.id !== "welcome")
-          .map((message) => ({
-            role: message.role,
-            content: message.content,
-          }));
-        return next;
-      });
+      setMessages(nextMessages);
 
       const reply = await fetchReply(history);
 

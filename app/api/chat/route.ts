@@ -23,6 +23,8 @@ type ChatRequestBody = {
   locale?: string;
 };
 
+const DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-20250514";
+
 function resolveLocale(value: string | undefined): Locale {
   if (value && routing.locales.includes(value as Locale)) {
     return value as Locale;
@@ -55,16 +57,30 @@ function isAnthropicConfigured(): boolean {
   return Boolean(apiKey && !apiKey.includes("your_anthropic"));
 }
 
+function normalizeHistory(messages: ChatMessage[]): ChatMessage[] {
+  return trimChatHistory(
+    messages.filter(
+      (message) =>
+        (message.role === "user" || message.role === "assistant") &&
+        message.content.trim(),
+    ),
+  );
+}
+
 export async function POST(request: Request) {
   const t = await getTranslations("dashboard");
 
   try {
     const body = (await request.json()) as ChatRequestBody;
-    const messages = body.messages ?? [];
     const locale = resolveLocale(body.locale);
+    const history = normalizeHistory(body.messages ?? []);
 
-    if (messages.length === 0) {
-      return NextResponse.json({ error: "No messages provided" }, { status: 400 });
+    if (history.length === 0) {
+      console.warn("[posty/chat] Rejected request with empty message history");
+      return NextResponse.json(
+        { error: t("chatError"), source: "error" },
+        { status: 400 },
+      );
     }
 
     const supabase = await createClient();
@@ -73,11 +89,14 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: t("chatError"), source: "error" },
+        { status: 401 },
+      );
     }
 
     const lastUserMessage =
-      [...messages].reverse().find((message) => message.role === "user")
+      [...history].reverse().find((message) => message.role === "user")
         ?.content ?? "";
 
     if (!isAnthropicConfigured()) {
@@ -107,17 +126,16 @@ export async function POST(request: Request) {
       apiKey: process.env.ANTHROPIC_API_KEY!.trim(),
     });
 
-    const history = trimChatHistory(
-      messages.filter((message) => message.content.trim()),
-    );
+    const model =
+      process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_CLAUDE_MODEL;
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model,
       max_tokens: 1024,
       system,
       messages: history.map((message) => ({
         role: message.role,
-        content: message.content,
+        content: message.content.trim(),
       })),
     });
 
@@ -132,7 +150,8 @@ export async function POST(request: Request) {
       configured: true,
     });
   } catch (error) {
-    console.error("[posty/chat] Claude request failed:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[posty/chat] Claude request failed:", message);
 
     return NextResponse.json(
       {
