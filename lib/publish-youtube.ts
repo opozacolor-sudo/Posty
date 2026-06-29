@@ -5,6 +5,136 @@ type YouTubeApiError = {
   id?: string;
 };
 
+type YouTubeVideoResource = {
+  id?: string;
+  snippet?: {
+    title?: string;
+  };
+  status?: {
+    privacyStatus?: string;
+    uploadStatus?: string;
+    failureReason?: string;
+  };
+  processingDetails?: {
+    processingStatus?: string;
+    processingFailureReason?: string;
+  };
+};
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseYouTubeUploadResponse(
+  response: Response,
+  bodyText: string,
+): { ok: true; videoId: string } | { ok: false; error: string } {
+  if (!response.ok) {
+    try {
+      const error = JSON.parse(bodyText) as YouTubeApiError;
+      return {
+        ok: false,
+        error: error.error?.message ?? `YouTube video upload failed (${response.status})`,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: bodyText.trim() || `YouTube video upload failed (${response.status})`,
+      };
+    }
+  }
+
+  if (!bodyText.trim()) {
+    return { ok: false, error: "YouTube upload returned empty response" };
+  }
+
+  try {
+    const uploaded = JSON.parse(bodyText) as YouTubeVideoResource;
+    if (!uploaded.id) {
+      return { ok: false, error: "YouTube upload completed without video id" };
+    }
+
+    return { ok: true, videoId: uploaded.id };
+  } catch {
+    return { ok: false, error: "YouTube upload returned invalid JSON" };
+  }
+}
+
+async function verifyYouTubeVideo(
+  accessToken: string,
+  videoId: string,
+): Promise<{ ok: true; detail: string } | { ok: false; error: string }> {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const response = await fetch(
+      "https://www.googleapis.com/youtube/v3/videos?" +
+        new URLSearchParams({
+          part: "status,processingDetails,snippet",
+          id: videoId,
+        }),
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+
+    const data = (await response.json()) as {
+      items?: YouTubeVideoResource[];
+      error?: { message?: string };
+    };
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: data.error?.message ?? "Could not verify YouTube upload",
+      };
+    }
+
+    const video = data.items?.[0];
+    if (!video) {
+      if (attempt < 3) {
+        await sleep(2000);
+        continue;
+      }
+
+      return {
+        ok: false,
+        error:
+          "Upload reported success but video not found on connected channel — check YouTube Studio > Content",
+      };
+    }
+
+    const failureReason =
+      video.processingDetails?.processingFailureReason ??
+      video.status?.failureReason;
+
+    if (failureReason) {
+      return { ok: false, error: `YouTube processing failed (${failureReason})` };
+    }
+
+    const watchUrl = `https://youtu.be/${videoId}`;
+    const processingStatus = video.processingDetails?.processingStatus;
+    const privacyStatus = video.status?.privacyStatus;
+    const title = video.snippet?.title?.trim();
+
+    const notes: string[] = [watchUrl];
+
+    if (title) {
+      notes.push(`titlu: ${title}`);
+    }
+
+    if (processingStatus === "processing") {
+      notes.push("YouTube încă procesează — apare în Studio în 1-10 minute");
+    } else if (privacyStatus === "private") {
+      notes.push("vizibilitate: privat");
+    } else if (privacyStatus === "unlisted") {
+      notes.push("vizibilitate: nelistat");
+    }
+
+    return { ok: true, detail: notes.join(" · ") };
+  }
+
+  return { ok: false, error: "Could not verify YouTube upload" };
+}
+
 function splitCaption(caption: string): { title: string; description: string } {
   const trimmed = caption.trim();
   const firstLine = trimmed.split("\n")[0]?.trim() || "Posty video";
@@ -72,16 +202,40 @@ async function uploadVideoToYouTube(
     body: new Uint8Array(videoBytes),
   });
 
-  const uploaded = (await uploadResponse.json()) as YouTubeApiError;
+  const bodyText = await uploadResponse.text();
+  return parseYouTubeUploadResponse(uploadResponse, bodyText);
+}
 
-  if (!uploadResponse.ok || !uploaded.id) {
-    return {
-      ok: false,
-      error: uploaded.error?.message ?? "YouTube video upload failed",
-    };
+async function uploadAndVerifyYouTubeVideo(
+  accessToken: string,
+  videoBytes: Buffer,
+  contentType: string,
+  caption: string,
+): Promise<
+  | { ok: true; videoId: string; detail: string }
+  | { ok: false; error: string }
+> {
+  const uploaded = await uploadVideoToYouTube(
+    accessToken,
+    videoBytes,
+    contentType,
+    caption,
+  );
+
+  if (!uploaded.ok) {
+    return uploaded;
   }
 
-  return { ok: true, videoId: uploaded.id };
+  const verified = await verifyYouTubeVideo(accessToken, uploaded.videoId);
+  if (!verified.ok) {
+    return verified;
+  }
+
+  return {
+    ok: true,
+    videoId: uploaded.videoId,
+    detail: verified.detail,
+  };
 }
 
 export async function publishYouTubeVideo(options: {
@@ -90,10 +244,13 @@ export async function publishYouTubeVideo(options: {
   caption: string;
   videoBytes: Buffer;
   contentType: string;
-}): Promise<{ ok: true; postId: string } | { ok: false; error: string }> {
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
   try {
     let accessToken = options.accessToken;
-    let result = await uploadVideoToYouTube(
+    let result = await uploadAndVerifyYouTubeVideo(
       accessToken,
       options.videoBytes,
       options.contentType,
@@ -108,7 +265,7 @@ export async function publishYouTubeVideo(options: {
     if (shouldRefresh && options.refreshToken) {
       const refreshed = await refreshGoogleAccessToken(options.refreshToken);
       accessToken = refreshed.accessToken;
-      result = await uploadVideoToYouTube(
+      result = await uploadAndVerifyYouTubeVideo(
         accessToken,
         options.videoBytes,
         options.contentType,
@@ -117,7 +274,7 @@ export async function publishYouTubeVideo(options: {
     }
 
     return result.ok
-      ? { ok: true, postId: result.videoId }
+      ? { ok: true, postId: result.videoId, detail: result.detail }
       : { ok: false, error: result.error };
   } catch (error) {
     return {

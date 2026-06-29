@@ -24,6 +24,7 @@ export type PublishPlatformResult = {
   platform: SocialPlatform;
   success: boolean;
   postId?: string;
+  detail?: string;
   error?: string;
   skipped?: boolean;
 };
@@ -99,7 +100,12 @@ async function publishToPlatform(
       });
 
       return result.ok
-        ? { platform, success: true, postId: result.postId }
+        ? {
+            platform,
+            success: true,
+            postId: result.postId,
+            detail: result.detail,
+          }
         : { platform, success: false, error: result.error };
     }
   }
@@ -290,9 +296,10 @@ export function formatPublishResultsSummary(
   const lines = results.map((result) => {
     const label = result.platform;
     if (result.success) {
+      const extra = result.detail ? ` → ${result.detail}` : result.postId ? ` (id: ${result.postId})` : "";
       return locale === "ro"
-        ? `- ${label}: publicat cu succes`
-        : `- ${label}: published successfully`;
+        ? `- ${label}: publicat cu succes${extra}`
+        : `- ${label}: published successfully${extra}`;
     }
 
     if (result.skipped) {
