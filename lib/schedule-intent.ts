@@ -195,7 +195,7 @@ export function extractCaption(messages: ChatMessage[]): string | null {
     }
 
     const blockquoteCaption = message.content.match(
-      /^>\s*\*?(.+?)\*?\s*$/m,
+      /^>\s*\*?[„""']?(.+?)[""'”]?\*?\s*$/m,
     );
     if (blockquoteCaption?.[1]?.trim()) {
       return blockquoteCaption[1].trim();

@@ -32,6 +32,8 @@ import {
   publishToConnectedPlatforms,
   type PublishPlatformResult,
 } from "@/lib/publish";
+import { getAppBaseUrl } from "@/lib/app-url";
+import { resolvePublishMediaUrl } from "@/lib/publish-media-url";
 import {
   extractScheduleFromConversation,
   formatScheduleConfirmation,
@@ -153,6 +155,7 @@ export async function POST(request: Request) {
     let scheduleSaveFailed = false;
     let publishResults: PublishPlatformResult[] | undefined;
     let publishFailed = false;
+    let publishSummary: string | undefined;
 
     if (shouldAttemptPublish(lastUserMessage, history)) {
       try {
@@ -162,24 +165,46 @@ export async function POST(request: Request) {
         });
 
         if (publishInput) {
-          publishResults = await publishToConnectedPlatforms(user.id, publishInput);
-          const summary = formatPublishResultsSummary(publishResults, locale);
+          const appBaseUrl = getAppBaseUrl(request);
+          const publishMediaUrl = await resolvePublishMediaUrl(
+            publishInput.mediaUrl,
+            appBaseUrl,
+          );
+
+          publishResults = await publishToConnectedPlatforms(user.id, publishInput, {
+            sessionClient: supabase,
+            mediaUrl: publishMediaUrl,
+          });
+          publishSummary = formatPublishResultsSummary(publishResults, locale);
           const anySuccess = publishResults.some((result) => result.success);
 
           if (anySuccess) {
             mediaContext = [
               "IMPORTANT: Publishing COMPLETED. Per-platform results:",
-              summary,
+              publishSummary,
               "Tell the user which platforms succeeded, failed, or were skipped.",
               "Do NOT claim success for platforms that failed or were skipped.",
+              "Do NOT say you are waiting for confirmation — publishing already finished.",
+            ].join("\n");
+          } else if (publishResults.length === 0) {
+            publishFailed = true;
+            publishSummary =
+              locale === "ro"
+                ? "Publicare eșuată: nu am putut încărca token-urile conturilor (verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel)."
+                : "Publishing failed: could not load connected account tokens (check SUPABASE_SERVICE_ROLE_KEY on Vercel).";
+            mediaContext = [
+              "IMPORTANT: Publishing FAILED before any platform was attempted.",
+              publishSummary,
+              "Do NOT claim anything was published.",
             ].join("\n");
           } else {
             publishFailed = true;
             mediaContext = [
               "IMPORTANT: Publishing FAILED on all attempted platforms.",
-              summary,
+              publishSummary,
               "Explain the errors and suggest fixes (e.g. attach a photo for Instagram).",
               "Do NOT claim any platform published successfully.",
+              "Do NOT say you are waiting for confirmation — publishing already finished.",
             ].join("\n");
           }
         } else {
@@ -328,10 +353,15 @@ export async function POST(request: Request) {
       mediaContext,
     });
 
-    const { text: reply, model } = await createClaudeReply({
+    const { text: claudeReply, model } = await createClaudeReply({
       system,
       messages: history,
     });
+
+    let reply = claudeReply;
+    if (publishSummary) {
+      reply = `${reply.trim()}\n\n---\n${publishSummary}`;
+    }
 
     return NextResponse.json({
       reply,
@@ -343,6 +373,7 @@ export async function POST(request: Request) {
       scheduleSaveFailed,
       publishResults,
       publishFailed,
+      publishSummary,
       imageGenerationFailed:
         imageIntent.shouldGenerate && !generatedImageUrl && Boolean(mediaContext?.includes("failed")),
     });

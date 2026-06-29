@@ -111,8 +111,14 @@ export function ChatBar({
           generatedImageUrl?: string;
           scheduledPost?: { id: string };
           scheduleSaveFailed?: boolean;
-          publishResults?: Array<{ platform: string; success: boolean }>;
+          publishResults?: Array<{
+            platform: string;
+            success: boolean;
+            error?: string;
+            skipped?: boolean;
+          }>;
           publishFailed?: boolean;
+          publishSummary?: string;
         };
 
         try {
