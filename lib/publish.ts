@@ -86,7 +86,12 @@ async function publishToPlatform(
       });
 
       return result.ok
-        ? { platform, success: true, postId: result.postId }
+        ? {
+            platform,
+            success: true,
+            postId: result.postId,
+            detail: result.detail,
+          }
         : { platform, success: false, error: result.error };
     }
 

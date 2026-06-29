@@ -66,8 +66,22 @@ function normalizeVideoContentType(contentType: string): string {
   return "video/mp4";
 }
 
-function pickPrivacyLevel(options: string[] | undefined): string {
+function pickPrivacyLevel(
+  options: string[] | undefined,
+  preferSelfOnly = false,
+): string {
   const available = options ?? ["SELF_ONLY"];
+
+  if (preferSelfOnly && available.includes("SELF_ONLY")) {
+    return "SELF_ONLY";
+  }
+
+  if (process.env.TIKTOK_PUBLISH_SELF_ONLY?.trim().toLowerCase() === "true") {
+    if (available.includes("SELF_ONLY")) {
+      return "SELF_ONLY";
+    }
+  }
+
   const preferred = [
     "PUBLIC_TO_EVERYONE",
     "MUTUAL_FOLLOW_FRIENDS",
@@ -82,6 +96,14 @@ function pickPrivacyLevel(options: string[] | undefined): string {
   }
 
   return available[0] ?? "SELF_ONLY";
+}
+
+function shouldRetryWithSelfOnly(error?: TikTokApiError): boolean {
+  const code = error?.code;
+  return (
+    code === "unaudited_client_can_only_post_to_private_accounts" ||
+    code === "privacy_level_option_mismatch"
+  );
 }
 
 async function queryCreatorInfo(
@@ -112,11 +134,14 @@ async function initVideoPublish(options: {
   caption: string;
   videoSize: number;
   creatorInfo: CreatorInfo;
+  privacyLevel?: string;
 }): Promise<
-  | { ok: true; publishId: string; uploadUrl: string }
-  | { ok: false; error: string }
+  | { ok: true; publishId: string; uploadUrl: string; privacyLevel: string }
+  | { ok: false; error: string; retryWithSelfOnly?: boolean }
 > {
-  const privacyLevel = pickPrivacyLevel(options.creatorInfo.privacy_level_options);
+  const privacyLevel =
+    options.privacyLevel ??
+    pickPrivacyLevel(options.creatorInfo.privacy_level_options);
 
   const response = await fetch(`${TIKTOK_API}/v2/post/publish/video/init/`, {
     method: "POST",
@@ -158,6 +183,7 @@ async function initVideoPublish(options: {
     return {
       ok: false,
       error: tikTokErrorMessage(payload.error, "TikTok video init failed"),
+      retryWithSelfOnly: shouldRetryWithSelfOnly(payload.error),
     };
   }
 
@@ -165,6 +191,7 @@ async function initVideoPublish(options: {
     ok: true,
     publishId: payload.data.publish_id,
     uploadUrl: payload.data.upload_url,
+    privacyLevel,
   };
 }
 
@@ -245,21 +272,34 @@ async function publishWithAccessToken(options: {
   caption: string;
   videoBytes: Buffer;
   contentType: string;
-}): Promise<{ ok: true; postId: string } | { ok: false; error: string }> {
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
   const creator = await queryCreatorInfo(options.accessToken);
   if (!creator.ok) {
     return creator;
   }
 
-  const init = await initVideoPublish({
+  let init = await initVideoPublish({
     accessToken: options.accessToken,
     caption: options.caption,
     videoSize: options.videoBytes.length,
     creatorInfo: creator.info,
   });
 
+  if (!init.ok && init.retryWithSelfOnly) {
+    init = await initVideoPublish({
+      accessToken: options.accessToken,
+      caption: options.caption,
+      videoSize: options.videoBytes.length,
+      creatorInfo: creator.info,
+      privacyLevel: "SELF_ONLY",
+    });
+  }
+
   if (!init.ok) {
-    return init;
+    return { ok: false, error: init.error };
   }
 
   const upload = await uploadVideoChunk(
@@ -272,7 +312,17 @@ async function publishWithAccessToken(options: {
     return upload;
   }
 
-  return waitForPublishComplete(options.accessToken, init.publishId);
+  const published = await waitForPublishComplete(options.accessToken, init.publishId);
+  if (!published.ok) {
+    return published;
+  }
+
+  const detail =
+    init.privacyLevel === "SELF_ONLY"
+      ? "privat pe TikTok (app în Sandbox / fără audit) — vezi în profilul tău"
+      : "live pe TikTok";
+
+  return { ok: true, postId: published.postId, detail };
 }
 
 export async function publishTikTokVideo(options: {
@@ -281,7 +331,10 @@ export async function publishTikTokVideo(options: {
   caption: string;
   videoBytes: Buffer;
   contentType: string;
-}): Promise<{ ok: true; postId: string } | { ok: false; error: string }> {
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
   try {
     let accessToken = options.accessToken;
     let result = await publishWithAccessToken({
@@ -307,7 +360,9 @@ export async function publishTikTokVideo(options: {
       });
     }
 
-    return result;
+    return result.ok
+      ? { ok: true, postId: result.postId, detail: result.detail }
+      : { ok: false, error: result.error };
   } catch (error) {
     return {
       ok: false,
