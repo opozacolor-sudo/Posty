@@ -25,6 +25,13 @@ export function getTikTokEnvDebug(): TikTokEnvDebug {
   if (!clientKey) missing.push("TIKTOK_CLIENT_KEY");
   if (!clientSecret) missing.push("TIKTOK_CLIENT_SECRET");
 
+  if (
+    redirectUri &&
+    !redirectUri.endsWith("/api/auth/tiktok/callback")
+  ) {
+    missing.push("TIKTOK_REDIRECT_URI must end with /api/auth/tiktok/callback");
+  }
+
   return {
     clientKey: clientKey ?? null,
     clientSecretPresent: Boolean(clientSecret),

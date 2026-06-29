@@ -279,7 +279,7 @@ export function parseScheduleHeuristic(options: {
     title: caption.slice(0, 80),
     caption,
     scheduledAt,
-    mediaUrl: findLatestMediaUrl(messages),
+    mediaUrl: findLatestPublishMedia(messages)?.url ?? findLatestMediaUrl(messages),
   };
 }
 
@@ -482,6 +482,7 @@ export async function extractScheduleFromConversation(options: {
 
   const mediaUrl =
     extraction.mediaUrl?.trim() ||
+    findLatestPublishMedia(messages)?.url ||
     findLatestMediaUrl(messages) ||
     null;
 

@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { buildTikTokOAuthUrl } from "@/lib/tiktok-oauth";
+import { buildTikTokOAuthUrl, resolveTikTokOAuthScopes } from "@/lib/tiktok-oauth";
 import { getTikTokEnvDebug, isTikTokConfigured } from "@/lib/tiktok-env";
 import {
   redirectToAccountsAfterTikTok,
@@ -36,8 +36,13 @@ export async function GET(request: NextRequest) {
     return redirectToLogin(request, locale);
   }
 
+  const scopeParam = request.nextUrl.searchParams.get("scopes");
+  const scopes = resolveTikTokOAuthScopes(scopeParam);
   const state = randomUUID();
-  const response = NextResponse.redirect(buildTikTokOAuthUrl(state));
+
+  console.log("[posty/tiktok-oauth] authorize scopes:", scopes.join(","));
+
+  const response = NextResponse.redirect(buildTikTokOAuthUrl(state, scopes));
   setTikTokOAuthCookies(response, state, locale);
 
   return response;

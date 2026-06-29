@@ -97,6 +97,7 @@
     "accounts": "Connect accounts",
     "accountsSubtitle": "Link your social media accounts to schedule and publish posts.",
     "connect": "Connect",
+    "reconnect": "Reconnect",
     "connectInstagram": "Connect Instagram",
     "connectedAs": "Connected as @{name}",
     "instagramConnected": "Instagram connected successfully!",

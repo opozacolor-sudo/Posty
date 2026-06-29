@@ -4,15 +4,93 @@ export const TIKTOK_OAUTH_SCOPES = ["user.info.basic"] as const;
 
 export const TIKTOK_STATS_SCOPES = ["user.info.stats", "video.list"] as const;
 
-export function getTikTokOAuthScopes(): readonly string[] {
-  const includeStats =
-    process.env.TIKTOK_INCLUDE_STATS_SCOPES?.trim().toLowerCase() === "true";
+export const TIKTOK_PUBLISH_SCOPES = ["video.publish"] as const;
 
-  if (includeStats) {
-    return [...TIKTOK_OAUTH_SCOPES, ...TIKTOK_STATS_SCOPES];
+export type TikTokOAuthScopeOptions = {
+  publish?: boolean;
+  stats?: boolean;
+};
+
+function envFlag(name: string): boolean {
+  return process.env[name]?.trim().toLowerCase() === "true";
+}
+
+export function getTikTokOAuthScopes(
+  options: TikTokOAuthScopeOptions = {},
+): readonly string[] {
+  const scopes: string[] = [...TIKTOK_OAUTH_SCOPES];
+
+  if (options.publish) {
+    scopes.push(...TIKTOK_PUBLISH_SCOPES);
   }
 
-  return TIKTOK_OAUTH_SCOPES;
+  if (options.stats) {
+    scopes.push(...TIKTOK_STATS_SCOPES);
+  }
+
+  return scopes;
+}
+
+export function parseTikTokOAuthScopeParam(
+  value: string | null | undefined,
+): TikTokOAuthScopeOptions | "basic" | null {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  if (value.trim().toLowerCase() === "basic") {
+    return "basic";
+  }
+
+  const parts = value
+    .split(",")
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
+
+  return {
+    publish: parts.includes("publish"),
+    stats: parts.includes("stats"),
+  };
+}
+
+/** Default connect: basic (+ publish if enabled). Stats never auto-added — breaks OAuth if not approved in TikTok portal. */
+export function resolveTikTokOAuthScopes(
+  scopeParam: string | null | undefined,
+): readonly string[] {
+  const parsed = parseTikTokOAuthScopeParam(scopeParam);
+
+  if (parsed === "basic") {
+    return getTikTokOAuthScopes();
+  }
+
+  if (parsed) {
+    return getTikTokOAuthScopes(parsed);
+  }
+
+  return getTikTokOAuthScopes({
+    publish: envFlag("TIKTOK_INCLUDE_PUBLISH_SCOPES"),
+    stats: false,
+  });
+}
+
+export function buildTikTokConnectPath(
+  locale: string,
+  options?: TikTokOAuthScopeOptions | "basic",
+): string {
+  const params = new URLSearchParams({ locale });
+
+  if (options === "basic") {
+    params.set("scopes", "basic");
+  } else if (options) {
+    const scopes: string[] = [];
+    if (options.publish) scopes.push("publish");
+    if (options.stats) scopes.push("stats");
+    if (scopes.length > 0) {
+      params.set("scopes", scopes.join(","));
+    }
+  }
+
+  return `/api/auth/tiktok?${params.toString()}`;
 }
 
 type TokenResponse = {
@@ -52,7 +130,7 @@ function unwrapTokenResponse(data: TokenResponse) {
 
 export function buildTikTokOAuthUrl(
   state: string,
-  scopes: readonly string[] = getTikTokOAuthScopes(),
+  scopes: readonly string[],
 ): string {
   const { clientKey, redirectUri } = assertTikTokConfigured();
 
@@ -109,6 +187,48 @@ export async function exchangeTikTokCodeForToken(code: string): Promise<{
     refreshToken: token.refreshToken ?? null,
     expiresIn: token.expiresIn,
     openId: token.openId ?? null,
+  };
+}
+
+export async function refreshTikTokAccessToken(refreshToken: string): Promise<{
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn?: number;
+}> {
+  const { clientKey, clientSecret } = assertTikTokConfigured();
+
+  const body = new URLSearchParams({
+    client_key: clientKey,
+    client_secret: clientSecret,
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+  });
+
+  const response = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Cache-Control": "no-cache",
+    },
+    body,
+  });
+
+  const data = (await response.json()) as TokenResponse;
+
+  if (!response.ok) {
+    throw new Error(data.error_description ?? data.error ?? "Failed to refresh TikTok token");
+  }
+
+  const token = unwrapTokenResponse(data);
+
+  if (!token.accessToken) {
+    throw new Error("TikTok refresh response missing access_token");
+  }
+
+  return {
+    accessToken: token.accessToken,
+    refreshToken: token.refreshToken ?? null,
+    expiresIn: token.expiresIn,
   };
 }
 

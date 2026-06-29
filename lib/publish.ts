@@ -8,6 +8,7 @@ import { publishLinkedInImagePost } from "./publish-linkedin";
 import { fetchPublishMediaBytes, resolvePublishMediaUrl } from "./publish-media-url";
 import { publishPinterestPin } from "./publish-pinterest";
 import { publishThreadsPost } from "./publish-threads";
+import { publishTikTokVideo } from "./publish-tiktok";
 import { publishYouTubeVideo } from "./publish-youtube";
 
 export type PublishMediaType = "image" | "video";
@@ -75,12 +76,17 @@ async function publishToPlatform(
     }
 
     if (platform === "tiktok") {
-      return {
-        platform,
-        success: false,
-        skipped: true,
-        error: "TikTok video upload is coming soon",
-      };
+      const result = await publishTikTokVideo({
+        accessToken,
+        refreshToken,
+        caption,
+        videoBytes: media.videoBytes,
+        contentType: media.videoContentType ?? "video/mp4",
+      });
+
+      return result.ok
+        ? { platform, success: true, postId: result.postId }
+        : { platform, success: false, error: result.error };
     }
 
     if (platform === "youtube") {

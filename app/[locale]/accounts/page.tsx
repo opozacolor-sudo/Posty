@@ -7,11 +7,20 @@ import {
   PLATFORM_COLORS,
 } from "@/components/dashboard/platform-icon";
 import { createClient } from "@/lib/supabase-server";
+import { buildTikTokConnectPath } from "@/lib/tiktok-oauth";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import {
   fetchUserConnectedAccounts,
   getFallbackConnectedAccounts,
 } from "@/lib/connected-accounts";
+
+function getPlatformConnectHref(platform: string, locale: string): string {
+  if (platform === "tiktok") {
+    return buildTikTokConnectPath(locale, "basic");
+  }
+
+  return `/api/auth/${platform}?locale=${locale}`;
+}
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -84,9 +93,18 @@ export default async function AccountsPage({ params }: Props) {
                 </p>
               </div>
 
-              <div className="relative z-10 shrink-0">
+              <div className="relative z-10 flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
                 {connected ? (
-                  <form action="/api/accounts/disconnect" method="POST">
+                  <>
+                    {platform === "tiktok" ? (
+                      <a
+                        href={buildTikTokConnectPath(locale, { publish: true })}
+                        className="inline-flex cursor-pointer rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted no-underline"
+                      >
+                        {t("reconnect")}
+                      </a>
+                    ) : null}
+                    <form action="/api/accounts/disconnect" method="POST">
                     <input type="hidden" name="platform" value={platform} />
                     <input type="hidden" name="locale" value={locale} />
                     <button
@@ -96,9 +114,10 @@ export default async function AccountsPage({ params }: Props) {
                       {t("disconnect")}
                     </button>
                   </form>
+                  </>
                 ) : (
                   <a
-                    href={`/api/auth/${platform}?locale=${locale}`}
+                    href={getPlatformConnectHref(platform, locale)}
                     className="btn-primary inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold no-underline"
                   >
                     {t("connect")}
