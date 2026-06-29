@@ -144,7 +144,16 @@
     "tiktokSavePermission": "Contul TikTok nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
     "tiktokSaveUnknown": "Contul TikTok nu a putut fi salvat. Încearcă din nou.",
     "tiktokServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
-    "tiktokTokenFailed": "Autorizarea TikTok nu s-a putut finaliza."
+    "tiktokTokenFailed": "Autorizarea TikTok nu s-a putut finaliza.",
+    "linkedinConnected": "LinkedIn conectat cu succes!",
+    "linkedinDenied": "Autorizarea LinkedIn a fost anulată.",
+    "linkedinInvalidState": "Autorizarea LinkedIn a eșuat. Încearcă din nou.",
+    "linkedinNotConfigured": "OAuth LinkedIn nu este configurat pe server.",
+    "linkedinSaveFailed": "Contul LinkedIn nu a putut fi salvat.",
+    "linkedinSavePermission": "Contul LinkedIn nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
+    "linkedinSaveUnknown": "Contul LinkedIn nu a putut fi salvat. Încearcă din nou.",
+    "linkedinServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
+    "linkedinTokenFailed": "Autorizarea LinkedIn nu s-a putut finaliza."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",

@@ -12,6 +12,7 @@ const SUCCESS_KEYS: Record<string, string> = {
   facebook: "facebookConnected",
   threads: "threadsConnected",
   tiktok: "tiktokConnected",
+  linkedin: "linkedinConnected",
 };
 
 const ERROR_KEYS: Record<string, string> = {
@@ -51,6 +52,14 @@ const ERROR_KEYS: Record<string, string> = {
   tiktok_save_unknown: "tiktokSaveUnknown",
   tiktok_service_role_missing: "tiktokServiceRoleMissing",
   tiktok_token_failed: "tiktokTokenFailed",
+  linkedin_denied: "linkedinDenied",
+  linkedin_invalid_state: "linkedinInvalidState",
+  linkedin_not_configured: "linkedinNotConfigured",
+  linkedin_save_failed: "linkedinSaveFailed",
+  linkedin_save_permission: "linkedinSavePermission",
+  linkedin_save_unknown: "linkedinSaveUnknown",
+  linkedin_service_role_missing: "linkedinServiceRoleMissing",
+  linkedin_token_failed: "linkedinTokenFailed",
   youtube_denied: "youtubeDenied",
   youtube_invalid_state: "youtubeInvalidState",
   youtube_no_channel: "youtubeNoChannel",

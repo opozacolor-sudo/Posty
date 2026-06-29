@@ -137,7 +137,16 @@
     "tiktokSavePermission": "Could not save TikTok account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
     "tiktokSaveUnknown": "Could not save TikTok account. Try again.",
     "tiktokServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
-    "tiktokTokenFailed": "TikTok authorization could not be completed."
+    "tiktokTokenFailed": "TikTok authorization could not be completed.",
+    "linkedinConnected": "LinkedIn connected successfully!",
+    "linkedinDenied": "LinkedIn authorization was cancelled.",
+    "linkedinInvalidState": "LinkedIn authorization failed. Please try again.",
+    "linkedinNotConfigured": "LinkedIn OAuth is not configured on the server.",
+    "linkedinSaveFailed": "Could not save LinkedIn account.",
+    "linkedinSavePermission": "Could not save LinkedIn account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
+    "linkedinSaveUnknown": "Could not save LinkedIn account. Try again.",
+    "linkedinServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
+    "linkedinTokenFailed": "LinkedIn authorization could not be completed."
   },
   "profile": {
     "backToDashboard": "Zurück zum Dashboard",
