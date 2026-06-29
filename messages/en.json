@@ -50,6 +50,7 @@
     "chatWelcome": "Hi! I'm Claude. Tell me what you'd like to post and I'll help you schedule it.",
     "chatOnline": "Online",
     "chatThinking": "Thinking...",
+    "chatPublishing": "Publishing... (may take up to 60 seconds)",
     "chatGeneratingImage": "Generating image... (~30 sec)",
     "attachMedia": "Attach photo or video",
     "uploadingMedia": "Uploading file...",

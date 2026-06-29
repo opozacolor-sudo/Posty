@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { ChatAttachment } from "@/lib/chat-upload";
+import { shouldAttemptPublish } from "@/lib/publish-intent";
 import {
   useSpeechInput,
   type SpeechInputError,
@@ -47,7 +48,9 @@ export function ChatBar({
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingMode, setLoadingMode] = useState<"thinking" | "image">("thinking");
+  const [loadingMode, setLoadingMode] = useState<"thinking" | "image" | "publish">(
+    "thinking",
+  );
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const [chatModeNotice, setChatModeNotice] = useState<string | null>(null);
   const [pendingAttachment, setPendingAttachment] = useState<ChatAttachment | null>(null);
@@ -188,12 +191,17 @@ export function ChatBar({
       const history = buildHistory(nextMessages);
 
       const historyText = history.map((message) => message.content).join("\n");
+      const mayPublish = shouldAttemptPublish(trimmed, history);
       const mayGenerateImage =
-        /\b(genereaz[aă]|imagine|story|povest|photo|image|graphic)\b/i.test(
+        !mayPublish &&
+        (/\b(genereaz[aă]|imagine|story|povest|photo|image|graphic)\b/i.test(
           historyText,
-        ) || /instagram|ig/i.test(historyText);
+        ) ||
+          /instagram|ig/i.test(historyText));
 
-      setLoadingMode(mayGenerateImage ? "image" : "thinking");
+      setLoadingMode(
+        mayPublish ? "publish" : mayGenerateImage ? "image" : "thinking",
+      );
       setMessages(nextMessages);
 
       const reply = await fetchReply(history);
@@ -320,9 +328,11 @@ export function ChatBar({
             {isUploading
               ? t("uploadingMedia")
               : isLoading
-                ? loadingMode === "image"
-                  ? t("chatGeneratingImage")
-                  : t("chatThinking")
+                ? loadingMode === "publish"
+                  ? t("chatPublishing")
+                  : loadingMode === "image"
+                    ? t("chatGeneratingImage")
+                    : t("chatThinking")
                 : isListening
                   ? t("voiceListening")
                   : t("chatOnline")}
@@ -393,9 +403,11 @@ export function ChatBar({
           {isLoading && (
             <div className="flex justify-start">
               <div className="rounded-2xl bg-card px-3 py-1.5 text-xs text-muted-foreground">
-                {loadingMode === "image"
-                  ? t("chatGeneratingImage")
-                  : t("chatThinking")}
+                {loadingMode === "publish"
+                  ? t("chatPublishing")
+                  : loadingMode === "image"
+                    ? t("chatGeneratingImage")
+                    : t("chatThinking")}
               </div>
             </div>
           )}

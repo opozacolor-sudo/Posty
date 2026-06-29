@@ -100,6 +100,7 @@
       "sun": "Du"
     },
     "chatThinking": "Se gândește...",
+    "chatPublishing": "Se publică... (poate dura până la 60 sec)",
     "chatGeneratingImage": "Se generează imaginea... (~30 sec)",
     "attachMedia": "Atașează foto sau video",
     "uploadingMedia": "Se încarcă fișierul...",

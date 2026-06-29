@@ -32,6 +32,10 @@ import {
   publishToConnectedPlatforms,
   type PublishPlatformResult,
 } from "@/lib/publish";
+import {
+  formatPublishMissingDetailsReply,
+  formatPublishUserReply,
+} from "@/lib/publish-reply";
 import { getAppBaseUrl } from "@/lib/app-url";
 import { resolvePublishMediaUrl } from "@/lib/publish-media-url";
 import {
@@ -156,8 +160,10 @@ export async function POST(request: Request) {
     let publishResults: PublishPlatformResult[] | undefined;
     let publishFailed = false;
     let publishSummary: string | undefined;
+    let publishAttempted = false;
 
     if (shouldAttemptPublish(lastUserMessage, history)) {
+      publishAttempted = true;
       try {
         const publishInput = extractPublishFromConversation({
           messages: history,
@@ -342,6 +348,27 @@ export async function POST(request: Request) {
     } else if (!scheduledPost && !publishResults && userWantsVideoGeneration(lastUserMessage)) {
       mediaContext =
         "The user asked for video generation. Video via Higgsfield is not wired in Posty yet. Explain that image generation works now and video is next.";
+    }
+
+    if (publishAttempted) {
+      const anySuccess = publishResults?.some((result) => result.success) ?? false;
+      const reply = publishSummary
+        ? formatPublishUserReply(publishSummary, locale, anySuccess)
+        : formatPublishMissingDetailsReply(locale);
+
+      return NextResponse.json({
+        reply,
+        source: "claude",
+        configured: true,
+        model: null,
+        generatedImageUrl,
+        scheduledPost,
+        scheduleSaveFailed,
+        publishResults,
+        publishFailed,
+        publishSummary,
+        imageGenerationFailed: false,
+      });
     }
 
     const system = buildChatSystemPrompt({
