@@ -1,9 +1,6 @@
 import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { AccountsCapabilityLegend } from "@/components/accounts/platform-capability";
-import { AccountsStatusSummary } from "@/components/accounts/accounts-status-summary";
-import { PlatformCapabilityDetails } from "@/components/accounts/platform-capability";
 import { OAuthStatusBanner } from "@/components/dashboard/oauth-status-banner";
 import {
   PlatformIcon,
@@ -77,9 +74,6 @@ export default async function AccountsPage({ params }: Props) {
           <OAuthStatusBanner />
         </Suspense>
 
-        <AccountsCapabilityLegend className="mt-6" />
-        <AccountsStatusSummary />
-
         <ul className="mt-6 flex flex-col gap-3">
           {accounts.map(({ platform, connected, accountName }) => (
             <li
@@ -110,7 +104,6 @@ export default async function AccountsPage({ params }: Props) {
                         : t("connected")
                       : t("notConnected")}
                   </p>
-                  <PlatformCapabilityDetails platform={platform} />
                 </div>
               </div>
 
