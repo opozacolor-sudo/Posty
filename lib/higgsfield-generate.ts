@@ -6,8 +6,8 @@ import {
   isHiggsfieldSdkConfigured,
 } from "./higgsfield-env";
 
-/** Platform API default for social images (matches Higgsfield docs). */
-const DEFAULT_IMAGE_ENDPOINT = "flux-pro/kontext/max/text-to-image";
+/** Same model as CLI default (2 credits, works on Creator plan). */
+const DEFAULT_IMAGE_ENDPOINT = "nano_banana_2";
 
 export type GenerateImageOptions = {
   prompt: string;
@@ -54,6 +54,26 @@ export function extractMediaUrl(response: V2Response): GenerateImageResult | nul
   return { url, requestId: response.request_id };
 }
 
+function buildSdkInput(
+  endpoint: string,
+  options: GenerateImageOptions,
+): Record<string, string> {
+  const input: Record<string, string> = {
+    prompt: options.prompt,
+    aspect_ratio: options.aspectRatio ?? "1:1",
+  };
+
+  if (endpoint.includes("nano_banana") || endpoint.includes("flux")) {
+    input.resolution = process.env.HIGGSFIELD_IMAGE_RESOLUTION?.trim() || "2k";
+  }
+
+  if (endpoint.includes("flux") && !endpoint.includes("nano_banana")) {
+    input.safety_tolerance = "6";
+  }
+
+  return input;
+}
+
 async function generateHiggsfieldImageViaSdk(
   options: GenerateImageOptions,
 ): Promise<GenerateImageResult> {
@@ -66,11 +86,7 @@ async function generateHiggsfieldImageViaSdk(
     process.env.HIGGSFIELD_IMAGE_ENDPOINT?.trim() || DEFAULT_IMAGE_ENDPOINT;
 
   const response = await client.subscribe(endpoint, {
-    input: {
-      prompt: options.prompt,
-      aspect_ratio: options.aspectRatio ?? "1:1",
-      safety_tolerance: 6,
-    },
+    input: buildSdkInput(endpoint, options),
     withPolling: true,
   });
 

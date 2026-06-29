@@ -39,8 +39,7 @@ export async function GET() {
           ? "Using local higgsfield CLI. For Vercel, add HF_API_KEY + HF_API_SECRET."
           : "Add HF_API_KEY + HF_API_SECRET from cloud.higgsfield.ai/api-keys.",
     imageEndpoint:
-      process.env.HIGGSFIELD_IMAGE_ENDPOINT?.trim() ||
-      "flux-pro/kontext/max/text-to-image",
+      process.env.HIGGSFIELD_IMAGE_ENDPOINT?.trim() || "nano_banana_2",
     ready: isHiggsfieldGenerationAvailable(),
     probeHint: "POST to this URL to run a live generation test.",
   });
