@@ -101,6 +101,7 @@
     },
     "chatThinking": "Se gândește...",
     "chatError": "Nu s-a putut contacta Claude. Încearcă din nou.",
+    "chatNotConfigured": "Mod demo — adaugă ANTHROPIC_API_KEY pe Vercel pentru răspunsuri AI complete.",
     "connectInstagram": "Conectează Instagram",
     "connectedAs": "Conectat ca @{name}",
     "instagramConnected": "Instagram conectat cu succes!",

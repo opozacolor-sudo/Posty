@@ -1,0 +1,129 @@
+import type { ConnectedAccount } from "./dashboard-data";
+
+const PLATFORM_LABELS: Record<string, string> = {
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  facebook: "Facebook",
+  linkedin: "LinkedIn",
+  threads: "Threads",
+  x: "X (Twitter)",
+  pinterest: "Pinterest",
+  bluesky: "Bluesky",
+};
+
+const LOCALE_LANGUAGE: Record<string, string> = {
+  ro: "Romanian",
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+  pt: "Portuguese",
+  ru: "Russian",
+  ja: "Japanese",
+  ko: "Korean",
+  zh: "Chinese",
+  ar: "Arabic",
+  hi: "Hindi",
+};
+
+type BuildChatSystemPromptOptions = {
+  locale: string;
+  userName?: string | null;
+  brandContext?: string;
+  connectedAccounts: ConnectedAccount[];
+};
+
+export function buildConnectedAccountsContext(
+  accounts: ConnectedAccount[],
+): string {
+  const connected = accounts.filter((account) => account.connected);
+  const disconnected = accounts.filter((account) => !account.connected);
+
+  const connectedLines =
+    connected.length > 0
+      ? connected
+          .map((account) => {
+            const label = PLATFORM_LABELS[account.platform] ?? account.platform;
+            return account.accountName
+              ? `- ${label}: connected as ${account.accountName}`
+              : `- ${label}: connected`;
+          })
+          .join("\n")
+      : "- None connected yet";
+
+  const disconnectedLabels = disconnected
+    .map((account) => PLATFORM_LABELS[account.platform] ?? account.platform)
+    .join(", ");
+
+  const lines = ["Connected accounts:", connectedLines];
+
+  if (disconnected.length > 0) {
+    lines.push("", `Not connected yet: ${disconnectedLabels}`);
+    lines.push(
+      "If the user asks to post somewhere that is not connected, tell them to connect that platform first from Accounts.",
+    );
+  }
+
+  return lines.join("\n");
+}
+
+export function buildChatSystemPrompt({
+  locale,
+  userName,
+  brandContext,
+  connectedAccounts,
+}: BuildChatSystemPromptOptions): string {
+  const language = LOCALE_LANGUAGE[locale] ?? "English";
+  const accountsContext = buildConnectedAccountsContext(connectedAccounts);
+
+  const parts = [
+    "You are Claude, the AI assistant inside Posty — a social media scheduling app.",
+    userName ? `The user's name is ${userName}.` : "",
+    "",
+    "Your job:",
+    "- Understand what the user wants to create, refine, or schedule.",
+    "- Draft captions, hooks, hashtags, and post ideas tailored to each platform.",
+    "- Ask short clarifying questions when platform, timing, or message is unclear.",
+    "- Prefer concrete drafts over generic advice.",
+    "",
+    "Current capabilities:",
+    "- Chat (text and voice transcript)",
+    "- OAuth-connected social accounts",
+    "- Brand profile aware copywriting",
+    "",
+    "Not available yet (do not claim you can do these now):",
+    "- Publishing posts directly",
+    "- Generating images or videos (Higgsfield integration coming)",
+    "- Uploading media files from chat",
+    "- Saving scheduled posts to the calendar",
+    "",
+    "When the user asks to post or schedule now, explain what you prepared and say publishing/scheduling will be wired up next.",
+    "",
+    accountsContext,
+  ];
+
+  if (brandContext?.trim()) {
+    parts.push("", "User brand profile:", brandContext.trim());
+  }
+
+  parts.push(
+    "",
+    `Reply in ${language} unless the user writes in another language.`,
+    "Keep replies concise, friendly, and actionable. Use short paragraphs or bullet lists when helpful.",
+  );
+
+  return parts.filter(Boolean).join("\n");
+}
+
+export function trimChatHistory<T extends { role: string; content: string }>(
+  messages: T[],
+  maxMessages = 20,
+): T[] {
+  if (messages.length <= maxMessages) {
+    return messages;
+  }
+
+  return messages.slice(-maxMessages);
+}

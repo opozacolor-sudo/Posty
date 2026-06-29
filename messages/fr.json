@@ -164,7 +164,8 @@
     "voiceNoSpeech": "I didn't catch that. Try again.",
     "voiceNetworkError": "Voice recognition failed due to a network error.",
     "voiceTranscribeFailed": "Could not transcribe audio. Use Chrome or add OPENAI_API_KEY on Vercel.",
-    "voiceError": "Voice input failed. Please try again."
+    "voiceError": "Voice input failed. Please try again.",
+    "chatNotConfigured": "Demo mode — add ANTHROPIC_API_KEY on Vercel for full AI replies."
   },
   "profile": {
     "backToDashboard": "Retour au tableau de bord",

@@ -51,6 +51,7 @@
     "chatOnline": "Online",
     "chatThinking": "Thinking...",
     "chatError": "Could not reach Claude. Please try again.",
+    "chatNotConfigured": "Demo mode — add ANTHROPIC_API_KEY on Vercel for full AI replies.",
     "assistantName": "Claude",
     "send": "Send",
     "voiceInput": "Voice input",

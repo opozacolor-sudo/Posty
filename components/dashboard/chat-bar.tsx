@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   useSpeechInput,
@@ -15,6 +15,7 @@ type ChatMessage = {
 };
 
 export function ChatBar() {
+  const locale = useLocale();
   const t = useTranslations("dashboard");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -26,6 +27,7 @@ export function ChatBar() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+  const [chatModeNotice, setChatModeNotice] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
 
@@ -60,16 +62,28 @@ export function ChatBar() {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history }),
+          body: JSON.stringify({ messages: history, locale }),
         });
 
         const data = (await response.json()) as {
           reply?: string;
           error?: string;
+          source?: "claude" | "mock" | "error";
+          configured?: boolean;
         };
+
+        if (data.source === "mock" && data.configured === false) {
+          setChatModeNotice(t("chatNotConfigured"));
+        } else if (data.source === "claude") {
+          setChatModeNotice(null);
+        }
 
         if (data.reply) {
           return data.reply;
+        }
+
+        if (data.error) {
+          return data.error;
         }
       } catch {
         // Fall back to local replies when the API is unavailable.
@@ -78,7 +92,7 @@ export function ChatBar() {
       const lastUser = [...history].reverse().find((m) => m.role === "user");
       return getLocalReply(lastUser?.content ?? "");
     },
-    [getLocalReply],
+    [getLocalReply, locale, t],
   );
 
   const sendMessage = useCallback(
@@ -187,6 +201,9 @@ export function ChatBar() {
                 ? t("voiceListening")
                 : t("chatOnline")}
           </p>
+          {chatModeNotice && (
+            <p className="text-[10px] text-muted-foreground">{chatModeNotice}</p>
+          )}
         </div>
       </div>
 
