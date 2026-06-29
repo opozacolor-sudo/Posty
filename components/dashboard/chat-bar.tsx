@@ -12,6 +12,7 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  imageUrl?: string;
 };
 
 export function ChatBar() {
@@ -43,9 +44,9 @@ export function ChatBar() {
   const fetchReply = useCallback(
     async (
       history: Array<{ role: "user" | "assistant"; content: string }>,
-    ): Promise<string> => {
+    ): Promise<{ text: string; imageUrl?: string }> => {
       if (history.length === 0) {
-        return t("chatError");
+        return { text: t("chatError") };
       }
 
       try {
@@ -58,11 +59,11 @@ export function ChatBar() {
         });
 
         if (response.type === "opaqueredirect" || response.status === 307 || response.status === 302) {
-          return t("chatSessionExpired");
+          return { text: t("chatSessionExpired") };
         }
 
         if (response.status === 401) {
-          return t("chatSessionExpired");
+          return { text: t("chatSessionExpired") };
         }
 
         let data: {
@@ -70,12 +71,13 @@ export function ChatBar() {
           error?: string;
           source?: "claude" | "mock" | "error";
           configured?: boolean;
+          generatedImageUrl?: string;
         };
 
         try {
           data = (await response.json()) as typeof data;
         } catch {
-          return t("chatError");
+          return { text: t("chatError") };
         }
 
         if (data.source === "mock" && data.configured === false) {
@@ -85,17 +87,20 @@ export function ChatBar() {
         }
 
         if (response.ok && data.reply) {
-          return data.reply;
+          return {
+            text: data.reply,
+            imageUrl: data.generatedImageUrl,
+          };
         }
 
         if (data.source === "mock" && data.reply) {
-          return data.reply;
+          return { text: data.reply };
         }
       } catch {
         // Network failure — show translated error below.
       }
 
-      return t("chatError");
+      return { text: t("chatError") };
     },
     [locale, t],
   );
@@ -133,7 +138,8 @@ export function ChatBar() {
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: reply,
+          content: reply.text,
+          imageUrl: reply.imageUrl,
         },
       ]);
 
@@ -224,6 +230,21 @@ export function ChatBar() {
                 }`}
               >
                 {message.content}
+                {message.imageUrl && (
+                  <a
+                    href={message.imageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 block overflow-hidden rounded-xl"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={message.imageUrl}
+                      alt=""
+                      className="max-h-48 w-full object-cover"
+                    />
+                  </a>
+                )}
               </div>
             </div>
           ))}

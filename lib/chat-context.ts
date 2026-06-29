@@ -33,6 +33,8 @@ type BuildChatSystemPromptOptions = {
   userName?: string | null;
   brandContext?: string;
   connectedAccounts: ConnectedAccount[];
+  higgsfieldConfigured?: boolean;
+  mediaContext?: string;
 };
 
 export function buildConnectedAccountsContext(
@@ -74,6 +76,8 @@ export function buildChatSystemPrompt({
   userName,
   brandContext,
   connectedAccounts,
+  higgsfieldConfigured = false,
+  mediaContext,
 }: BuildChatSystemPromptOptions): string {
   const language = LOCALE_LANGUAGE[locale] ?? "English";
   const accountsContext = buildConnectedAccountsContext(connectedAccounts);
@@ -92,14 +96,20 @@ export function buildChatSystemPrompt({
     "- Chat (text and voice transcript)",
     "- OAuth-connected social accounts",
     "- Brand profile aware copywriting",
+    higgsfieldConfigured
+      ? "- Generate images via Higgsfield when the user asks (image URL may be provided in context)"
+      : null,
     "",
     "Not available yet (do not claim you can do these now):",
     "- Publishing posts directly",
-    "- Generating images or videos (Higgsfield integration coming)",
+    higgsfieldConfigured ? null : "- Generating images or videos (Higgsfield not configured yet)",
+    higgsfieldConfigured ? "- Generating videos (coming soon)" : null,
     "- Uploading media files from chat",
     "- Saving scheduled posts to the calendar",
     "",
     "When the user asks to post or schedule now, explain what you prepared and say publishing/scheduling will be wired up next.",
+    mediaContext ? "" : null,
+    mediaContext ?? null,
     "",
     accountsContext,
   ];

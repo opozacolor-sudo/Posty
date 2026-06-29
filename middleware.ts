@@ -10,7 +10,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/auth") ||
     request.nextUrl.pathname.startsWith("/api/auth") ||
     request.nextUrl.pathname.startsWith("/api/accounts") ||
-    request.nextUrl.pathname.startsWith("/api/chat")
+    request.nextUrl.pathname.startsWith("/api/chat") ||
+    request.nextUrl.pathname.startsWith("/api/media")
   ) {
     return updateSession(request);
   }
@@ -32,5 +33,6 @@ export const config = {
     "/api/auth/:path*",
     "/api/accounts/:path*",
     "/api/chat/:path*",
+    "/api/media/:path*",
   ],
 };

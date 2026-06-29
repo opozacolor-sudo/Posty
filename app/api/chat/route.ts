@@ -12,9 +12,16 @@ import {
   trimChatHistory,
 } from "@/lib/chat-context";
 import { fetchUserConnectedAccounts } from "@/lib/connected-accounts";
+import {
+  generateHiggsfieldImage,
+  userWantsImageGeneration,
+  userWantsVideoGeneration,
+} from "@/lib/higgsfield-generate";
+import { isHiggsfieldConfigured } from "@/lib/higgsfield-env";
 import { createClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -114,11 +121,43 @@ export async function POST(request: Request) {
         ? user.user_metadata.full_name
         : user.email?.split("@")[0] ?? null;
 
+    let mediaContext: string | undefined;
+    let generatedImageUrl: string | undefined;
+
+    if (isHiggsfieldConfigured() && userWantsImageGeneration(lastUserMessage)) {
+      try {
+        const aspectRatio =
+          /instagram|povest|story|stories|9:16|vertical/i.test(lastUserMessage)
+            ? "9:16"
+            : "1:1";
+        const image = await generateHiggsfieldImage({
+          prompt: lastUserMessage,
+          aspectRatio,
+        });
+        generatedImageUrl = image.url;
+        mediaContext = [
+          "The user asked to generate an image. Posty already generated it via Higgsfield.",
+          `Image URL: ${image.url}`,
+          "Include this URL in your reply so the user can open or download it.",
+          "Also suggest a caption/hashtags for their target platform.",
+        ].join("\n");
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        console.error("[posty/chat] Higgsfield image failed:", detail);
+        mediaContext = `Image generation was requested but failed (${detail}). Apologize briefly and offer to retry with a clearer prompt.`;
+      }
+    } else if (userWantsVideoGeneration(lastUserMessage)) {
+      mediaContext =
+        "The user asked for video generation. Video via Higgsfield is not wired in Posty yet. Explain that image generation works now and video is next.";
+    }
+
     const system = buildChatSystemPrompt({
       locale,
       userName,
       brandContext,
       connectedAccounts,
+      higgsfieldConfigured: isHiggsfieldConfigured(),
+      mediaContext,
     });
 
     const { text: reply, model } = await createClaudeReply({
@@ -131,6 +170,7 @@ export async function POST(request: Request) {
       source: "claude",
       configured: true,
       model,
+      generatedImageUrl,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
