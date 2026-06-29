@@ -63,11 +63,26 @@ function validateVideoBytes(bytes: Buffer): string | null {
     return "Video file is not a valid MP4/WebM container — re-export as MP4 and try again";
   }
 
-  if (isWebm) {
-    return "YouTube works best with MP4 (H.264). Re-export or attach an .mp4 file.";
+  return null;
+}
+
+function formatYouTubeApiError(data: YouTubeApiError, fallback: string): string {
+  const message = data.error?.message?.trim();
+  const reason = data.error?.errors?.[0]?.reason?.trim();
+
+  if (message && reason && !message.includes(reason)) {
+    return `${message} (${reason})`;
   }
 
-  return null;
+  if (message) {
+    return message;
+  }
+
+  if (reason) {
+    return reason;
+  }
+
+  return fallback;
 }
 
 function parseYouTubeUploadResponse(
@@ -79,7 +94,7 @@ function parseYouTubeUploadResponse(
       const error = JSON.parse(bodyText) as YouTubeApiError;
       return {
         ok: false,
-        error: error.error?.message ?? `YouTube video upload failed (${response.status})`,
+        error: formatYouTubeApiError(error, `YouTube video upload failed (${response.status})`),
       };
     } catch {
       return {
@@ -186,16 +201,17 @@ async function waitForYouTubeProcessing(
       processingStatus === "failed" ||
       processingStatus === "terminated"
     ) {
+      const reasonText = failureReason ? String(failureReason).trim() : "";
       return {
         ok: false,
-        error: `YouTube rejected the video${failureReason ? ` (${failureReason})` : ""}. Studio: ${studioUrl}`,
+        error: reasonText
+          ? `YouTube rejected the video: ${reasonText}. Studio: ${studioUrl}`
+          : `YouTube rejected the video during processing. Studio: ${studioUrl}`,
       };
     }
 
     const isProcessed =
-      uploadStatus === "processed" ||
-      processingStatus === "succeeded" ||
-      (uploadStatus === "uploaded" && processingStatus == null);
+      uploadStatus === "processed" || processingStatus === "succeeded";
 
     if (isProcessed) {
       const watchUrl = `https://youtu.be/${videoId}`;
@@ -265,7 +281,7 @@ async function uploadVideoToYouTube(
     "https://www.googleapis.com/upload/youtube/v3/videos?" +
       new URLSearchParams({
         uploadType: "resumable",
-        part: "snippet,status,processingDetails",
+        part: "snippet,status",
       }),
     {
       method: "POST",
@@ -292,10 +308,19 @@ async function uploadVideoToYouTube(
   );
 
   if (!initResponse.ok) {
-    const error = (await initResponse.json()) as YouTubeApiError;
+    let errorBody: YouTubeApiError = {};
+    try {
+      errorBody = (await initResponse.json()) as YouTubeApiError;
+    } catch {
+      // ignore parse errors
+    }
+
     return {
       ok: false,
-      error: error.error?.message ?? "YouTube upload initialization failed",
+      error: formatYouTubeApiError(
+        errorBody,
+        `YouTube upload initialization failed (${initResponse.status})`,
+      ),
     };
   }
 
