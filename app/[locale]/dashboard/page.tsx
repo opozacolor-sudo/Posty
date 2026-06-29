@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { fetchUserConnectedAccounts } from "@/lib/connected-accounts";
+import { fetchUpcomingScheduledPosts } from "@/lib/scheduled-posts";
 import { getDisplayName } from "@/lib/dashboard-data";
 
 type Props = {
@@ -17,6 +18,7 @@ export default async function DashboardPage({ params }: Props) {
   let displayName = t("defaultUser");
   let avatarUrl: string | null = null;
   let accounts;
+  let upcomingPosts;
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -34,6 +36,7 @@ export default async function DashboardPage({ params }: Props) {
 
     if (user) {
       accounts = await fetchUserConnectedAccounts(supabase, user.id);
+      upcomingPosts = await fetchUpcomingScheduledPosts(supabase, user.id);
     }
   }
 
@@ -42,6 +45,7 @@ export default async function DashboardPage({ params }: Props) {
       displayName={displayName}
       avatarUrl={avatarUrl}
       accounts={accounts}
+      initialPosts={upcomingPosts ?? []}
     />
   );
 }

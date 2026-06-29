@@ -31,7 +31,11 @@ function uploadErrorMessage(code: string | undefined, t: (key: string) => string
   return t("uploadFailed");
 }
 
-export function ChatBar() {
+export function ChatBar({
+  onScheduleCreated,
+}: {
+  onScheduleCreated?: () => void;
+}) {
   const locale = useLocale();
   const t = useTranslations("dashboard");
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -105,6 +109,7 @@ export function ChatBar() {
           source?: "claude" | "mock" | "error";
           configured?: boolean;
           generatedImageUrl?: string;
+          scheduledPost?: { id: string };
         };
 
         try {
@@ -120,6 +125,10 @@ export function ChatBar() {
         }
 
         if (response.ok && data.reply) {
+          if (data.scheduledPost) {
+            onScheduleCreated?.();
+          }
+
           return {
             text: data.reply,
             imageUrl: data.generatedImageUrl,
@@ -135,7 +144,7 @@ export function ChatBar() {
 
       return { text: t("chatError") };
     },
-    [locale, t],
+    [locale, onScheduleCreated, t],
   );
 
   const sendMessage = useCallback(

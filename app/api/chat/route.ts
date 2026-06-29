@@ -19,6 +19,12 @@ import {
   userWantsVideoGeneration,
 } from "@/lib/higgsfield-generate";
 import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
+import {
+  extractScheduleFromConversation,
+  formatScheduleConfirmation,
+  userMentionsScheduling,
+} from "@/lib/schedule-intent";
+import { createScheduledPost } from "@/lib/scheduled-posts";
 import { createClient } from "@/lib/supabase-server";
 import type { ChatAttachment } from "@/lib/chat-upload";
 
@@ -126,10 +132,46 @@ export async function POST(request: Request) {
 
     let mediaContext: string | undefined;
     let generatedImageUrl: string | undefined;
+    let scheduledPost:
+      | Awaited<ReturnType<typeof createScheduledPost>>
+      | undefined;
+
+    if (userMentionsScheduling(lastUserMessage)) {
+      try {
+        const scheduleInput = await extractScheduleFromConversation({
+          messages: history,
+          connectedAccounts,
+          locale,
+        });
+
+        if (scheduleInput) {
+          const saved = await createScheduledPost(
+            supabase,
+            user.id,
+            scheduleInput,
+          );
+
+          if (saved) {
+            scheduledPost = saved;
+            mediaContext = [
+              "IMPORTANT: The post was SUCCESSFULLY saved to the Posty calendar.",
+              formatScheduleConfirmation(scheduleInput, locale),
+              "Confirm this to the user briefly. Do NOT say scheduling is unavailable.",
+              `Platform: ${scheduleInput.platform}`,
+              `Scheduled: ${scheduleInput.scheduledAt}`,
+              `Caption preview: ${scheduleInput.title}`,
+            ].join("\n");
+          }
+        }
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        console.error("[posty/chat] Schedule extraction failed:", detail);
+      }
+    }
 
     const imageIntent = resolveImageGenerationIntent(history, lastUserMessage);
 
-    if (isHiggsfieldGenerationAvailable() && imageIntent.shouldGenerate) {
+    if (!scheduledPost && isHiggsfieldGenerationAvailable() && imageIntent.shouldGenerate) {
       try {
         const image = await generateHiggsfieldImage({
           prompt: imageIntent.prompt,
@@ -148,7 +190,7 @@ export async function POST(request: Request) {
         console.error("[posty/chat] Higgsfield image failed:", detail);
         mediaContext = `Image generation was requested but failed (${detail}). Apologize briefly and offer to retry with a clearer prompt.`;
       }
-    } else if (userWantsVideoGeneration(lastUserMessage)) {
+    } else if (!scheduledPost && userWantsVideoGeneration(lastUserMessage)) {
       mediaContext =
         "The user asked for video generation. Video via Higgsfield is not wired in Posty yet. Explain that image generation works now and video is next.";
     }
@@ -173,6 +215,7 @@ export async function POST(request: Request) {
       configured: true,
       model,
       generatedImageUrl,
+      scheduledPost,
       imageGenerationFailed:
         imageIntent.shouldGenerate && !generatedImageUrl && Boolean(mediaContext?.includes("failed")),
     });
