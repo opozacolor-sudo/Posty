@@ -7,10 +7,24 @@ type ChatTurn = {
 
 export function formatHiggsfieldError(error: unknown): string {
   if (error instanceof Error) {
+    const apiError = error as Error & {
+      statusCode?: number;
+      responseData?: unknown;
+    };
+
+    if (typeof apiError.statusCode === "number") {
+      const body =
+        apiError.responseData !== undefined
+          ? JSON.stringify(apiError.responseData)
+          : apiError.message;
+      return `${error.constructor.name} (${apiError.statusCode}): ${body}`;
+    }
+
     const name = error.constructor.name;
     if (name !== "Error") {
       return `${name}: ${error.message}`;
     }
+
     return error.message;
   }
 

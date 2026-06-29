@@ -6,8 +6,8 @@ import {
   isHiggsfieldSdkConfigured,
 } from "./higgsfield-env";
 
-/** Same model as CLI default (2 credits, works on Creator plan). */
-const DEFAULT_IMAGE_ENDPOINT = "nano_banana_2";
+/** Documented Platform API path (see @higgsfield/client README). */
+const DEFAULT_IMAGE_ENDPOINT = "flux-pro/kontext/max/text-to-image";
 
 export type GenerateImageOptions = {
   prompt: string;
@@ -57,18 +57,23 @@ export function extractMediaUrl(response: V2Response): GenerateImageResult | nul
 function buildSdkInput(
   endpoint: string,
   options: GenerateImageOptions,
-): Record<string, string> {
-  const input: Record<string, string> = {
+): Record<string, string | number> {
+  const input: Record<string, string | number> = {
     prompt: options.prompt,
     aspect_ratio: options.aspectRatio ?? "1:1",
   };
 
-  if (endpoint.includes("nano_banana") || endpoint.includes("flux")) {
+  if (endpoint.includes("flux-pro/kontext")) {
+    input.safety_tolerance = 6;
+    return input;
+  }
+
+  if (endpoint.includes("nano_banana") || endpoint.includes("gpt_image")) {
     input.resolution = process.env.HIGGSFIELD_IMAGE_RESOLUTION?.trim() || "2k";
   }
 
   if (endpoint.includes("flux") && !endpoint.includes("nano_banana")) {
-    input.safety_tolerance = "6";
+    input.safety_tolerance = 6;
   }
 
   return input;
