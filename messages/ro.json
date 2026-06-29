@@ -75,7 +75,7 @@
     "connect": "Conectează",
     "reconnect": "Reconectează",
     "tiktokEnableVideo": "Activează video",
-    "tiktokVideoHint": "Pentru postare video: activează Content Posting API + scope video.publish în TikTok Developer, apoi apasă Activează video.",
+    "tiktokVideoHint": "Pentru video: Content Posting API + video.publish în TikTok Developer. În Sandbox, contul TikTok trebuie setat pe Privat în app (Setări → Confidențialitate).",
     "disconnect": "Deconectează",
     "backToDashboard": "Înapoi la dashboard",
     "privacyPolicy": "Politica de confidențialitate",

@@ -46,7 +46,7 @@ function tikTokErrorMessage(error?: TikTokApiError, fallback = "TikTok API error
   }
 
   if (error.code === "unaudited_client_can_only_post_to_private_accounts") {
-    return "TikTok sandbox requires private posts — retrying with SELF_ONLY privacy";
+    return "TikTok Sandbox: setează contul aipixxel pe Privat în app TikTok (Profil → Meniu → Setări → Confidențialitate → Cont privat ON), apoi încearcă din nou. Alternativ: App Review TikTok pentru postări publice.";
   }
 
   return error.message?.trim() || error.code || fallback;
