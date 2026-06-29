@@ -72,7 +72,7 @@
     "statsLoading": "Loading statistics...",
     "statsPeriodHint": "Latest post · connected accounts",
     "statsConnectHint": "Connect an account from Accounts to see live stats.",
-    "statsUnavailable": "Stats unavailable for this platform (missing API permissions).",
+    "statsUnavailable": "Stats unavailable — reconnect the account from Accounts (API permissions may be missing).",
     "assistantName": "Claude",
     "send": "Send",
     "voiceInput": "Voice input",

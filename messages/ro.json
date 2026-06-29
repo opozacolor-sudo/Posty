@@ -122,7 +122,7 @@
     "statsLoading": "Se încarcă statisticile...",
     "statsPeriodHint": "Ultima postare · conturi conectate",
     "statsConnectHint": "Conectează un cont din Conturi pentru statistici reale.",
-    "statsUnavailable": "Statistici indisponibile pentru această platformă (lipsesc permisiuni API).",
+    "statsUnavailable": "Statistici indisponibile — reconectează contul din Conturi (pot lipsi permisiuni API).",
     "connectInstagram": "Conectează Instagram",
     "connectedAs": "Conectat ca @{name}",
     "instagramConnected": "Instagram conectat cu succes!",

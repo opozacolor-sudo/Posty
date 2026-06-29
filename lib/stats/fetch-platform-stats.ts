@@ -1,7 +1,11 @@
 import type { SocialPlatform } from "@/lib/dashboard-data";
 import type { ConnectedAccountWithToken } from "@/lib/publish-accounts";
+import { fetchFacebookStats } from "./facebook-stats";
 import { fetchInstagramStats } from "./instagram-stats";
+import { fetchLinkedInStats } from "./linkedin-stats";
+import { fetchPinterestStats } from "./pinterest-stats";
 import { fetchThreadsStats } from "./threads-stats";
+import { fetchTikTokStats } from "./tiktok-stats";
 import { fetchYouTubeStats } from "./youtube-stats";
 import { emptyStats, type PlatformStatsResult } from "./types";
 
@@ -20,8 +24,29 @@ async function fetchStatsForPlatform(
     case "youtube":
       result = await fetchYouTubeStats(account.accessToken);
       break;
-    default:
+    case "facebook":
+      result = await fetchFacebookStats(
+        account.accessToken,
+        account.platformMetadata.pageId,
+      );
+      break;
+    case "linkedin":
+      result = await fetchLinkedInStats(
+        account.accessToken,
+        account.platformMetadata.personId,
+      );
+      break;
+    case "pinterest":
+      result = await fetchPinterestStats(account.accessToken);
+      break;
+    case "tiktok":
+      result = await fetchTikTokStats(account.accessToken);
+      break;
+    case "x":
+    case "bluesky":
       return emptyStats(account.platform);
+    default:
+      return emptyStats(account.platform as SocialPlatform);
   }
 
   if (result.ok) {

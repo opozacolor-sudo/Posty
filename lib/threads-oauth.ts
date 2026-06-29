@@ -5,6 +5,19 @@ export const THREADS_OAUTH_SCOPES = [
   "threads_content_publish",
 ] as const;
 
+export const THREADS_INSIGHTS_SCOPES = ["threads_manage_insights"] as const;
+
+export function getThreadsOAuthScopes(): readonly string[] {
+  const includeInsights =
+    process.env.THREADS_INCLUDE_INSIGHTS_SCOPES?.trim().toLowerCase() === "true";
+
+  if (includeInsights) {
+    return [...THREADS_OAUTH_SCOPES, ...THREADS_INSIGHTS_SCOPES];
+  }
+
+  return THREADS_OAUTH_SCOPES;
+}
+
 type ShortLivedTokenResponse = {
   access_token?: string;
   user_id?: string | number;
@@ -26,14 +39,17 @@ type ThreadsProfileResponse = {
   error?: { message: string };
 };
 
-export function buildThreadsOAuthUrl(state: string): string {
+export function buildThreadsOAuthUrl(
+  state: string,
+  scopes: readonly string[] = getThreadsOAuthScopes(),
+): string {
   const { appId, redirectUri } = assertThreadsConfigured();
 
   const params = new URLSearchParams({
     client_id: appId,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: THREADS_OAUTH_SCOPES.join(","),
+    scope: scopes.join(","),
     state,
   });
 

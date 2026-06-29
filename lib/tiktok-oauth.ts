@@ -2,6 +2,19 @@ import { assertTikTokConfigured } from "./tiktok-env";
 
 export const TIKTOK_OAUTH_SCOPES = ["user.info.basic"] as const;
 
+export const TIKTOK_STATS_SCOPES = ["user.info.stats", "video.list"] as const;
+
+export function getTikTokOAuthScopes(): readonly string[] {
+  const includeStats =
+    process.env.TIKTOK_INCLUDE_STATS_SCOPES?.trim().toLowerCase() === "true";
+
+  if (includeStats) {
+    return [...TIKTOK_OAUTH_SCOPES, ...TIKTOK_STATS_SCOPES];
+  }
+
+  return TIKTOK_OAUTH_SCOPES;
+}
+
 type TokenResponse = {
   access_token?: string;
   refresh_token?: string;
@@ -37,13 +50,16 @@ function unwrapTokenResponse(data: TokenResponse) {
   };
 }
 
-export function buildTikTokOAuthUrl(state: string): string {
+export function buildTikTokOAuthUrl(
+  state: string,
+  scopes: readonly string[] = getTikTokOAuthScopes(),
+): string {
   const { clientKey, redirectUri } = assertTikTokConfigured();
 
   const params = new URLSearchParams({
     client_key: clientKey,
     response_type: "code",
-    scope: TIKTOK_OAUTH_SCOPES.join(","),
+    scope: scopes.join(","),
     redirect_uri: redirectUri,
     state,
   });
