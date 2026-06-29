@@ -53,15 +53,30 @@ export function ChatBar() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
+          redirect: "manual",
           body: JSON.stringify({ messages: history, locale }),
         });
 
-        const data = (await response.json()) as {
+        if (response.type === "opaqueredirect" || response.status === 307 || response.status === 302) {
+          return t("chatSessionExpired");
+        }
+
+        if (response.status === 401) {
+          return t("chatSessionExpired");
+        }
+
+        let data: {
           reply?: string;
           error?: string;
           source?: "claude" | "mock" | "error";
           configured?: boolean;
         };
+
+        try {
+          data = (await response.json()) as typeof data;
+        } catch {
+          return t("chatError");
+        }
 
         if (data.source === "mock" && data.configured === false) {
           setChatModeNotice(t("chatNotConfigured"));

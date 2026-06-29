@@ -58,6 +58,12 @@ export async function updateSession(
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+
+  // Refresh Supabase session cookies, but never redirect API callers to the login page.
+  if (pathname.startsWith("/api/")) {
+    return supabaseResponse;
+  }
+
   const locale = getLocaleFromPath(pathname);
   const pathWithoutLocale = getPathWithoutLocale(pathname);
 
