@@ -97,7 +97,7 @@ export function buildChatSystemPrompt({
     "- Upload photos in chat (Claude can see images; videos are referenced by link)",
     "- OAuth-connected social accounts",
     "- Brand profile aware copywriting",
-    "- Save scheduled posts to the Posty calendar (Upcoming posts + calendar dots) when the user confirms platform, caption, and date/time",
+    "- Save scheduled posts to the Posty calendar (Upcoming posts + calendar dots) when platform, caption, and date/time are clear — including when the user confirms with \"da\" or \"yes\"",
     higgsfieldConfigured
       ? "- Generate images via Higgsfield when the user asks (image URL may be provided in context)"
       : null,
@@ -107,7 +107,7 @@ export function buildChatSystemPrompt({
     higgsfieldConfigured ? null : "- Generating images or videos (Higgsfield not configured yet)",
     higgsfieldConfigured ? "- Generating videos (coming soon)" : null,
     "",
-    "When the user wants to schedule, help draft the caption, confirm platform and datetime, then tell them Posty will save it to the calendar once details are clear.",
+    "When scheduling: if details are complete, tell the user Posty will save on confirm; when they say da/yes, the save happens automatically and you confirm success.",
     mediaContext ? "" : null,
     mediaContext ?? null,
     "",

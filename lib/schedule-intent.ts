@@ -21,7 +21,10 @@ type ScheduleExtraction = {
 };
 
 const SCHEDULE_KEYWORDS =
-  /\b(programeaz|program(ez|are|at|ezi)|schedule|planific|plan(eaz|ez)|confirm(a|ă)\s+(program|schedule)|da,?\s*programeaz|post(eaz|ez)?\s+(pe|on|for|la)\s+|set\s+up\s+(the\s+)?post)\b/i;
+  /\b(programeaz|program(ez|are|at|ezi)|schedule|planific|plan(eaz|ez)|confirm(a|ă)\s+(program|schedule)|da,?\s*programeaz|post(eaz|ez)?\s+(pe|on|for|la)\s+|set\s+up\s+(the\s+)?post|salveaz[aă]\s+(post|în calendar))\b/i;
+
+const CONFIRM_ONLY =
+  /^(da|yes|yep|ok|okay|confirm[aă]?|sigur|perfect|mergi|save|salveaz[aă])[\s!.?,]*$/i;
 
 function isSocialPlatform(value: string): value is SocialPlatform {
   return PLATFORMS.includes(value as SocialPlatform);
@@ -29,6 +32,68 @@ function isSocialPlatform(value: string): value is SocialPlatform {
 
 export function userMentionsScheduling(message: string): boolean {
   return SCHEDULE_KEYWORDS.test(message);
+}
+
+export function userConfirmsScheduling(message: string): boolean {
+  const trimmed = message.trim();
+  return (
+    CONFIRM_ONLY.test(trimmed) ||
+    /\b(da,?\s*(programeaz|salveaz|confirm)|yes,?\s*(schedule|save|confirm))\b/i.test(
+      trimmed,
+    )
+  );
+}
+
+function conversationHasPendingSchedule(messages: ChatMessage[]): boolean {
+  if (
+    messages.some(
+      (message) =>
+        message.role === "user" && userMentionsScheduling(message.content),
+    )
+  ) {
+    return true;
+  }
+
+  const recentAssistant = [...messages]
+    .reverse()
+    .filter((message) => message.role === "assistant")
+    .slice(0, 2);
+
+  return recentAssistant.some((message) => {
+    const text = message.content;
+    const lower = text.toLowerCase();
+
+    return (
+      (/\b(instagram|tiktok|youtube|facebook|linkedin|threads|pinterest)\b/i.test(
+        text,
+      ) &&
+        (/\b(mâine|tomorrow|azi|today|\d{1,2}:\d{2}|18:00|calendar|program)\b/i.test(
+          lower,
+        ) ||
+          /platform[aă]?:|caption:|data\/ora:|summary for post/i.test(text))) ||
+      /salvez postarea|save (it )?to (the )?calendar|spune ['"]da['"]/i.test(
+        text,
+      )
+    );
+  });
+}
+
+export function shouldAttemptScheduleExtraction(
+  lastUserMessage: string,
+  messages: ChatMessage[],
+): boolean {
+  if (userMentionsScheduling(lastUserMessage)) {
+    return true;
+  }
+
+  if (
+    userConfirmsScheduling(lastUserMessage) &&
+    conversationHasPendingSchedule(messages)
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function formatHistoryForExtraction(messages: ChatMessage[]): string {
@@ -88,7 +153,7 @@ export async function extractScheduleFromConversation(options: {
     [...messages].reverse().find((message) => message.role === "user")?.content ??
     "";
 
-  if (!userMentionsScheduling(lastUserMessage)) {
+  if (!shouldAttemptScheduleExtraction(lastUserMessage, messages)) {
     return null;
   }
 
@@ -110,7 +175,9 @@ export async function extractScheduleFromConversation(options: {
     '{ "shouldSchedule": boolean, "platform": "instagram"|"tiktok"|..., "title": "short preview max 80 chars", "caption": "full post text", "scheduledAt": "ISO 8601 with timezone offset", "mediaUrl": string|null, "reason": "why not scheduling if shouldSchedule is false" }',
     "",
     "Rules:",
-    "- Set shouldSchedule true ONLY when the user clearly wants to save/schedule a post AND platform, caption, and future datetime are known.",
+    "- Set shouldSchedule true when the user wants to save/schedule AND platform, caption, and future datetime are known (from any message in the thread).",
+    "- If the user says \"cu captionul tău\" / \"with your caption\", use the caption Claude drafted in an earlier assistant message.",
+    "- Short confirmations (\"da\", \"yes\", \"ok\") after a schedule summary mean shouldSchedule true — reuse platform, caption, and time from the conversation.",
     "- Use a connected platform when possible; if user picks a disconnected platform, set shouldSchedule false.",
     "- title = short preview of caption (first line or hook).",
     "- scheduledAt must be in the future.",

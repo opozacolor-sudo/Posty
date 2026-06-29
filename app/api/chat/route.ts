@@ -22,7 +22,7 @@ import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
 import {
   extractScheduleFromConversation,
   formatScheduleConfirmation,
-  userMentionsScheduling,
+  shouldAttemptScheduleExtraction,
 } from "@/lib/schedule-intent";
 import { createScheduledPost } from "@/lib/scheduled-posts";
 import { createClient } from "@/lib/supabase-server";
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       | Awaited<ReturnType<typeof createScheduledPost>>
       | undefined;
 
-    if (userMentionsScheduling(lastUserMessage)) {
+    if (shouldAttemptScheduleExtraction(lastUserMessage, history)) {
       try {
         const scheduleInput = await extractScheduleFromConversation({
           messages: history,
@@ -161,6 +161,10 @@ export async function POST(request: Request) {
               `Scheduled: ${scheduleInput.scheduledAt}`,
               `Caption preview: ${scheduleInput.title}`,
             ].join("\n");
+          } else {
+            console.error(
+              "[posty/chat] Schedule save returned null — is scheduled_posts migration applied?",
+            );
           }
         }
       } catch (error) {
