@@ -161,7 +161,7 @@ export function extractCaption(messages: ChatMessage[]): string | null {
     }
 
     const inlineCaption = message.content.match(
-      /\b(?:cu textul|with (?:the )?(?:text|caption)|captionul)[:\s]+([\s\S]+)$/i,
+      /\b(?:cu (?:textul|descrierea|descriere|caption(?:ul)?)|with (?:the )?(?:text|caption|description)|(?:caption|description|descrierea|descriere))[:\s]+([\s\S]+)$/i,
     );
 
     if (inlineCaption?.[1]?.trim()) {

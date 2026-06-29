@@ -91,7 +91,7 @@ function normalizeHistory(messages: ChatMessage[]): ChatMessage[] {
     messages.filter(
       (message) =>
         (message.role === "user" || message.role === "assistant") &&
-        message.content.trim(),
+        (message.content.trim() || Boolean(message.attachments?.length)),
     ),
   );
 }

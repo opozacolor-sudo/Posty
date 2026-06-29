@@ -25,7 +25,7 @@ export function formatPublishMissingDetailsReply(locale: string): string {
       "- ai atașat poza sau videoul cu 📎",
       "- există un caption (text + hashtag-uri) în chat",
       "",
-      "Apoi scrie: „postează pe youtube”, „postează pe tiktok” sau „postează pe instagram”.",
+      "Apoi scrie: „postează pe youtube”, „postează pe tiktok cu descrierea …” sau „postează pe instagram”.",
     ].join("\n");
   }
 
