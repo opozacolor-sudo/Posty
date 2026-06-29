@@ -138,3 +138,26 @@ export async function fetchChatMediaBytes(
 
   return { bytes, contentType };
 }
+
+export async function fetchPublishMediaBytes(
+  mediaUrl: string,
+): Promise<{ bytes: Buffer; contentType: string } | null> {
+  const storagePath = parseChatMediaStoragePath(mediaUrl);
+  if (storagePath) {
+    return fetchChatMediaBytes(storagePath);
+  }
+
+  try {
+    const response = await fetch(mediaUrl);
+    if (!response.ok) {
+      return null;
+    }
+
+    const contentType =
+      response.headers.get("content-type") ?? "application/octet-stream";
+    const bytes = Buffer.from(await response.arrayBuffer());
+    return { bytes, contentType };
+  } catch {
+    return null;
+  }
+}

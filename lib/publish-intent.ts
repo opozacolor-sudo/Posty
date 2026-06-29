@@ -4,7 +4,7 @@ import type { ChatAttachment } from "./chat-upload";
 import type { PublishInput } from "./publish";
 import {
   extractCaption,
-  findLatestMediaUrl,
+  findLatestPublishMedia,
   userConfirmsScheduling,
 } from "./schedule-intent";
 
@@ -18,13 +18,13 @@ const PUBLISH_KEYWORDS =
   /\b(post(eaz|ez)?\s+acum|post(eaz|ez)?\s+poza|posteaz[aă]\s+poza|poza anterioar[aă]|post\s+now|publish\s+now|public[aă]\s+acum|trimite\s+acum|posteaz[aă]\s+pe\s+toate|pe\s+toate\s+(re[tț]elele|platformele|conturile)|toate\s+(re[tț]elele|platformele|conturile)|all\s+(connected|networks|platforms)|post\s+to\s+all)\b/i;
 
 const PLATFORM_PUBLISH_PATTERN =
-  /\b(post(eaz|ez)?(ă|a)?|public[aă]|trimite)\s+(pe\s+)?(instagram|insta|\big\b|facebook|linkedin|threads|pinterest|tiktok|youtube)\b/i;
+  /\b(post(eaz|ez)?(ă|a)?|public[aă]|trimite)\s+(pe\s+)?(video(l)?\s+(pe\s+)?)?(instagram|insta|\big\b|facebook|linkedin|threads|pinterest|tiktok|youtube)\b/i;
 
 const PUBLISH_RETRY_PATTERN =
   /\b(ai postat|s-a postat|a mers|re[iî]ncearc[aă]|(?:mai\s+)?(?:o\s+dat[aă]|din nou)|retry|post again|did it post)\b/i;
 
 function conversationReadyToPublish(messages: ChatMessage[]): boolean {
-  return Boolean(extractCaption(messages) && findLatestMediaUrl(messages));
+  return Boolean(extractCaption(messages) && findLatestPublishMedia(messages));
 }
 
 function lastAssistantPublishWasInconclusive(messages: ChatMessage[]): boolean {
@@ -189,9 +189,15 @@ export function extractPublishFromConversation(options: {
     return null;
   }
 
+  const media = findLatestPublishMedia(messages);
+  if (!media) {
+    return null;
+  }
+
   return {
     caption,
-    mediaUrl: findLatestMediaUrl(messages),
+    mediaUrl: media.url,
+    mediaType: media.mediaType,
     targetPlatforms,
   };
 }

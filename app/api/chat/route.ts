@@ -25,7 +25,7 @@ import {
 } from "@/lib/publish-intent";
 import {
   extractCaption,
-  findLatestMediaUrl,
+  findLatestPublishMedia,
 } from "@/lib/schedule-intent";
 import {
   formatPublishResultsSummary,
@@ -37,7 +37,6 @@ import {
   formatPublishUserReply,
 } from "@/lib/publish-reply";
 import { getAppBaseUrl } from "@/lib/app-url";
-import { resolvePublishMediaUrl } from "@/lib/publish-media-url";
 import {
   extractScheduleFromConversation,
   formatScheduleConfirmation,
@@ -172,14 +171,10 @@ export async function POST(request: Request) {
 
         if (publishInput) {
           const appBaseUrl = getAppBaseUrl(request);
-          const publishMediaUrl = await resolvePublishMediaUrl(
-            publishInput.mediaUrl,
-            appBaseUrl,
-          );
 
           publishResults = await publishToConnectedPlatforms(user.id, publishInput, {
             sessionClient: supabase,
-            mediaUrl: publishMediaUrl,
+            appBaseUrl,
           });
           publishSummary = formatPublishResultsSummary(publishResults, locale);
           const anySuccess = publishResults.some((result) => result.success);
@@ -216,15 +211,15 @@ export async function POST(request: Request) {
         } else {
           publishFailed = true;
           const hasCaption = Boolean(extractCaption(history));
-          const hasMedia = Boolean(findLatestMediaUrl(history));
+          const publishMedia = findLatestPublishMedia(history);
           mediaContext = [
             "IMPORTANT: Could not publish — missing details from the conversation.",
             hasCaption
               ? "Caption was found."
               : "Caption is missing — include text or ask Claude to draft one.",
-            hasMedia
-              ? "Image URL was found."
-              : "Image is missing — attach the photo with 📎 in chat (required for Instagram).",
+            publishMedia
+              ? `Media was found (${publishMedia.mediaType}).`
+              : "Media is missing — attach a photo or video with 📎 in chat.",
             "Do NOT claim anything was published.",
           ].join("\n");
         }

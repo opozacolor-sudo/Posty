@@ -5,12 +5,17 @@ import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
 import { publishFacebookPhotoPost } from "./publish-facebook";
 import { publishInstagramPost } from "./publish-instagram";
 import { publishLinkedInImagePost } from "./publish-linkedin";
+import { fetchPublishMediaBytes, resolvePublishMediaUrl } from "./publish-media-url";
 import { publishPinterestPin } from "./publish-pinterest";
 import { publishThreadsPost } from "./publish-threads";
+import { publishYouTubeVideo } from "./publish-youtube";
+
+export type PublishMediaType = "image" | "video";
 
 export type PublishInput = {
   caption: string;
   mediaUrl?: string | null;
+  mediaType?: PublishMediaType | null;
   targetPlatforms: "all" | SocialPlatform[];
 };
 
@@ -20,11 +25,6 @@ export type PublishPlatformResult = {
   postId?: string;
   error?: string;
   skipped?: boolean;
-};
-
-const VIDEO_ONLY_REASONS: Partial<Record<SocialPlatform, string>> = {
-  tiktok: "TikTok accepts video only, not photo posts",
-  youtube: "YouTube accepts video only, not photo posts",
 };
 
 const UNSUPPORTED_REASONS: Partial<Record<SocialPlatform, string>> = {
@@ -45,23 +45,69 @@ function requiresImage(platform: SocialPlatform): boolean {
   );
 }
 
+function requiresVideo(platform: SocialPlatform): boolean {
+  return platform === "youtube" || platform === "tiktok";
+}
+
+type PublishMediaPayload = {
+  mediaType: PublishMediaType | null;
+  imageUrl?: string | null;
+  videoBytes?: Buffer;
+  videoContentType?: string;
+};
+
 async function publishToPlatform(
   platform: SocialPlatform,
   accessToken: string,
   caption: string,
-  mediaUrl?: string | null,
+  media: PublishMediaPayload,
   platformMetadata: Record<string, string> = {},
+  refreshToken: string | null = null,
 ): Promise<PublishPlatformResult> {
-  if (VIDEO_ONLY_REASONS[platform]) {
+  if (requiresVideo(platform)) {
+    if (media.mediaType !== "video" || !media.videoBytes) {
+      return {
+        platform,
+        success: false,
+        skipped: true,
+        error: `${platform} needs a video attached with 📎 (mp4/mov)`,
+      };
+    }
+
+    if (platform === "tiktok") {
+      return {
+        platform,
+        success: false,
+        skipped: true,
+        error: "TikTok video upload is coming soon",
+      };
+    }
+
+    if (platform === "youtube") {
+      const result = await publishYouTubeVideo({
+        accessToken,
+        refreshToken,
+        caption,
+        videoBytes: media.videoBytes,
+        contentType: media.videoContentType ?? "video/mp4",
+      });
+
+      return result.ok
+        ? { platform, success: true, postId: result.postId }
+        : { platform, success: false, error: result.error };
+    }
+  }
+
+  if (media.mediaType === "video") {
     return {
       platform,
       success: false,
       skipped: true,
-      error: VIDEO_ONLY_REASONS[platform],
+      error: `${platform} accepts photos only, not video`,
     };
   }
 
-  if (requiresImage(platform) && !mediaUrl) {
+  if (requiresImage(platform) && !media.imageUrl) {
     return {
       platform,
       success: false,
@@ -69,11 +115,11 @@ async function publishToPlatform(
     };
   }
 
-  if (platform === "instagram" && mediaUrl) {
+  if (platform === "instagram" && media.imageUrl) {
     const result = await publishInstagramPost({
       accessToken,
       caption,
-      imageUrl: mediaUrl,
+      imageUrl: media.imageUrl,
     });
 
     return result.ok
@@ -85,7 +131,7 @@ async function publishToPlatform(
     const result = await publishThreadsPost({
       accessToken,
       caption,
-      imageUrl: mediaUrl,
+      imageUrl: media.imageUrl,
     });
 
     return result.ok
@@ -93,12 +139,12 @@ async function publishToPlatform(
       : { platform, success: false, error: result.error };
   }
 
-  if (platform === "facebook" && mediaUrl) {
+  if (platform === "facebook" && media.imageUrl) {
     const result = await publishFacebookPhotoPost({
       accessToken,
       pageId: platformMetadata.pageId,
       caption,
-      imageUrl: mediaUrl,
+      imageUrl: media.imageUrl,
     });
 
     return result.ok
@@ -106,11 +152,11 @@ async function publishToPlatform(
       : { platform, success: false, error: result.error };
   }
 
-  if (platform === "linkedin" && mediaUrl) {
+  if (platform === "linkedin" && media.imageUrl) {
     const result = await publishLinkedInImagePost({
       accessToken,
       caption,
-      imageUrl: mediaUrl,
+      imageUrl: media.imageUrl,
     });
 
     return result.ok
@@ -118,12 +164,12 @@ async function publishToPlatform(
       : { platform, success: false, error: result.error };
   }
 
-  if (platform === "pinterest" && mediaUrl) {
+  if (platform === "pinterest" && media.imageUrl) {
     const result = await publishPinterestPin({
       accessToken,
       boardId: platformMetadata.boardId,
       caption,
-      imageUrl: mediaUrl,
+      imageUrl: media.imageUrl,
     });
 
     return result.ok
@@ -144,7 +190,7 @@ export async function publishToConnectedPlatforms(
   input: PublishInput,
   options?: {
     sessionClient?: SupabaseClient;
-    mediaUrl?: string | null;
+    appBaseUrl?: string;
   },
 ): Promise<PublishPlatformResult[]> {
   const accounts = await fetchConnectedAccountsWithTokens(
@@ -156,7 +202,8 @@ export async function publishToConnectedPlatforms(
     return [];
   }
 
-  const mediaUrl = options?.mediaUrl ?? input.mediaUrl;
+  const mediaUrl = input.mediaUrl;
+  const mediaType = input.mediaType ?? null;
 
   const connectedPlatforms = accounts.map((account) => account.platform);
   const targets =
@@ -165,6 +212,32 @@ export async function publishToConnectedPlatforms(
       : input.targetPlatforms.filter((platform) =>
           connectedPlatforms.includes(platform),
         );
+
+  let imageUrl: string | null = null;
+  let videoBytes: Buffer | undefined;
+  let videoContentType: string | undefined;
+
+  if (mediaType === "video" && mediaUrl) {
+    const downloaded = await fetchPublishMediaBytes(mediaUrl);
+    if (!downloaded) {
+      return targets.map((platform) => ({
+        platform,
+        success: false,
+        error: "Could not download video for publishing",
+      }));
+    }
+    videoBytes = downloaded.bytes;
+    videoContentType = downloaded.contentType;
+  } else if (mediaUrl) {
+    imageUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
+  }
+
+  const mediaPayload: PublishMediaPayload = {
+    mediaType,
+    imageUrl,
+    videoBytes,
+    videoContentType,
+  };
 
   const results: PublishPlatformResult[] = [];
 
@@ -188,8 +261,9 @@ export async function publishToConnectedPlatforms(
         platform,
         account.accessToken,
         input.caption,
-        mediaUrl,
+        mediaPayload,
         account.platformMetadata,
+        account.refreshToken,
       ),
     );
   }

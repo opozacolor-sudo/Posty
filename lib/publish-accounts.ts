@@ -6,6 +6,7 @@ export type ConnectedAccountWithToken = {
   platform: SocialPlatform;
   accountName: string | null;
   accessToken: string;
+  refreshToken: string | null;
   isActive: boolean;
   platformMetadata: Record<string, string>;
 };
@@ -14,6 +15,7 @@ type ConnectedAccountTokenRow = {
   platform: string;
   account_name: string | null;
   access_token: string | null;
+  refresh_token: string | null;
   is_active: boolean;
   platform_metadata: unknown;
 };
@@ -27,6 +29,7 @@ function mapConnectedAccountRows(
       platform: row.platform as SocialPlatform,
       accountName: row.account_name,
       accessToken: row.access_token as string,
+      refreshToken: row.refresh_token ?? null,
       isActive: row.is_active,
       platformMetadata:
         row.platform_metadata &&
@@ -43,7 +46,9 @@ async function fetchRowsFromClient(
 ): Promise<ConnectedAccountTokenRow[]> {
   const { data, error } = await client
     .from("connected_accounts")
-    .select("platform, account_name, access_token, is_active, platform_metadata")
+    .select(
+      "platform, account_name, access_token, refresh_token, is_active, platform_metadata",
+    )
     .eq("user_id", userId)
     .eq("is_active", true);
 

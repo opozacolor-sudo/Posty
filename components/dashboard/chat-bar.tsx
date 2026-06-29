@@ -194,6 +194,7 @@ export function ChatBar({
       const mayPublish = shouldAttemptPublish(trimmed, history);
       const mayGenerateImage =
         !mayPublish &&
+        !/\bvideo|mp4|youtube|tiktok\b/i.test(historyText) &&
         (/\b(genereaz[aă]|imagine|story|povest|photo|image|graphic)\b/i.test(
           historyText,
         ) ||

@@ -22,10 +22,10 @@ export function formatPublishMissingDetailsReply(locale: string): string {
       "Nu am putut publica — îmi lipsesc detalii din conversație.",
       "",
       "Verifică:",
-      "- ai atașat poza cu 📎",
+      "- ai atașat poza sau videoul cu 📎",
       "- există un caption (text + hashtag-uri) în chat",
       "",
-      "Apoi scrie din nou: „postează pe instagram”.",
+      "Apoi scrie: „postează pe youtube” sau „postează pe instagram”.",
     ].join("\n");
   }
 
@@ -33,9 +33,9 @@ export function formatPublishMissingDetailsReply(locale: string): string {
     "Could not publish — missing details from the conversation.",
     "",
     "Check:",
-    "- you attached a photo with 📎",
+    "- you attached a photo or video with 📎",
     "- a caption exists in the chat",
     "",
-    "Then try again: “post on instagram”.",
+    "Then try: “post on youtube” or “post on instagram”.",
   ].join("\n");
 }

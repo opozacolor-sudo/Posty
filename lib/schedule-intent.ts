@@ -315,6 +315,74 @@ export function findLatestMediaUrl(messages: ChatMessage[]): string | null {
   return null;
 }
 
+export function findLatestVideoUrl(messages: ChatMessage[]): string | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    const attachment = message.attachments?.find((item) =>
+      item.mediaType.startsWith("video/"),
+    );
+    if (attachment?.url) {
+      return attachment.url;
+    }
+  }
+
+  return null;
+}
+
+export type PublishMedia = {
+  url: string;
+  mediaType: "image" | "video";
+  contentType: string;
+};
+
+export function findLatestPublishMedia(messages: ChatMessage[]): PublishMedia | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (!message.attachments?.length) {
+      continue;
+    }
+
+    const video = message.attachments.find((item) =>
+      item.mediaType.startsWith("video/"),
+    );
+    if (video?.url) {
+      return {
+        url: video.url,
+        mediaType: "video",
+        contentType: video.mediaType,
+      };
+    }
+
+    const image = message.attachments.find((item) =>
+      item.mediaType.startsWith("image/"),
+    );
+    if (image?.url) {
+      return {
+        url: image.url,
+        mediaType: "image",
+        contentType: image.mediaType,
+      };
+    }
+  }
+
+  const generatedMatch = [...messages]
+    .reverse()
+    .map((message) =>
+      message.content.match(/\[Posty generated image: (https?:\/\/[^\]]+)\]/i),
+    )
+    .find(Boolean);
+
+  if (generatedMatch?.[1]) {
+    return {
+      url: generatedMatch[1],
+      mediaType: "image",
+      contentType: "image/jpeg",
+    };
+  }
+
+  return null;
+}
+
 function parseExtractionJson(text: string): ScheduleExtraction | null {
   const trimmed = text.trim();
   const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
