@@ -120,7 +120,7 @@
     "publishFailed": "Nu s-a publicat pe nicio platformă. Vezi rezultatul detaliat din răspuns.",
     "publishPartial": "Publicat pe unele platforme — vezi detaliile în răspuns.",
     "statsLoading": "Se încarcă statisticile...",
-    "statsPeriodHint": "Ultimele 30 zile · conturi conectate",
+    "statsPeriodHint": "Ultima postare · conturi conectate",
     "statsConnectHint": "Conectează un cont din Conturi pentru statistici reale.",
     "statsUnavailable": "Statistici indisponibile pentru această platformă (lipsesc permisiuni API).",
     "connectInstagram": "Conectează Instagram",

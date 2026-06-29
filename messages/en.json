@@ -70,7 +70,7 @@
     "publishFailed": "Could not publish to any platform. Check the reply for details.",
     "publishPartial": "Published to some platforms — see Claude's reply for details.",
     "statsLoading": "Loading statistics...",
-    "statsPeriodHint": "Last 30 days · connected accounts",
+    "statsPeriodHint": "Latest post · connected accounts",
     "statsConnectHint": "Connect an account from Accounts to see live stats.",
     "statsUnavailable": "Stats unavailable for this platform (missing API permissions).",
     "assistantName": "Claude",
