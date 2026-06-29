@@ -91,18 +91,31 @@ export default async function AccountsPage({ params }: Props) {
                       : t("connected")
                     : t("notConnected")}
                 </p>
+                {platform === "tiktok" && connected ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("tiktokVideoHint")}
+                  </p>
+                ) : null}
               </div>
 
               <div className="relative z-10 flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
                 {connected ? (
                   <>
                     {platform === "tiktok" ? (
-                      <a
-                        href={buildTikTokConnectPath(locale, { publish: true })}
-                        className="inline-flex cursor-pointer rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted no-underline"
-                      >
-                        {t("reconnect")}
-                      </a>
+                      <>
+                        <a
+                          href={buildTikTokConnectPath(locale, "basic")}
+                          className="inline-flex cursor-pointer rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted no-underline"
+                        >
+                          {t("reconnect")}
+                        </a>
+                        <a
+                          href={buildTikTokConnectPath(locale, { publish: true })}
+                          className="inline-flex cursor-pointer rounded-full border border-coral/30 bg-coral/5 px-4 py-2 text-sm font-semibold text-coral transition-colors hover:bg-coral/10 no-underline"
+                        >
+                          {t("tiktokEnableVideo")}
+                        </a>
+                      </>
                     ) : null}
                     <form action="/api/accounts/disconnect" method="POST">
                     <input type="hidden" name="platform" value={platform} />

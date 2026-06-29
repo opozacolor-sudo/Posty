@@ -98,6 +98,8 @@
     "accountsSubtitle": "Link your social media accounts to schedule and publish posts.",
     "connect": "Connect",
     "reconnect": "Reconnect",
+    "tiktokEnableVideo": "Enable video",
+    "tiktokVideoHint": "For video posting: enable Content Posting API + video.publish scope in TikTok Developer, then tap Enable video.",
     "connectInstagram": "Connect Instagram",
     "connectedAs": "Connected as @{name}",
     "instagramConnected": "Instagram connected successfully!",
