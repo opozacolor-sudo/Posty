@@ -98,7 +98,9 @@ export function buildChatSystemPrompt({
     "- OAuth-connected social accounts",
     "- Brand profile aware copywriting",
     "- Save scheduled posts to the Posty calendar (Upcoming posts + calendar dots) when platform, caption, and date/time are clear — including when the user confirms with \"da\" or \"yes\"",
-    "- Publish posts now to connected platforms when the user says \"postează acum\" / \"post now\" (photo+caption: Instagram, Facebook, LinkedIn, Pinterest, Threads; video: YouTube + TikTok)",
+    "- Scheduled posts publish automatically at the chosen time (background worker on Posty servers)",
+    "- Publish posts now when the user wants immediate posting: \"postează acum\", \"postează pe youtube\", \"pune pe instagram\", \"publică acum\", \"trimite pe tiktok\", \"post now\", etc. (photo+caption: Instagram, Facebook, LinkedIn, Pinterest, Threads; video: YouTube; TikTok video needs TikTok App Review for public posts)",
+    "- Schedule posts when the user mentions a future time: \"programează\", \"programează mâine la 18\", \"pune în calendar\", \"planifică pentru luni\", \"schedule for tomorrow\", etc.",
     higgsfieldConfigured
       ? "- Generate images via Higgsfield when the user asks (image URL may be provided in context)"
       : null,

@@ -2,6 +2,7 @@ import { PLATFORM_COLORS } from "@/components/dashboard/platform-icon";
 import { getDatePartsInTimeZone, getScheduleDisplayTimeZone } from "./schedule-display";
 import type { ScheduledPost, SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
+import type { PublishMediaType } from "./publish";
 import { createAdminClient, isSupabaseAdminConfigured } from "./supabase-admin";
 import { getSupabaseProjectRef } from "./save-connected-account";
 import type { createClient } from "./supabase-server";
@@ -14,7 +15,11 @@ export type ScheduledPostRow = {
   caption: string | null;
   scheduled_at: string;
   media_url: string | null;
+  media_type: string | null;
   status: string;
+  published_at: string | null;
+  last_publish_error: string | null;
+  publish_attempts: number;
   created_at: string;
 };
 
@@ -24,6 +29,7 @@ export type CreateScheduledPostInput = {
   caption?: string | null;
   scheduledAt: string;
   mediaUrl?: string | null;
+  mediaType?: "image" | "video" | null;
 };
 
 export async function checkScheduledPostsTable(
@@ -167,6 +173,7 @@ export async function createScheduledPost(
       caption: input.caption?.slice(0, 5000) ?? null,
       scheduled_at: scheduledAt.toISOString(),
       media_url: input.mediaUrl ?? null,
+      media_type: input.mediaType ?? null,
       status: "scheduled",
     })
     .select("*")
@@ -204,4 +211,114 @@ export function getScheduledDaysForMonth(
   }
 
   return [...days].sort((a, b) => a - b);
+}
+
+export function inferScheduledMediaType(
+  mediaUrl: string | null | undefined,
+): PublishMediaType | null {
+  if (!mediaUrl) {
+    return null;
+  }
+
+  if (/\.(mp4|mov|webm)(\?|$)/i.test(mediaUrl)) {
+    return "video";
+  }
+
+  if (/\.(jpe?g|png|webp|gif)(\?|$)/i.test(mediaUrl)) {
+    return "image";
+  }
+
+  return "image";
+}
+
+export async function claimScheduledPostForPublish(): Promise<ScheduledPostRow | null> {
+  const admin = createAdminClient();
+  const now = new Date().toISOString();
+
+  const { data: duePosts, error: fetchError } = await admin
+    .from("scheduled_posts")
+    .select("*")
+    .eq("status", "scheduled")
+    .lte("scheduled_at", now)
+    .order("scheduled_at", { ascending: true })
+    .limit(1);
+
+  if (fetchError) {
+    console.error("[posty/cron] fetch due posts failed:", fetchError.message);
+    return null;
+  }
+
+  const candidate = duePosts?.[0] as ScheduledPostRow | undefined;
+  if (!candidate) {
+    return null;
+  }
+
+  const { data: claimed, error: claimError } = await admin
+    .from("scheduled_posts")
+    .update({ status: "publishing" })
+    .eq("id", candidate.id)
+    .eq("status", "scheduled")
+    .select("*")
+    .maybeSingle();
+
+  if (claimError) {
+    console.error("[posty/cron] claim post failed:", claimError.message);
+    return null;
+  }
+
+  return (claimed as ScheduledPostRow | null) ?? null;
+}
+
+export async function markScheduledPostPublished(postId: string): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("scheduled_posts")
+    .update({
+      status: "published",
+      published_at: new Date().toISOString(),
+      last_publish_error: null,
+    })
+    .eq("id", postId);
+
+  if (error) {
+    console.error("[posty/cron] mark published failed:", error.message);
+  }
+}
+
+export async function markScheduledPostFailed(
+  postId: string,
+  errorMessage: string,
+): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("scheduled_posts")
+    .update({
+      status: "failed",
+      last_publish_error: errorMessage.slice(0, 2000),
+    })
+    .eq("id", postId);
+
+  if (error) {
+    console.error("[posty/cron] mark failed failed:", error.message);
+  }
+}
+
+export async function releaseScheduledPostAfterFailure(
+  postId: string,
+  errorMessage: string,
+  publishAttempts: number,
+): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("scheduled_posts")
+    .update({
+      status: "scheduled",
+      publish_attempts: publishAttempts,
+      last_publish_error: errorMessage.slice(0, 2000),
+    })
+    .eq("id", postId);
+
+  if (error) {
+    console.error("[posty/cron] release post failed:", error.message);
+  }
 }

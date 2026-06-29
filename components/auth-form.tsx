@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { createClient, isSupabaseReady } from "@/lib/supabase";
 
 type AuthMode = "login" | "signup";
@@ -95,6 +95,9 @@ export function AuthForm() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback?locale=${locale}`,
+            data: {
+              onboarding_completed: false,
+            },
           },
         });
 
@@ -104,7 +107,7 @@ export function AuthForm() {
         }
 
         if (data.session) {
-          router.push("/dashboard");
+          router.push("/onboarding");
           router.refresh();
           return;
         }
@@ -263,6 +266,20 @@ export function AuthForm() {
           {mode === "login" ? t("signup") : t("login")}
         </button>
       </p>
+
+      {mode === "signup" ? (
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          {t("signupLegalPrefix")}{" "}
+          <Link href="/terms" className="font-medium text-coral hover:underline">
+            {t("termsLink")}
+          </Link>{" "}
+          {t("signupLegalAnd")}{" "}
+          <Link href="/privacy" className="font-medium text-coral hover:underline">
+            {t("privacyLink")}
+          </Link>
+          .
+        </p>
+      ) : null}
     </div>
   );
 }

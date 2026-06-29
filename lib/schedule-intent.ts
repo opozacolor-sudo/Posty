@@ -1,4 +1,9 @@
 import { createClaudeReply } from "./anthropic-client";
+import {
+  messageWantsScheduleAction,
+  POST_NOW_VERB,
+  userConfirmsSchedule,
+} from "./chat-intent-triggers";
 import type { ConnectedAccount } from "./dashboard-data";
 import { PLATFORMS, type SocialPlatform } from "./dashboard-data";
 import type { ChatAttachment } from "./chat-upload";
@@ -21,28 +26,16 @@ type ScheduleExtraction = {
   reason?: string;
 };
 
-const SCHEDULE_KEYWORDS =
-  /\b(programeaz|program(ez|are|at|ezi)|schedule|planific|plan(eaz|ez)|confirm(a|ă)\s+(program|schedule)|da,?\s*programeaz|post(eaz|ez)?\s+(pe|on|for|la)\s+|set\s+up\s+(the\s+)?post|salveaz[aă]\s+(post|în calendar))\b/i;
-
-const CONFIRM_ONLY =
-  /^(da|yes|yep|ok|okay|confirm[aă]?|sigur|perfect|mergi|save|salveaz[aă])[\s!.?,]*$/i;
-
-function isSocialPlatform(value: string): value is SocialPlatform {
-  return PLATFORMS.includes(value as SocialPlatform);
-}
-
 export function userMentionsScheduling(message: string): boolean {
-  return SCHEDULE_KEYWORDS.test(message);
+  return messageWantsScheduleAction(message);
 }
 
 export function userConfirmsScheduling(message: string): boolean {
-  const trimmed = message.trim();
-  return (
-    CONFIRM_ONLY.test(trimmed) ||
-    /\b(da,?\s*(programeaz|salveaz|confirm)|yes,?\s*(schedule|save|confirm))\b/i.test(
-      trimmed,
-    )
-  );
+  return userConfirmsSchedule(message);
+}
+
+function isSocialPlatform(value: string): value is SocialPlatform {
+  return PLATFORMS.includes(value as SocialPlatform);
 }
 
 function conversationHasPendingSchedule(messages: ChatMessage[]): boolean {
@@ -83,7 +76,7 @@ export function shouldAttemptScheduleExtraction(
   lastUserMessage: string,
   messages: ChatMessage[],
 ): boolean {
-  if (/\b(post(eaz|ez)?\s+acum|post\s+now|publish\s+now|public[aă]\s+acum)\b/i.test(lastUserMessage)) {
+  if (POST_NOW_VERB.test(lastUserMessage)) {
     return false;
   }
 
@@ -274,12 +267,16 @@ export function parseScheduleHeuristic(options: {
     return null;
   }
 
+  const media = findLatestPublishMedia(messages);
+  const mediaUrl = media?.url ?? findLatestMediaUrl(messages);
+
   return {
     platform,
     title: caption.slice(0, 80),
     caption,
     scheduledAt,
-    mediaUrl: findLatestPublishMedia(messages)?.url ?? findLatestMediaUrl(messages),
+    mediaUrl,
+    mediaType: media?.mediaType ?? (mediaUrl ? "image" : null),
   };
 }
 
@@ -486,6 +483,8 @@ export async function extractScheduleFromConversation(options: {
     findLatestMediaUrl(messages) ||
     null;
 
+  const publishMedia = findLatestPublishMedia(messages);
+
   return {
     platform: extraction.platform,
     title:
@@ -494,6 +493,7 @@ export async function extractScheduleFromConversation(options: {
     caption: extraction.caption.trim(),
     scheduledAt: scheduledAt.toISOString(),
     mediaUrl,
+    mediaType: publishMedia?.mediaType ?? (mediaUrl ? "image" : null),
   };
 }
 

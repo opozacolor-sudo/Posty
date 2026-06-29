@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { locales, type Locale } from "@/i18n/routing";
+import { isOnboardingInProgress, isOnboardingRoute } from "./onboarding";
+import { isLegalRoute } from "./legal";
 import { assertSupabaseConfigured } from "./supabase-env";
 
 function getLocaleFromPath(pathname: string): Locale {
@@ -69,7 +71,7 @@ export async function updateSession(
 
   const isAuthCallback = pathname.startsWith("/auth");
   const isLoginPage = pathWithoutLocale === "/login";
-  const isPublicRoute = isAuthCallback || isLoginPage;
+  const isPublicRoute = isAuthCallback || isLoginPage || isLegalRoute(pathWithoutLocale);
 
   if (!user && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
@@ -79,7 +81,21 @@ export async function updateSession(
 
   if (user && isLoginPage) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = `/${locale}/dashboard`;
+    redirectUrl.pathname = isOnboardingInProgress(user)
+      ? `/${locale}/onboarding`
+      : `/${locale}/dashboard`;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (
+    user &&
+    isOnboardingInProgress(user) &&
+    !isOnboardingRoute(pathWithoutLocale) &&
+    !isLegalRoute(pathWithoutLocale) &&
+    !isPublicRoute
+  ) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = `/${locale}/onboarding`;
     return NextResponse.redirect(redirectUrl);
   }
 

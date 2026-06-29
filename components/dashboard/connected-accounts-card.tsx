@@ -7,10 +7,30 @@ import {
   PLATFORM_COLORS,
 } from "@/components/dashboard/platform-icon";
 import type { ConnectedAccount } from "@/lib/dashboard-data";
+import {
+  getPlatformPublishStatus,
+  type CapabilityLevel,
+} from "@/lib/platform-capabilities";
 
 type ConnectedAccountsCardProps = {
   accounts: ConnectedAccount[];
 };
+
+function connectionDotClass(connected: boolean, publishStatus: CapabilityLevel): string {
+  if (!connected) {
+    return "bg-muted-foreground/40";
+  }
+
+  if (publishStatus === "live") {
+    return "bg-green";
+  }
+
+  if (publishStatus === "review") {
+    return "bg-amber-500";
+  }
+
+  return "bg-muted-foreground/40";
+}
 
 export function ConnectedAccountsCard({ accounts }: ConnectedAccountsCardProps) {
   const t = useTranslations("dashboard");
@@ -67,9 +87,10 @@ export function ConnectedAccountsCard({ accounts }: ConnectedAccountsCardProps) 
                 className="h-3 w-3 md:h-3.5 md:w-3.5"
               />
               <span
-                className={`absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full ring-1 ring-white ${
-                  connected ? "bg-green" : "bg-muted-foreground/40"
-                }`}
+                className={`absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full ring-1 ring-white ${connectionDotClass(
+                  connected,
+                  getPlatformPublishStatus(platform),
+                )}`}
               />
             </div>
             {connected && accountName && platform === "instagram" && (

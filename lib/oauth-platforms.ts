@@ -1,4 +1,30 @@
 import type { SocialPlatform } from "./dashboard-data";
+import { buildTikTokConnectPath } from "./tiktok-oauth";
+
+export const OAUTH_CONNECT_PLATFORMS: SocialPlatform[] = [
+  "instagram",
+  "youtube",
+  "facebook",
+  "threads",
+  "tiktok",
+  "linkedin",
+  "pinterest",
+];
+
+export function getPlatformConnectHref(
+  platform: SocialPlatform,
+  locale: string,
+): string | null {
+  if (platform === "x" || platform === "bluesky") {
+    return null;
+  }
+
+  if (platform === "tiktok") {
+    return buildTikTokConnectPath(locale, "basic");
+  }
+
+  return buildConnectUrl(platform, locale);
+}
 
 export function buildConnectUrl(platform: SocialPlatform, locale: string): string {
   return `/api/auth/${platform}?locale=${encodeURIComponent(locale)}`;

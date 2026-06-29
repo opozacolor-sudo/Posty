@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import { LegalDocumentView } from "@/components/legal/legal-document-view";
+import { LegalPageShell } from "@/components/legal/legal-page-shell";
+import { getLegalDocument } from "@/lib/legal";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -8,15 +10,13 @@ type Props = {
 export default async function TermsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("dashboard");
+  const t = await getTranslations("legal");
+  const document = getLegalDocument("terms", locale);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <Link href="/dashboard" className="text-sm font-medium text-coral">
-        ← {t("backToDashboard")}
-      </Link>
-      <h1 className="mt-4 text-2xl font-bold">{t("termsOfService")}</h1>
-      <p className="mt-4 text-sm text-muted-foreground">{t("legalPlaceholder")}</p>
-    </div>
+    <LegalPageShell>
+      <h1 className="text-3xl font-bold tracking-tight">{document.title}</h1>
+      <LegalDocumentView document={document} lastUpdatedLabel={t("lastUpdated")} />
+    </LegalPageShell>
   );
 }
