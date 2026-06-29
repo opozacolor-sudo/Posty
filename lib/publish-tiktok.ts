@@ -46,7 +46,7 @@ function tikTokErrorMessage(error?: TikTokApiError, fallback = "TikTok API error
   }
 
   if (error.code === "unaudited_client_can_only_post_to_private_accounts") {
-    return "TikTok app not audited yet — posts are limited to private (SELF_ONLY)";
+    return "TikTok sandbox requires private posts — retrying with SELF_ONLY privacy";
   }
 
   return error.message?.trim() || error.code || fallback;
@@ -71,15 +71,16 @@ function pickPrivacyLevel(
   preferSelfOnly = false,
 ): string {
   const available = options ?? ["SELF_ONLY"];
+  const forcePublic =
+    process.env.TIKTOK_PUBLISH_PUBLIC?.trim().toLowerCase() === "true";
 
-  if (preferSelfOnly && available.includes("SELF_ONLY")) {
+  if (
+    (preferSelfOnly ||
+      !forcePublic ||
+      process.env.TIKTOK_PUBLISH_SELF_ONLY?.trim().toLowerCase() === "true") &&
+    available.includes("SELF_ONLY")
+  ) {
     return "SELF_ONLY";
-  }
-
-  if (process.env.TIKTOK_PUBLISH_SELF_ONLY?.trim().toLowerCase() === "true") {
-    if (available.includes("SELF_ONLY")) {
-      return "SELF_ONLY";
-    }
   }
 
   const preferred = [
