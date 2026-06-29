@@ -15,8 +15,15 @@ function getLocaleFromPath(pathname: string): Locale {
 
 function getPathWithoutLocale(pathname: string): string {
   const locale = getLocaleFromPath(pathname);
-  const stripped = pathname.replace(`/${locale}`, "") || "/";
-  return stripped.startsWith("/") ? stripped : `/${stripped}`;
+  if (pathname.startsWith(`/${locale}/`)) {
+    return pathname.slice(locale.length + 1);
+  }
+
+  if (pathname === `/${locale}`) {
+    return "/";
+  }
+
+  return pathname.startsWith("/") ? pathname : `/${pathname}`;
 }
 
 export async function updateSession(
