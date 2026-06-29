@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  FACEBOOK_OAUTH_SCOPES,
+  getFacebookOAuthScopes,
 } from "@/lib/meta-oauth";
 import { INSTAGRAM_BUSINESS_SCOPES } from "@/lib/instagram-business-oauth";
 import { getInstagramEnvDebug, isInstagramConfigured } from "@/lib/instagram-env";
@@ -28,6 +28,9 @@ export async function GET() {
     threads: getThreadsEnvDebug(),
     instagramScopes: INSTAGRAM_BUSINESS_SCOPES,
     threadsScopes: THREADS_OAUTH_SCOPES,
-    facebookScopes: FACEBOOK_OAUTH_SCOPES,
+    facebookScopes: getFacebookOAuthScopes(),
+    facebookPublishScopesEnabled:
+      process.env.FACEBOOK_INCLUDE_PUBLISH_SCOPES?.trim().toLowerCase() ===
+      "true",
   });
 }

@@ -8,13 +8,32 @@ export const INSTAGRAM_OAUTH_SCOPES = [
   "pages_read_engagement",
 ] as const;
 
-// Publishing to a Facebook Page requires pages_manage_posts (App Review in production).
-export const FACEBOOK_OAUTH_SCOPES = [
+// Minimal scopes for Facebook Login in Development mode (connect only).
+export const FACEBOOK_CONNECT_SCOPES = [
   "pages_show_list",
-  "pages_read_engagement",
-  "pages_manage_posts",
   "business_management",
 ] as const;
+
+/** Requires Meta App Review before OAuth will accept them. */
+export const FACEBOOK_PUBLISH_SCOPES = [
+  "pages_read_engagement",
+  "pages_manage_posts",
+] as const;
+
+export function getFacebookOAuthScopes(): readonly string[] {
+  const includePublish =
+    process.env.FACEBOOK_INCLUDE_PUBLISH_SCOPES?.trim().toLowerCase() ===
+    "true";
+
+  if (includePublish) {
+    return [...FACEBOOK_CONNECT_SCOPES, ...FACEBOOK_PUBLISH_SCOPES];
+  }
+
+  return FACEBOOK_CONNECT_SCOPES;
+}
+
+/** @deprecated use getFacebookOAuthScopes() */
+export const FACEBOOK_OAUTH_SCOPES = FACEBOOK_CONNECT_SCOPES;
 
 const GRAPH_API_VERSION = "v21.0";
 
@@ -45,7 +64,7 @@ export function buildInstagramOAuthUrl(
 
 export function buildFacebookOAuthUrl(
   state: string,
-  scopes: readonly string[] = FACEBOOK_OAUTH_SCOPES,
+  scopes: readonly string[] = getFacebookOAuthScopes(),
 ): string {
   return buildMetaOAuthUrl(state, scopes, "facebook");
 }
