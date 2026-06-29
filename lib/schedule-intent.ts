@@ -3,6 +3,7 @@ import type { ConnectedAccount } from "./dashboard-data";
 import { PLATFORMS, type SocialPlatform } from "./dashboard-data";
 import type { ChatAttachment } from "./chat-upload";
 import type { CreateScheduledPostInput } from "./scheduled-posts";
+import { formatScheduleDateTime } from "./schedule-display";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -406,12 +407,10 @@ export function formatScheduleConfirmation(
   input: CreateScheduledPostInput,
   locale: string,
 ): string {
-  const formatter = new Intl.DateTimeFormat(locale === "ro" ? "ro-RO" : "en-US", {
+  const when = formatScheduleDateTime(input.scheduledAt, locale, {
     dateStyle: "medium",
     timeStyle: "short",
   });
-
-  const when = formatter.format(new Date(input.scheduledAt));
 
   if (locale === "ro") {
     return `Postarea a fost salvată în calendar pentru ${input.platform} pe ${when}. O vei vedea la „Postări următoare”. Publicarea efectivă pe platformă vine în curând.`;

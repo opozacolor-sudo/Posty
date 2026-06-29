@@ -1,16 +1,19 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useLocale, useFormatter, useTranslations } from "next-intl";
 import { PlatformIcon } from "@/components/dashboard/platform-icon";
 import type { ScheduledPost } from "@/lib/dashboard-data";
+import { getScheduleDisplayTimeZone } from "@/lib/schedule-display";
 
 type UpcomingPostsCardProps = {
   posts: ScheduledPost[];
 };
 
 export function UpcomingPostsCard({ posts }: UpcomingPostsCardProps) {
+  const locale = useLocale();
   const t = useTranslations("dashboard");
   const format = useFormatter();
+  const timeZone = getScheduleDisplayTimeZone(locale);
   const visible = posts.slice(0, 3);
 
   return (
@@ -47,6 +50,7 @@ export function UpcomingPostsCard({ posts }: UpcomingPostsCardProps) {
                     day: "numeric",
                     hour: "numeric",
                     minute: "2-digit",
+                    ...(timeZone ? { timeZone } : {}),
                   })}
                 </p>
               </div>

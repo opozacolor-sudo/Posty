@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import { HeaderCard } from "@/components/dashboard/header-card";
 import { DashboardCardsGrid } from "@/components/dashboard/dashboard-cards-grid";
 import { ChatBar } from "@/components/dashboard/chat-bar";
@@ -29,11 +30,17 @@ export function DashboardView({
 }: DashboardViewProps) {
   const connectedAccounts = accounts ?? getFallbackConnectedAccounts();
   const [posts, setPosts] = useState<ScheduledPost[]>(initialPosts);
+  const locale = useLocale();
 
   const scheduledDays = useMemo(() => {
     const now = new Date();
-    return getScheduledDaysForMonth(posts, now.getFullYear(), now.getMonth());
-  }, [posts]);
+    return getScheduledDaysForMonth(
+      posts,
+      now.getFullYear(),
+      now.getMonth(),
+      locale,
+    );
+  }, [locale, posts]);
 
   const refreshPosts = useCallback(async () => {
     try {

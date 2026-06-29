@@ -1,4 +1,5 @@
 import { PLATFORM_COLORS } from "@/components/dashboard/platform-icon";
+import { getDatePartsInTimeZone, getScheduleDisplayTimeZone } from "./schedule-display";
 import type { ScheduledPost, SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
 import { createAdminClient, isSupabaseAdminConfigured } from "./supabase-admin";
@@ -190,13 +191,15 @@ export function getScheduledDaysForMonth(
   posts: ScheduledPost[],
   year: number,
   month: number,
+  locale = "en",
 ): number[] {
   const days = new Set<number>();
+  const timeZone = getScheduleDisplayTimeZone(locale) ?? "UTC";
 
   for (const post of posts) {
-    const date = new Date(post.scheduledAt);
-    if (date.getFullYear() === year && date.getMonth() === month) {
-      days.add(date.getDate());
+    const parts = getDatePartsInTimeZone(post.scheduledAt, timeZone);
+    if (parts.year === year && parts.month - 1 === month) {
+      days.add(parts.day);
     }
   }
 
