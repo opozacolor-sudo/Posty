@@ -153,7 +153,16 @@
     "linkedinSavePermission": "Contul LinkedIn nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
     "linkedinSaveUnknown": "Contul LinkedIn nu a putut fi salvat. Încearcă din nou.",
     "linkedinServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
-    "linkedinTokenFailed": "Autorizarea LinkedIn nu s-a putut finaliza."
+    "linkedinTokenFailed": "Autorizarea LinkedIn nu s-a putut finaliza.",
+    "pinterestConnected": "Pinterest conectat cu succes!",
+    "pinterestDenied": "Autorizarea Pinterest a fost anulată.",
+    "pinterestInvalidState": "Autorizarea Pinterest a eșuat. Încearcă din nou.",
+    "pinterestNotConfigured": "OAuth Pinterest nu este configurat pe server.",
+    "pinterestSaveFailed": "Contul Pinterest nu a putut fi salvat.",
+    "pinterestSavePermission": "Contul Pinterest nu a putut fi salvat. Verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel.",
+    "pinterestSaveUnknown": "Contul Pinterest nu a putut fi salvat. Încearcă din nou.",
+    "pinterestServiceRoleMissing": "Adaugă SUPABASE_SERVICE_ROLE_KEY pe Vercel, apoi redeploy.",
+    "pinterestTokenFailed": "Autorizarea Pinterest nu s-a putut finaliza."
   },
   "profile": {
     "backToDashboard": "Înapoi la dashboard",

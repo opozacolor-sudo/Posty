@@ -153,7 +153,16 @@
     "linkedinSavePermission": "Could not save LinkedIn account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
     "linkedinSaveUnknown": "Could not save LinkedIn account. Try again.",
     "linkedinServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
-    "linkedinTokenFailed": "LinkedIn authorization could not be completed."
+    "linkedinTokenFailed": "LinkedIn authorization could not be completed.",
+    "pinterestConnected": "Pinterest connected successfully!",
+    "pinterestDenied": "Pinterest authorization was cancelled.",
+    "pinterestInvalidState": "Pinterest authorization failed. Please try again.",
+    "pinterestNotConfigured": "Pinterest OAuth is not configured on the server.",
+    "pinterestSaveFailed": "Could not save Pinterest account.",
+    "pinterestSavePermission": "Could not save Pinterest account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
+    "pinterestSaveUnknown": "Could not save Pinterest account. Try again.",
+    "pinterestServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
+    "pinterestTokenFailed": "Pinterest authorization could not be completed."
   },
   "profile": {
     "backToDashboard": "Back to dashboard",

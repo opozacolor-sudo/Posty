@@ -13,6 +13,7 @@ const SUCCESS_KEYS: Record<string, string> = {
   threads: "threadsConnected",
   tiktok: "tiktokConnected",
   linkedin: "linkedinConnected",
+  pinterest: "pinterestConnected",
 };
 
 const ERROR_KEYS: Record<string, string> = {
@@ -60,6 +61,14 @@ const ERROR_KEYS: Record<string, string> = {
   linkedin_save_unknown: "linkedinSaveUnknown",
   linkedin_service_role_missing: "linkedinServiceRoleMissing",
   linkedin_token_failed: "linkedinTokenFailed",
+  pinterest_denied: "pinterestDenied",
+  pinterest_invalid_state: "pinterestInvalidState",
+  pinterest_not_configured: "pinterestNotConfigured",
+  pinterest_save_failed: "pinterestSaveFailed",
+  pinterest_save_permission: "pinterestSavePermission",
+  pinterest_save_unknown: "pinterestSaveUnknown",
+  pinterest_service_role_missing: "pinterestServiceRoleMissing",
+  pinterest_token_failed: "pinterestTokenFailed",
   youtube_denied: "youtubeDenied",
   youtube_invalid_state: "youtubeInvalidState",
   youtube_no_channel: "youtubeNoChannel",
