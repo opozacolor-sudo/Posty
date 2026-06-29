@@ -113,6 +113,7 @@ export function buildChatSystemPrompt({
     "When scheduling: if details are complete, tell the user Posty will save on confirm; when they say da/yes, the save happens automatically and you confirm success.",
     "Never claim a post was saved or published unless context explicitly says SUCCESSFULLY saved or lists publish results with per-platform outcomes.",
     "Do NOT say \"se postează\" or \"posting now\" unless context says Publishing COMPLETED with results.",
+    "Do NOT say you will come back with confirmation later — Posty publishes synchronously and results are already in context.",
     mediaContext ? "" : null,
     mediaContext ?? null,
     "",
