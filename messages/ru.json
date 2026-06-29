@@ -155,7 +155,16 @@
     "pinterestSavePermission": "Could not save Pinterest account. Check SUPABASE_SERVICE_ROLE_KEY on Vercel.",
     "pinterestSaveUnknown": "Could not save Pinterest account. Try again.",
     "pinterestServiceRoleMissing": "Add SUPABASE_SERVICE_ROLE_KEY to Vercel, then redeploy.",
-    "pinterestTokenFailed": "Pinterest authorization could not be completed."
+    "pinterestTokenFailed": "Pinterest authorization could not be completed.",
+    "voiceStop": "Stop recording",
+    "voiceListening": "Listening...",
+    "voiceListeningPlaceholder": "Speak now...",
+    "voiceTapToStop": "tap the mic again to send",
+    "voicePermissionDenied": "Allow microphone access in your browser to use voice input.",
+    "voiceNoSpeech": "I didn't catch that. Try again.",
+    "voiceNetworkError": "Voice recognition failed due to a network error.",
+    "voiceTranscribeFailed": "Could not transcribe audio. Use Chrome or add OPENAI_API_KEY on Vercel.",
+    "voiceError": "Voice input failed. Please try again."
   },
   "profile": {
     "backToDashboard": "Назад к панели",

@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import {
+  useSpeechInput,
+  type SpeechInputError,
+} from "@/hooks/use-speech-input";
 
 type ChatMessage = {
   id: string;
@@ -20,129 +24,140 @@ export function ChatBar() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  function getLocalReply(userMessage: string): string {
-    const lower = userMessage.toLowerCase();
+  const getLocalReply = useCallback(
+    (userMessage: string): string => {
+      const lower = userMessage.toLowerCase();
 
-    if (lower.includes("instagram") || lower.includes("post")) {
-      return t("chatReplyPost");
-    }
-    if (lower.includes("schedule") || lower.includes("program")) {
-      return t("chatReplySchedule");
-    }
-    if (lower.includes("stat") || lower.includes("analiz")) {
-      return t("chatReplyStats");
-    }
+      if (lower.includes("instagram") || lower.includes("post")) {
+        return t("chatReplyPost");
+      }
+      if (lower.includes("schedule") || lower.includes("program")) {
+        return t("chatReplySchedule");
+      }
+      if (lower.includes("stat") || lower.includes("analiz")) {
+        return t("chatReplyStats");
+      }
 
-    return t("chatReplyDefault");
-  }
+      return t("chatReplyDefault");
+    },
+    [t],
+  );
 
-  async function fetchReply(
-    history: Array<{ role: "user" | "assistant"; content: string }>,
-  ): Promise<string> {
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
-      });
+  const fetchReply = useCallback(
+    async (
+      history: Array<{ role: "user" | "assistant"; content: string }>,
+    ): Promise<string> => {
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history }),
+        });
 
-      const data = (await response.json()) as {
-        reply?: string;
-        error?: string;
+        const data = (await response.json()) as {
+          reply?: string;
+          error?: string;
+        };
+
+        if (data.reply) {
+          return data.reply;
+        }
+      } catch {
+        // Fall back to local replies when the API is unavailable.
+      }
+
+      const lastUser = [...history].reverse().find((m) => m.role === "user");
+      return getLocalReply(lastUser?.content ?? "");
+    },
+    [getLocalReply],
+  );
+
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || isLoadingRef.current) return;
+
+      isLoadingRef.current = true;
+      setIsLoading(true);
+      setVoiceNotice(null);
+      setInput("");
+
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: trimmed,
       };
 
-      if (data.reply) {
-        return data.reply;
-      }
-    } catch {
-      // Fall back to local replies when the API is unavailable.
-    }
+      let history: Array<{ role: "user" | "assistant"; content: string }> = [];
 
-    const lastUser = [...history].reverse().find((m) => m.role === "user");
-    return getLocalReply(lastUser?.content ?? "");
-  }
+      setMessages((prev) => {
+        const next = [...prev, userMessage];
+        history = next
+          .filter((message) => message.id !== "welcome")
+          .map((message) => ({
+            role: message.role,
+            content: message.content,
+          }));
+        return next;
+      });
 
-  async function sendMessage(text: string) {
-    const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+      const reply = await fetchReply(history);
 
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: trimmed,
-    };
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: reply,
+        },
+      ]);
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
+      isLoadingRef.current = false;
+      setIsLoading(false);
+    },
+    [fetchReply],
+  );
 
-    const history = [...messages, userMessage]
-      .filter((message) => message.id !== "welcome")
-      .map((message) => ({
-        role: message.role,
-        content: message.content,
-      }));
+  const handleVoiceError = useCallback(
+    (error: SpeechInputError) => {
+      const keyMap: Record<SpeechInputError, string> = {
+        not_supported: "voiceNotSupported",
+        permission_denied: "voicePermissionDenied",
+        no_speech: "voiceNoSpeech",
+        network: "voiceNetworkError",
+        transcribe_failed: "voiceTranscribeFailed",
+        unknown: "voiceError",
+      };
 
-    const reply = await fetchReply(history);
+      setVoiceNotice(t(keyMap[error]));
+    },
+    [t],
+  );
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: reply,
-      },
-    ]);
-    setIsLoading(false);
-  }
+  const { isListening, mode, toggleListening } = useSpeechInput({
+    onInterim: (text) => {
+      setInput(text);
+      setVoiceNotice(t("voiceListening"));
+    },
+    onTranscript: (text) => {
+      setInput(text);
+      void sendMessage(text);
+    },
+    onError: handleVoiceError,
+  });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     void sendMessage(input);
-  }
-
-  function toggleVoice() {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      void sendMessage(t("voiceNotSupported"));
-      return;
-    }
-
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = document.documentElement.lang || "en";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
-    recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript;
-      if (transcript) {
-        setInput(transcript);
-        void sendMessage(transcript);
-      }
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
   }
 
   return (
@@ -166,7 +181,11 @@ export function ChatBar() {
         <div>
           <p className="text-xs font-bold leading-tight">{t("assistantName")}</p>
           <p className="text-[10px] text-green">
-            {isLoading ? t("chatThinking") : t("chatOnline")}
+            {isLoading
+              ? t("chatThinking")
+              : isListening
+                ? t("voiceListening")
+                : t("chatOnline")}
           </p>
         </div>
       </div>
@@ -204,26 +223,40 @@ export function ChatBar() {
         onSubmit={handleSubmit}
         className="shrink-0 border-t border-border bg-white px-3 py-2"
       >
+        {voiceNotice && (
+          <p
+            className={`mx-auto mb-2 max-w-3xl text-center text-[11px] ${
+              isListening ? "font-medium text-coral" : "text-muted-foreground"
+            }`}
+          >
+            {voiceNotice}
+            {isListening && mode === "recording" ? ` · ${t("voiceTapToStop")}` : null}
+          </p>
+        )}
+
         <div className="mx-auto flex max-w-3xl items-center gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={t("chatPlaceholder")}
+            placeholder={
+              isListening ? t("voiceListeningPlaceholder") : t("chatPlaceholder")
+            }
             disabled={isLoading}
             className="input-field flex-1 rounded-full px-4 py-2.5 text-sm disabled:opacity-60"
           />
 
           <button
             type="button"
-            onClick={toggleVoice}
+            onClick={toggleListening}
             disabled={isLoading}
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-60 ${
               isListening
-                ? "bg-coral text-white"
+                ? "animate-pulse bg-coral text-white"
                 : "bg-card text-foreground hover:bg-border"
             }`}
-            aria-label={t("voiceInput")}
+            aria-label={isListening ? t("voiceStop") : t("voiceInput")}
+            aria-pressed={isListening}
           >
             <svg
               className="h-4 w-4"
@@ -242,7 +275,7 @@ export function ChatBar() {
 
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || isListening}
             className="btn-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0 disabled:opacity-60"
             aria-label={t("send")}
           >
