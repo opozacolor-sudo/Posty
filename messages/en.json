@@ -66,6 +66,8 @@
     "scheduleFailed": "Could not save the scheduled post. Try again.",
     "scheduleMissingFields": "Missing platform, caption, or date/time for scheduling.",
     "scheduleInPast": "Pick a date and time in the future.",
+    "publishFailed": "Could not publish to any platform. Check the reply for details.",
+    "publishPartial": "Published to some platforms — see Claude's reply for details.",
     "assistantName": "Claude",
     "send": "Send",
     "voiceInput": "Voice input",

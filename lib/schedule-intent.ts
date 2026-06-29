@@ -83,6 +83,10 @@ export function shouldAttemptScheduleExtraction(
   lastUserMessage: string,
   messages: ChatMessage[],
 ): boolean {
+  if (/\b(post(eaz|ez)?\s+acum|post\s+now|publish\s+now|public[aă]\s+acum)\b/i.test(lastUserMessage)) {
+    return false;
+  }
+
   if (userMentionsScheduling(lastUserMessage)) {
     return true;
   }
@@ -157,7 +161,7 @@ function detectPlatform(
   return null;
 }
 
-function extractCaption(messages: ChatMessage[]): string | null {
+export function extractCaption(messages: ChatMessage[]): string | null {
   const userText = messages
     .filter((message) => message.role === "user")
     .map((message) => message.content)
@@ -269,7 +273,7 @@ function formatHistoryForExtraction(messages: ChatMessage[]): string {
     .join("\n\n");
 }
 
-function findLatestMediaUrl(messages: ChatMessage[]): string | null {
+export function findLatestMediaUrl(messages: ChatMessage[]): string | null {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
     const attachment = message.attachments?.find((item) =>
@@ -413,8 +417,8 @@ export function formatScheduleConfirmation(
   });
 
   if (locale === "ro") {
-    return `Postarea a fost salvată în calendar pentru ${input.platform} pe ${when}. O vei vedea la „Postări următoare”. Publicarea efectivă pe platformă vine în curând.`;
+    return `Postarea a fost salvată în calendar pentru ${input.platform} pe ${when}. O vei vedea la „Postări următoare”. Poți publica acum din chat cu „postează acum”.`;
   }
 
-  return `Post saved to your calendar for ${input.platform} on ${when}. You'll see it under Upcoming posts. Actual publishing to the platform is coming soon.`;
+  return `Post saved to your calendar for ${input.platform} on ${when}. You'll see it under Upcoming posts. Say "post now" in chat to publish immediately.`;
 }

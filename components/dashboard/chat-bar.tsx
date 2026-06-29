@@ -111,6 +111,8 @@ export function ChatBar({
           generatedImageUrl?: string;
           scheduledPost?: { id: string };
           scheduleSaveFailed?: boolean;
+          publishResults?: Array<{ platform: string; success: boolean }>;
+          publishFailed?: boolean;
         };
 
         try {
@@ -130,6 +132,10 @@ export function ChatBar({
             onScheduleCreated?.();
           } else if (data.scheduleSaveFailed) {
             setChatModeNotice(t("scheduleFailed"));
+          } else if (data.publishResults?.some((result) => result.success)) {
+            setChatModeNotice(t("publishPartial"));
+          } else if (data.publishFailed) {
+            setChatModeNotice(t("publishFailed"));
           }
 
           return {

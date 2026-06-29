@@ -1,0 +1,170 @@
+import type { SocialPlatform } from "./dashboard-data";
+import { PLATFORMS } from "./dashboard-data";
+import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
+import { publishInstagramPost } from "./publish-instagram";
+import { publishThreadsPost } from "./publish-threads";
+
+export type PublishInput = {
+  caption: string;
+  mediaUrl?: string | null;
+  targetPlatforms: "all" | SocialPlatform[];
+};
+
+export type PublishPlatformResult = {
+  platform: SocialPlatform;
+  success: boolean;
+  postId?: string;
+  error?: string;
+  skipped?: boolean;
+};
+
+const UNSUPPORTED_REASONS: Partial<Record<SocialPlatform, string>> = {
+  facebook: "Facebook needs pages_manage_posts (coming soon)",
+  tiktok: "TikTok publish scope not connected yet",
+  youtube: "YouTube needs video upload (coming soon)",
+  linkedin: "LinkedIn post scope not enabled — reconnect with post permission",
+  pinterest: "Pinterest write scopes not enabled yet",
+  x: "X is not connected in Posty yet",
+  bluesky: "Bluesky is not connected in Posty yet",
+};
+
+function isSocialPlatform(value: string): value is SocialPlatform {
+  return PLATFORMS.includes(value as SocialPlatform);
+}
+
+async function publishToPlatform(
+  platform: SocialPlatform,
+  accessToken: string,
+  caption: string,
+  mediaUrl?: string | null,
+): Promise<PublishPlatformResult> {
+  if (platform === "instagram") {
+    if (!mediaUrl) {
+      return {
+        platform,
+        success: false,
+        error: "Instagram needs an image attached to the post",
+      };
+    }
+
+    const result = await publishInstagramPost({
+      accessToken,
+      caption,
+      imageUrl: mediaUrl,
+    });
+
+    return result.ok
+      ? { platform, success: true, postId: result.postId }
+      : { platform, success: false, error: result.error };
+  }
+
+  if (platform === "threads") {
+    const result = await publishThreadsPost({
+      accessToken,
+      caption,
+      imageUrl: mediaUrl,
+    });
+
+    return result.ok
+      ? { platform, success: true, postId: result.postId }
+      : { platform, success: false, error: result.error };
+  }
+
+  return {
+    platform,
+    success: false,
+    skipped: true,
+    error: UNSUPPORTED_REASONS[platform] ?? "Publishing not available for this platform yet",
+  };
+}
+
+export async function publishToConnectedPlatforms(
+  userId: string,
+  input: PublishInput,
+): Promise<PublishPlatformResult[]> {
+  const accounts = await fetchConnectedAccountsWithTokens(userId);
+
+  if (accounts.length === 0) {
+    return [];
+  }
+
+  const connectedPlatforms = accounts.map((account) => account.platform);
+  const targets =
+    input.targetPlatforms === "all"
+      ? connectedPlatforms
+      : input.targetPlatforms.filter((platform) =>
+          connectedPlatforms.includes(platform),
+        );
+
+  const results: PublishPlatformResult[] = [];
+
+  for (const platform of targets) {
+    if (!isSocialPlatform(platform)) {
+      continue;
+    }
+
+    const account = accounts.find((item) => item.platform === platform);
+    if (!account) {
+      results.push({
+        platform,
+        success: false,
+        error: "Account not connected",
+      });
+      continue;
+    }
+
+    results.push(
+      await publishToPlatform(
+        platform,
+        account.accessToken,
+        input.caption,
+        input.mediaUrl,
+      ),
+    );
+  }
+
+  return results;
+}
+
+export function formatPublishResultsSummary(
+  results: PublishPlatformResult[],
+  locale: string,
+): string {
+  if (results.length === 0) {
+    return locale === "ro"
+      ? "Nu am găsit conturi conectate pentru publicare."
+      : "No connected accounts were found to publish to.";
+  }
+
+  const lines = results.map((result) => {
+    const label = result.platform;
+    if (result.success) {
+      return locale === "ro"
+        ? `- ${label}: publicat cu succes`
+        : `- ${label}: published successfully`;
+    }
+
+    if (result.skipped) {
+      return locale === "ro"
+        ? `- ${label}: omis (${result.error})`
+        : `- ${label}: skipped (${result.error})`;
+    }
+
+    return locale === "ro"
+      ? `- ${label}: eșuat (${result.error})`
+      : `- ${label}: failed (${result.error})`;
+  });
+
+  const successCount = results.filter((result) => result.success).length;
+
+  if (locale === "ro") {
+    return [
+      `Publicare finalizată: ${successCount}/${results.length} reușite.`,
+      ...lines,
+    ].join("\n");
+  }
+
+  return [`Publishing finished: ${successCount}/${results.length} succeeded.`, ...lines].join(
+    "\n",
+  );
+}

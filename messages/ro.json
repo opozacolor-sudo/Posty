@@ -116,6 +116,8 @@
     "scheduleFailed": "Nu s-a putut salva postarea programată. Încearcă din nou.",
     "scheduleMissingFields": "Lipsesc platforma, textul sau data/ora pentru programare.",
     "scheduleInPast": "Alege o dată și oră în viitor.",
+    "publishFailed": "Nu s-a publicat pe nicio platformă. Vezi răspunsul lui Claude.",
+    "publishPartial": "Publicat pe unele platforme — vezi detaliile în răspuns.",
     "connectInstagram": "Conectează Instagram",
     "connectedAs": "Conectat ca @{name}",
     "instagramConnected": "Instagram conectat cu succes!",

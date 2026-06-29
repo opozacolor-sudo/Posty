@@ -20,6 +20,15 @@ import {
 } from "@/lib/higgsfield-generate";
 import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
 import {
+  extractPublishFromConversation,
+  shouldAttemptPublish,
+} from "@/lib/publish-intent";
+import {
+  formatPublishResultsSummary,
+  publishToConnectedPlatforms,
+  type PublishPlatformResult,
+} from "@/lib/publish";
+import {
   extractScheduleFromConversation,
   formatScheduleConfirmation,
   shouldAttemptScheduleExtraction,
@@ -138,8 +147,56 @@ export async function POST(request: Request) {
       | Awaited<ReturnType<typeof createScheduledPost>>
       | undefined;
     let scheduleSaveFailed = false;
+    let publishResults: PublishPlatformResult[] | undefined;
+    let publishFailed = false;
 
-    if (shouldAttemptScheduleExtraction(lastUserMessage, history)) {
+    if (shouldAttemptPublish(lastUserMessage, history)) {
+      try {
+        const publishInput = extractPublishFromConversation({
+          messages: history,
+          connectedAccounts,
+        });
+
+        if (publishInput) {
+          publishResults = await publishToConnectedPlatforms(user.id, publishInput);
+          const summary = formatPublishResultsSummary(publishResults, locale);
+          const anySuccess = publishResults.some((result) => result.success);
+
+          if (anySuccess) {
+            mediaContext = [
+              "IMPORTANT: Publishing COMPLETED. Per-platform results:",
+              summary,
+              "Tell the user which platforms succeeded, failed, or were skipped.",
+              "Do NOT claim success for platforms that failed or were skipped.",
+            ].join("\n");
+          } else {
+            publishFailed = true;
+            mediaContext = [
+              "IMPORTANT: Publishing FAILED on all attempted platforms.",
+              summary,
+              "Explain the errors and suggest fixes (e.g. attach a photo for Instagram).",
+              "Do NOT claim any platform published successfully.",
+            ].join("\n");
+          }
+        } else {
+          publishFailed = true;
+          mediaContext = [
+            "IMPORTANT: Could not publish — need a caption from the conversation.",
+            "Instagram also needs an uploaded image in the chat.",
+            "Do NOT claim anything was published.",
+          ].join("\n");
+        }
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        console.error("[posty/chat] Publish failed:", detail);
+        publishFailed = true;
+        mediaContext = [
+          "IMPORTANT: Publishing FAILED due to a server error.",
+          `Detail: ${detail}`,
+          "Do NOT claim anything was published.",
+        ].join("\n");
+      }
+    } else if (shouldAttemptScheduleExtraction(lastUserMessage, history)) {
       try {
         const tableStatus = await checkScheduledPostsTable(supabase);
 
@@ -227,7 +284,7 @@ export async function POST(request: Request) {
 
     const imageIntent = resolveImageGenerationIntent(history, lastUserMessage);
 
-    if (!scheduledPost && isHiggsfieldGenerationAvailable() && imageIntent.shouldGenerate) {
+    if (!scheduledPost && !publishResults && isHiggsfieldGenerationAvailable() && imageIntent.shouldGenerate) {
       try {
         const image = await generateHiggsfieldImage({
           prompt: imageIntent.prompt,
@@ -246,7 +303,7 @@ export async function POST(request: Request) {
         console.error("[posty/chat] Higgsfield image failed:", detail);
         mediaContext = `Image generation was requested but failed (${detail}). Apologize briefly and offer to retry with a clearer prompt.`;
       }
-    } else if (!scheduledPost && userWantsVideoGeneration(lastUserMessage)) {
+    } else if (!scheduledPost && !publishResults && userWantsVideoGeneration(lastUserMessage)) {
       mediaContext =
         "The user asked for video generation. Video via Higgsfield is not wired in Posty yet. Explain that image generation works now and video is next.";
     }
@@ -273,6 +330,8 @@ export async function POST(request: Request) {
       generatedImageUrl,
       scheduledPost,
       scheduleSaveFailed,
+      publishResults,
+      publishFailed,
       imageGenerationFailed:
         imageIntent.shouldGenerate && !generatedImageUrl && Boolean(mediaContext?.includes("failed")),
     });
