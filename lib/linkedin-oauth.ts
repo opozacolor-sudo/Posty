@@ -1,11 +1,4 @@
-import { assertLinkedInConfigured } from "./linkedin-env";
-
-export const LINKEDIN_OAUTH_SCOPES = [
-  "openid",
-  "profile",
-  "email",
-  "w_member_social",
-] as const;
+import { assertLinkedInConfigured, getLinkedInOAuthScopes } from "./linkedin-env";
 
 type TokenResponse = {
   access_token?: string;
@@ -33,7 +26,7 @@ export function buildLinkedInOAuthUrl(state: string): string {
     client_id: clientId,
     redirect_uri: redirectUri,
     state,
-    scope: LINKEDIN_OAUTH_SCOPES.join(" "),
+    scope: getLinkedInOAuthScopes().join(" "),
   });
 
   return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
