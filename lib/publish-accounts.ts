@@ -1,5 +1,6 @@
-import { createAdminClient, isSupabaseAdminConfigured } from "./supabase-admin";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SocialPlatform } from "./dashboard-data";
+import { createAdminClient, isSupabaseAdminConfigured } from "./supabase-admin";
 
 export type ConnectedAccountWithToken = {
   platform: SocialPlatform;
@@ -9,27 +10,18 @@ export type ConnectedAccountWithToken = {
   platformMetadata: Record<string, string>;
 };
 
-export async function fetchConnectedAccountsWithTokens(
-  userId: string,
-): Promise<ConnectedAccountWithToken[]> {
-  if (!isSupabaseAdminConfigured()) {
-    console.error("[posty/publish] SUPABASE_SERVICE_ROLE_KEY missing");
-    return [];
-  }
+type ConnectedAccountTokenRow = {
+  platform: string;
+  account_name: string | null;
+  access_token: string | null;
+  is_active: boolean;
+  platform_metadata: unknown;
+};
 
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("connected_accounts")
-    .select("platform, account_name, access_token, is_active, platform_metadata")
-    .eq("user_id", userId)
-    .eq("is_active", true);
-
-  if (error) {
-    console.error("[posty/publish] fetch accounts failed:", error.message);
-    return [];
-  }
-
-  return (data ?? [])
+function mapConnectedAccountRows(
+  rows: ConnectedAccountTokenRow[],
+): ConnectedAccountWithToken[] {
+  return rows
     .filter((row) => row.access_token)
     .map((row) => ({
       platform: row.platform as SocialPlatform,
@@ -43,4 +35,42 @@ export async function fetchConnectedAccountsWithTokens(
           ? (row.platform_metadata as Record<string, string>)
           : {},
     }));
+}
+
+async function fetchRowsFromClient(
+  client: SupabaseClient,
+  userId: string,
+): Promise<ConnectedAccountTokenRow[]> {
+  const { data, error } = await client
+    .from("connected_accounts")
+    .select("platform, account_name, access_token, is_active, platform_metadata")
+    .eq("user_id", userId)
+    .eq("is_active", true);
+
+  if (error) {
+    console.error("[posty/publish] fetch accounts failed:", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function fetchConnectedAccountsWithTokens(
+  userId: string,
+  sessionClient?: SupabaseClient,
+): Promise<ConnectedAccountWithToken[]> {
+  if (isSupabaseAdminConfigured()) {
+    const admin = createAdminClient();
+    return mapConnectedAccountRows(await fetchRowsFromClient(admin, userId));
+  }
+
+  if (sessionClient) {
+    console.warn(
+      "[posty/publish] SUPABASE_SERVICE_ROLE_KEY missing — using user session for tokens",
+    );
+    return mapConnectedAccountRows(await fetchRowsFromClient(sessionClient, userId));
+  }
+
+  console.error("[posty/publish] SUPABASE_SERVICE_ROLE_KEY missing and no session client");
+  return [];
 }

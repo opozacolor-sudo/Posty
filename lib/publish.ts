@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
 import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
@@ -141,12 +142,21 @@ async function publishToPlatform(
 export async function publishToConnectedPlatforms(
   userId: string,
   input: PublishInput,
+  options?: {
+    sessionClient?: SupabaseClient;
+    mediaUrl?: string | null;
+  },
 ): Promise<PublishPlatformResult[]> {
-  const accounts = await fetchConnectedAccountsWithTokens(userId);
+  const accounts = await fetchConnectedAccountsWithTokens(
+    userId,
+    options?.sessionClient,
+  );
 
   if (accounts.length === 0) {
     return [];
   }
+
+  const mediaUrl = options?.mediaUrl ?? input.mediaUrl;
 
   const connectedPlatforms = accounts.map((account) => account.platform);
   const targets =
@@ -178,7 +188,7 @@ export async function publishToConnectedPlatforms(
         platform,
         account.accessToken,
         input.caption,
-        input.mediaUrl,
+        mediaUrl,
         account.platformMetadata,
       ),
     );
