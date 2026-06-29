@@ -9,6 +9,7 @@ export type ConnectedAccountUpsert = {
   refresh_token: string | null;
   token_expires_at: string | null;
   is_active: boolean;
+  platform_metadata?: Record<string, string> | null;
 };
 
 export type SaveConnectedAccountFailureReason =

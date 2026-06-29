@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   exchangeLinkedInCodeForToken,
   fetchLinkedInDisplayName,
+  fetchLinkedInUserInfo,
 } from "@/lib/linkedin-oauth";
 import { getLinkedInEnvDebug, isLinkedInConfigured } from "@/lib/linkedin-env";
 import {
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokens = await exchangeLinkedInCodeForToken(code);
+    const profile = await fetchLinkedInUserInfo(tokens.accessToken);
     const displayName =
       (await fetchLinkedInDisplayName(tokens.accessToken)) ?? "LinkedIn";
 
@@ -81,6 +83,7 @@ export async function GET(request: NextRequest) {
       refresh_token: tokens.refreshToken,
       token_expires_at: tokenExpiresAt,
       is_active: true,
+      platform_metadata: profile?.sub ? { personId: profile.sub } : null,
     });
 
     if (!saveResult.ok) {

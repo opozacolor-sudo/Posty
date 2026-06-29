@@ -71,6 +71,26 @@ export async function exchangeLinkedInCodeForToken(code: string): Promise<{
 }
 
 export async function fetchLinkedInDisplayName(accessToken: string): Promise<string | null> {
+  const profile = await fetchLinkedInUserInfo(accessToken);
+  if (!profile) {
+    return null;
+  }
+
+  if (profile.name) {
+    return profile.name;
+  }
+
+  const parts = [profile.given_name, profile.family_name].filter(Boolean);
+  if (parts.length > 0) {
+    return parts.join(" ");
+  }
+
+  return profile.email ?? profile.sub ?? null;
+}
+
+export async function fetchLinkedInUserInfo(
+  accessToken: string,
+): Promise<UserInfoResponse | null> {
   const response = await fetch("https://api.linkedin.com/v2/userinfo", {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -83,14 +103,5 @@ export async function fetchLinkedInDisplayName(accessToken: string): Promise<str
     return null;
   }
 
-  if (data.name) {
-    return data.name;
-  }
-
-  const parts = [data.given_name, data.family_name].filter(Boolean);
-  if (parts.length > 0) {
-    return parts.join(" ");
-  }
-
-  return data.email ?? data.sub ?? null;
+  return data;
 }

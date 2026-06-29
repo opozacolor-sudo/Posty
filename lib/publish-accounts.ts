@@ -6,6 +6,7 @@ export type ConnectedAccountWithToken = {
   accountName: string | null;
   accessToken: string;
   isActive: boolean;
+  platformMetadata: Record<string, string>;
 };
 
 export async function fetchConnectedAccountsWithTokens(
@@ -19,7 +20,7 @@ export async function fetchConnectedAccountsWithTokens(
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("connected_accounts")
-    .select("platform, account_name, access_token, is_active")
+    .select("platform, account_name, access_token, is_active, platform_metadata")
     .eq("user_id", userId)
     .eq("is_active", true);
 
@@ -35,5 +36,11 @@ export async function fetchConnectedAccountsWithTokens(
       accountName: row.account_name,
       accessToken: row.access_token as string,
       isActive: row.is_active,
+      platformMetadata:
+        row.platform_metadata &&
+        typeof row.platform_metadata === "object" &&
+        !Array.isArray(row.platform_metadata)
+          ? (row.platform_metadata as Record<string, string>)
+          : {},
     }));
 }

@@ -1,7 +1,10 @@
 import type { SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
 import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
+import { publishFacebookPhotoPost } from "./publish-facebook";
 import { publishInstagramPost } from "./publish-instagram";
+import { publishLinkedInImagePost } from "./publish-linkedin";
+import { publishPinterestPin } from "./publish-pinterest";
 import { publishThreadsPost } from "./publish-threads";
 
 export type PublishInput = {
@@ -18,12 +21,12 @@ export type PublishPlatformResult = {
   skipped?: boolean;
 };
 
+const VIDEO_ONLY_REASONS: Partial<Record<SocialPlatform, string>> = {
+  tiktok: "TikTok accepts video only, not photo posts",
+  youtube: "YouTube accepts video only, not photo posts",
+};
+
 const UNSUPPORTED_REASONS: Partial<Record<SocialPlatform, string>> = {
-  facebook: "Facebook needs pages_manage_posts (coming soon)",
-  tiktok: "TikTok publish scope not connected yet",
-  youtube: "YouTube needs video upload (coming soon)",
-  linkedin: "LinkedIn post scope not enabled — reconnect with post permission",
-  pinterest: "Pinterest write scopes not enabled yet",
   x: "X is not connected in Posty yet",
   bluesky: "Bluesky is not connected in Posty yet",
 };
@@ -32,21 +35,40 @@ function isSocialPlatform(value: string): value is SocialPlatform {
   return PLATFORMS.includes(value as SocialPlatform);
 }
 
+function requiresImage(platform: SocialPlatform): boolean {
+  return (
+    platform === "instagram" ||
+    platform === "facebook" ||
+    platform === "linkedin" ||
+    platform === "pinterest"
+  );
+}
+
 async function publishToPlatform(
   platform: SocialPlatform,
   accessToken: string,
   caption: string,
   mediaUrl?: string | null,
+  platformMetadata: Record<string, string> = {},
 ): Promise<PublishPlatformResult> {
-  if (platform === "instagram") {
-    if (!mediaUrl) {
-      return {
-        platform,
-        success: false,
-        error: "Instagram needs an image attached to the post",
-      };
-    }
+  if (VIDEO_ONLY_REASONS[platform]) {
+    return {
+      platform,
+      success: false,
+      skipped: true,
+      error: VIDEO_ONLY_REASONS[platform],
+    };
+  }
 
+  if (requiresImage(platform) && !mediaUrl) {
+    return {
+      platform,
+      success: false,
+      error: `${platform} needs an image attached to the post`,
+    };
+  }
+
+  if (platform === "instagram" && mediaUrl) {
     const result = await publishInstagramPost({
       accessToken,
       caption,
@@ -61,6 +83,44 @@ async function publishToPlatform(
   if (platform === "threads") {
     const result = await publishThreadsPost({
       accessToken,
+      caption,
+      imageUrl: mediaUrl,
+    });
+
+    return result.ok
+      ? { platform, success: true, postId: result.postId }
+      : { platform, success: false, error: result.error };
+  }
+
+  if (platform === "facebook" && mediaUrl) {
+    const result = await publishFacebookPhotoPost({
+      accessToken,
+      pageId: platformMetadata.pageId,
+      caption,
+      imageUrl: mediaUrl,
+    });
+
+    return result.ok
+      ? { platform, success: true, postId: result.postId }
+      : { platform, success: false, error: result.error };
+  }
+
+  if (platform === "linkedin" && mediaUrl) {
+    const result = await publishLinkedInImagePost({
+      accessToken,
+      caption,
+      imageUrl: mediaUrl,
+    });
+
+    return result.ok
+      ? { platform, success: true, postId: result.postId }
+      : { platform, success: false, error: result.error };
+  }
+
+  if (platform === "pinterest" && mediaUrl) {
+    const result = await publishPinterestPin({
+      accessToken,
+      boardId: platformMetadata.boardId,
       caption,
       imageUrl: mediaUrl,
     });
@@ -119,6 +179,7 @@ export async function publishToConnectedPlatforms(
         account.accessToken,
         input.caption,
         input.mediaUrl,
+        account.platformMetadata,
       ),
     );
   }

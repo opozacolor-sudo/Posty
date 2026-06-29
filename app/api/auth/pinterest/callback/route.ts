@@ -3,6 +3,7 @@ import {
   exchangePinterestCodeForToken,
   fetchPinterestDisplayName,
 } from "@/lib/pinterest-oauth";
+import { fetchPinterestDefaultBoardId } from "@/lib/publish-pinterest";
 import {
   getPinterestEnvDebug,
   isPinterestConfigured,
@@ -71,6 +72,7 @@ export async function GET(request: NextRequest) {
     const tokens = await exchangePinterestCodeForToken(code);
     const displayName =
       (await fetchPinterestDisplayName(tokens.accessToken)) ?? "Pinterest";
+    const boardId = await fetchPinterestDefaultBoardId(tokens.accessToken);
 
     const tokenExpiresAt = tokens.expiresIn
       ? new Date(Date.now() + tokens.expiresIn * 1000).toISOString()
@@ -84,6 +86,7 @@ export async function GET(request: NextRequest) {
       refresh_token: tokens.refreshToken,
       token_expires_at: tokenExpiresAt,
       is_active: true,
+      platform_metadata: boardId ? { boardId } : null,
     });
 
     if (!saveResult.ok) {
