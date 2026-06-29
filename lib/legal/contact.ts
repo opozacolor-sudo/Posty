@@ -4,7 +4,7 @@ export function getLegalContactEmail(): string {
   return (
     process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL?.trim() ||
     process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ||
-    "contact@posty.app"
+    "opozacolor@gmail.com"
   );
 }
 
