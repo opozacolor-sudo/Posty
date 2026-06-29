@@ -19,22 +19,26 @@ CREATE INDEX IF NOT EXISTS scheduled_posts_user_scheduled_at_idx
 
 ALTER TABLE scheduled_posts ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can read own scheduled posts" ON scheduled_posts;
 CREATE POLICY "Users can read own scheduled posts"
   ON scheduled_posts
   FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own scheduled posts" ON scheduled_posts;
 CREATE POLICY "Users can insert own scheduled posts"
   ON scheduled_posts
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own scheduled posts" ON scheduled_posts;
 CREATE POLICY "Users can update own scheduled posts"
   ON scheduled_posts
   FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own scheduled posts" ON scheduled_posts;
 CREATE POLICY "Users can delete own scheduled posts"
   ON scheduled_posts
   FOR DELETE

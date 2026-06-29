@@ -96,6 +96,167 @@ export function shouldAttemptScheduleExtraction(
   return false;
 }
 
+function getDateInTimeZone(timeZone: string, dayOffset = 0): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+  const target = new Date(Date.UTC(year, month - 1, day + dayOffset));
+
+  return target.toISOString().slice(0, 10);
+}
+
+function buildScheduledAtISO(
+  dayOffset: number,
+  hour: number,
+  minute: number,
+  locale: string,
+): string | null {
+  const timeZone = locale === "ro" ? "Europe/Bucharest" : "UTC";
+  const offset = locale === "ro" ? "+03:00" : "Z";
+  const dateStr = getDateInTimeZone(timeZone, dayOffset);
+  const iso = `${dateStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00${offset}`;
+  const date = new Date(iso);
+
+  if (Number.isNaN(date.getTime()) || date.getTime() <= Date.now()) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
+function detectPlatform(
+  text: string,
+  connectedPlatforms: SocialPlatform[],
+): SocialPlatform | null {
+  const patterns: Array<[SocialPlatform, RegExp]> = [
+    ["instagram", /\b(instagram|insta|\big\b)\b/i],
+    ["tiktok", /\btiktok\b/i],
+    ["youtube", /\b(youtube|\byt\b)\b/i],
+    ["facebook", /\bfacebook\b/i],
+    ["linkedin", /\blinkedin\b/i],
+    ["threads", /\bthreads\b/i],
+    ["pinterest", /\bpinterest\b/i],
+    ["x", /\b(\bx\b|twitter)\b/i],
+    ["bluesky", /\bbluesky\b/i],
+  ];
+
+  for (const [platform, pattern] of patterns) {
+    if (connectedPlatforms.includes(platform) && pattern.test(text)) {
+      return platform;
+    }
+  }
+
+  return null;
+}
+
+function extractCaption(messages: ChatMessage[]): string | null {
+  const userText = messages
+    .filter((message) => message.role === "user")
+    .map((message) => message.content)
+    .join("\n");
+
+  const quotedCaption =
+    userText.match(/[„""']([^""'”]+)[""'”]/) ??
+    userText.match(/:\s*[„""']([^""'”]+)[""'”]/);
+
+  if (quotedCaption?.[1]?.trim()) {
+    return quotedCaption[1].trim();
+  }
+
+  for (const message of [...messages].reverse()) {
+    if (message.role !== "assistant") {
+      continue;
+    }
+
+    const labeledCaption =
+      message.content.match(/\*\*Caption:\*\*\s*(.+)/i) ??
+      message.content.match(/(?:^|\n)\*?\*?Caption:\*?\*?\s*(.+)/i);
+
+    if (labeledCaption?.[1]?.trim()) {
+      return labeledCaption[1].trim();
+    }
+
+    if (/variant[aă]\s*1|op[tț]iunea?\s*1|option\s*1/i.test(userText)) {
+      const optionOne =
+        message.content.match(
+          /\*\*Op[tț]iunea?\s*1[^*]*\*\*\s*\n([\s\S]+?)(?:\n\n|\*\*|$)/i,
+        ) ??
+        message.content.match(/Op[tț]iunea?\s*1[^:\n]*:?\s*["„]?([^\n"]+)/i);
+
+      if (optionOne?.[1]?.trim()) {
+        return optionOne[1].trim();
+      }
+    }
+
+    const hashtagLine = message.content.match(
+      /(.{8,}?#\w[\w\d]*(?:\s+#\w[\w\d]*)*)/,
+    );
+
+    if (hashtagLine?.[1]?.trim() && !/hashtag/i.test(hashtagLine[1])) {
+      return hashtagLine[1].trim();
+    }
+  }
+
+  return null;
+}
+
+function parseScheduleTimeFromText(
+  text: string,
+  locale: string,
+): string | null {
+  let dayOffset: number | null = null;
+
+  if (/\b(mâine|maine|tomorrow)\b/i.test(text)) {
+    dayOffset = 1;
+  } else if (/\b(azi|today)\b/i.test(text)) {
+    dayOffset = 0;
+  }
+
+  if (dayOffset === null) {
+    return null;
+  }
+
+  const timeMatch = text.match(/\b(\d{1,2})[:h.](\d{2})\b/);
+  const hour = timeMatch ? Number(timeMatch[1]) : 18;
+  const minute = timeMatch ? Number(timeMatch[2]) : 0;
+
+  return buildScheduledAtISO(dayOffset, hour, minute, locale);
+}
+
+export function parseScheduleHeuristic(options: {
+  messages: ChatMessage[];
+  connectedAccounts: ConnectedAccount[];
+  locale: string;
+}): CreateScheduledPostInput | null {
+  const { messages, connectedAccounts, locale } = options;
+  const connectedPlatforms = connectedAccounts
+    .filter((account) => account.connected)
+    .map((account) => account.platform);
+  const allText = messages.map((message) => message.content).join("\n");
+  const platform = detectPlatform(allText, connectedPlatforms);
+  const caption = extractCaption(messages);
+  const scheduledAt = parseScheduleTimeFromText(allText, locale);
+
+  if (!platform || !caption || !scheduledAt) {
+    return null;
+  }
+
+  return {
+    platform,
+    title: caption.slice(0, 80),
+    caption,
+    scheduledAt,
+    mediaUrl: findLatestMediaUrl(messages),
+  };
+}
+
 function formatHistoryForExtraction(messages: ChatMessage[]): string {
   return messages
     .map((message) => {
@@ -160,6 +321,11 @@ export async function extractScheduleFromConversation(options: {
   const connectedPlatforms = connectedAccounts
     .filter((account) => account.connected)
     .map((account) => account.platform);
+
+  const heuristic = parseScheduleHeuristic(options);
+  if (heuristic) {
+    return heuristic;
+  }
 
   const now = new Date();
   const timezone = locale === "ro" ? "Europe/Bucharest" : "UTC";

@@ -25,7 +25,9 @@ export type CreateScheduledPostInput = {
   mediaUrl?: string | null;
 };
 
-export async function checkScheduledPostsTable(): Promise<{
+export async function checkScheduledPostsTable(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<{
   ready: boolean;
   serviceRoleConfigured: boolean;
   projectRef: string | null;
@@ -35,29 +37,54 @@ export async function checkScheduledPostsTable(): Promise<{
   const projectRef = getSupabaseProjectRef();
   const serviceRoleConfigured = isSupabaseAdminConfigured();
 
-  if (!serviceRoleConfigured) {
+  const { error: userError } = await supabase
+    .from("scheduled_posts")
+    .select("id")
+    .limit(0);
+
+  if (!userError) {
+    return { ready: true, serviceRoleConfigured, projectRef };
+  }
+
+  if (isMissingTableError(userError)) {
     return {
       ready: false,
-      serviceRoleConfigured: false,
+      serviceRoleConfigured,
       projectRef,
-      errorCode: "missing_service_role",
-      errorMessage: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server.",
+      errorCode: userError.code,
+      errorMessage: userError.message,
     };
   }
 
-  const admin = createAdminClient();
-  const { error } = await admin.from("scheduled_posts").select("id").limit(1);
+  if (serviceRoleConfigured) {
+    const admin = createAdminClient();
+    const { error: adminError } = await admin
+      .from("scheduled_posts")
+      .select("id")
+      .limit(1);
 
-  if (!error) {
-    return { ready: true, serviceRoleConfigured: true, projectRef };
+    if (!adminError) {
+      return { ready: true, serviceRoleConfigured: true, projectRef };
+    }
+
+    if (isMissingTableError(adminError)) {
+      return {
+        ready: false,
+        serviceRoleConfigured: true,
+        projectRef,
+        errorCode: adminError.code,
+        errorMessage: adminError.message,
+      };
+    }
   }
 
+  // Table likely exists; let insert surface any auth/RLS issue.
   return {
-    ready: false,
-    serviceRoleConfigured: true,
+    ready: true,
+    serviceRoleConfigured,
     projectRef,
-    errorCode: error.code,
-    errorMessage: error.message,
+    errorCode: userError.code,
+    errorMessage: userError.message,
   };
 }
 
@@ -145,11 +172,15 @@ export async function createScheduledPost(
     .single();
 
   if (error) {
-    console.error("[posty/scheduled-posts] insert failed:", error.message);
+    console.error(
+      "[posty/scheduled-posts] insert failed:",
+      error.code,
+      error.message,
+    );
     if (isMissingTableError(error)) {
       throw new Error("missing_table");
     }
-    return null;
+    throw new Error(`insert_failed:${error.code ?? "unknown"}`);
   }
 
   return rowToScheduledPost(data as ScheduledPostRow);

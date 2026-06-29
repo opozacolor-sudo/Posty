@@ -141,7 +141,7 @@ export async function POST(request: Request) {
 
     if (shouldAttemptScheduleExtraction(lastUserMessage, history)) {
       try {
-        const tableStatus = await checkScheduledPostsTable();
+        const tableStatus = await checkScheduledPostsTable(supabase);
 
         if (!tableStatus.ready) {
           scheduleSaveFailed = true;
@@ -208,6 +208,12 @@ export async function POST(request: Request) {
           mediaContext = [
             "IMPORTANT: Scheduling FAILED — the chosen date/time is in the past.",
             "Ask the user for a future date and time.",
+            "Do NOT claim the post was saved.",
+          ].join("\n");
+        } else if (detail.startsWith("insert_failed:")) {
+          mediaContext = [
+            "IMPORTANT: Scheduling FAILED when writing to Supabase.",
+            `Server detail: ${detail}`,
             "Do NOT claim the post was saved.",
           ].join("\n");
         } else {

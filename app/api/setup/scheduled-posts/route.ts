@@ -12,7 +12,7 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const status = await checkScheduledPostsTable();
+  const status = await checkScheduledPostsTable(supabase);
 
   return NextResponse.json({
     ...status,
