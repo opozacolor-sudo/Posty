@@ -118,7 +118,9 @@
     "backToSetup": "Înapoi la setup",
     "backToLogin": "Înapoi la autentificare",
     "privacyLink": "Politica de confidențialitate",
-    "termsLink": "Termeni și condiții"
+    "termsLink": "Termeni și condiții",
+    "contactTitle": "Contact",
+    "contactBody": "Întrebări despre Posty, confidențialitate sau datele tale:"
   },
   "dashboard": {
     "greeting": "Bună ziua, {name}",

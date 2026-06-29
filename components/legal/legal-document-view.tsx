@@ -3,11 +3,17 @@ import type { LegalDocumentContent } from "@/lib/legal/types";
 type LegalDocumentViewProps = {
   document: LegalDocumentContent;
   lastUpdatedLabel: string;
+  contactTitle: string;
+  contactBody: string;
+  contactEmail: string;
 };
 
 export function LegalDocumentView({
   document,
   lastUpdatedLabel,
+  contactTitle,
+  contactBody,
+  contactEmail,
 }: LegalDocumentViewProps) {
   return (
     <article className="prose-legal">
@@ -38,6 +44,17 @@ export function LegalDocumentView({
           </section>
         ))}
       </div>
+
+      <section className="mt-10 rounded-[14px] border border-coral/20 bg-coral/5 p-5">
+        <h2 className="text-lg font-bold text-foreground">{contactTitle}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{contactBody}</p>
+        <a
+          href={`mailto:${contactEmail}`}
+          className="mt-3 inline-block text-sm font-semibold text-coral hover:underline"
+        >
+          {contactEmail}
+        </a>
+      </section>
     </article>
   );
 }

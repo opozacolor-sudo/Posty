@@ -18,5 +18,6 @@ export function getLegalDocument(
 }
 
 export function isLegalRoute(pathWithoutLocale: string): boolean {
-  return pathWithoutLocale === "/privacy" || pathWithoutLocale === "/terms";
+  const normalized = pathWithoutLocale.replace(/\/$/, "") || "/";
+  return normalized === "/privacy" || normalized === "/terms";
 }

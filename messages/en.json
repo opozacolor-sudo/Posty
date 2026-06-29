@@ -118,7 +118,9 @@
     "backToSetup": "Back to setup",
     "backToLogin": "Back to login",
     "privacyLink": "Privacy Policy",
-    "termsLink": "Terms of Service"
+    "termsLink": "Terms of Service",
+    "contactTitle": "Contact",
+    "contactBody": "Questions about Posty, privacy, or your data:"
   },
   "dashboard": {
     "greeting": "Good day, {name}",
