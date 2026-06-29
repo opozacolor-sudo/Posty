@@ -135,10 +135,11 @@ export async function POST(request: Request) {
         });
         generatedImageUrl = image.url;
         mediaContext = [
-          "The user asked to generate an image. Posty already generated it via Higgsfield.",
+          "IMPORTANT: Image generation is already COMPLETE.",
+          "Do NOT say you are processing, generating, waiting, or contacting Higgsfield.",
+          "The image preview appears automatically in the Posty chat UI under your reply.",
           `Image URL: ${image.url}`,
-          "Include this URL in your reply so the user can open or download it.",
-          "Also suggest a caption/hashtags for their target platform.",
+          "Briefly describe what was generated, then give 1-2 caption options and hashtags.",
         ].join("\n");
       } catch (error) {
         const detail = formatHiggsfieldError(error);
@@ -170,6 +171,8 @@ export async function POST(request: Request) {
       configured: true,
       model,
       generatedImageUrl,
+      imageGenerationFailed:
+        imageIntent.shouldGenerate && !generatedImageUrl && Boolean(mediaContext?.includes("failed")),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

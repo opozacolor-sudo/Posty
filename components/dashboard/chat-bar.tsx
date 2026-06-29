@@ -27,6 +27,7 @@ export function ChatBar() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMode, setLoadingMode] = useState<"thinking" | "image">("thinking");
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const [chatModeNotice, setChatModeNotice] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -126,9 +127,18 @@ export function ChatBar() {
         .filter((message) => message.id !== "welcome")
         .map((message) => ({
           role: message.role,
-          content: message.content,
+          content: message.imageUrl
+            ? `${message.content}\n[Posty generated image: ${message.imageUrl}]`
+            : message.content,
         }));
 
+      const historyText = history.map((message) => message.content).join("\n");
+      const mayGenerateImage =
+        /\b(genereaz[aă]|imagine|story|povest|photo|image|graphic)\b/i.test(
+          historyText,
+        ) || /instagram|ig/i.test(historyText);
+
+      setLoadingMode(mayGenerateImage ? "image" : "thinking");
       setMessages(nextMessages);
 
       const reply = await fetchReply(history);
@@ -204,7 +214,9 @@ export function ChatBar() {
           <p className="text-xs font-bold leading-tight">{t("assistantName")}</p>
           <p className="text-[10px] text-green">
             {isLoading
-              ? t("chatThinking")
+              ? loadingMode === "image"
+                ? t("chatGeneratingImage")
+                : t("chatThinking")
               : isListening
                 ? t("voiceListening")
                 : t("chatOnline")}
@@ -231,19 +243,24 @@ export function ChatBar() {
               >
                 {message.content}
                 {message.imageUrl && (
-                  <a
-                    href={message.imageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 block overflow-hidden rounded-xl"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={message.imageUrl}
-                      alt=""
-                      className="max-h-48 w-full object-cover"
-                    />
-                  </a>
+                  <div className="mt-2">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Imagine generată
+                    </p>
+                    <a
+                      href={message.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block overflow-hidden rounded-xl border border-border"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={message.imageUrl}
+                        alt=""
+                        className="max-h-56 w-full object-cover"
+                      />
+                    </a>
+                  </div>
                 )}
               </div>
             </div>
@@ -251,7 +268,9 @@ export function ChatBar() {
           {isLoading && (
             <div className="flex justify-start">
               <div className="rounded-2xl bg-card px-3 py-1.5 text-xs text-muted-foreground">
-                {t("chatThinking")}
+                {loadingMode === "image"
+                  ? t("chatGeneratingImage")
+                  : t("chatThinking")}
               </div>
             </div>
           )}

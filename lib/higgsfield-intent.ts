@@ -70,13 +70,79 @@ export function resolveAspectRatio(text: string): ImageAspectRatio {
   return "1:1";
 }
 
+export function historyHasGeneratedImage(history: ChatTurn[]): boolean {
+  return history.some(
+    (turn) =>
+      turn.content.includes("[Posty generated image:") ||
+      /https:\/\/[^\s]+cloudfront\.net[^\s]*/i.test(turn.content),
+  );
+}
+
+function conversationMentionsImageIntent(history: ChatTurn[]): boolean {
+  const userText = history
+    .filter((turn) => turn.role === "user")
+    .map((turn) => turn.content)
+    .join(" ");
+
+  return (
+    userWantsImageGeneration(userText) ||
+    /\b(story|povest)\b.*\b(instagram|ig)\b/i.test(userText) ||
+    /\b(instagram|ig)\b.*\b(story|povest|imagine|poz[aă])\b/i.test(userText) ||
+    /\b(vibe|var[aă]|city|urban)\b.*\b(story|instagram|ig)\b/i.test(userText)
+  );
+}
+
+function getLastAssistantMessage(history: ChatTurn[]): ChatTurn | undefined {
+  return [...history].reverse().find((turn) => turn.role === "assistant");
+}
+
+function assistantAskedClarifyingQuestion(content: string): boolean {
+  return (
+    content.includes("?") &&
+    /\b(stil|style|imagine|story|povest|vibe|detali|prefer|vil?i|cum|ce|personaj|element|fundal|culori|ton)\b/i.test(
+      content,
+    )
+  );
+}
+
+function buildCombinedImagePrompt(userMessages: string[]): string {
+  return userMessages.map((message) => message.trim()).filter(Boolean).join(". ");
+}
+
 export function resolveImageGenerationIntent(
   history: ChatTurn[],
   lastUserMessage: string,
 ): { shouldGenerate: boolean; prompt: string; aspectRatio: ImageAspectRatio } {
+  if (historyHasGeneratedImage(history)) {
+    return { shouldGenerate: false, prompt: "", aspectRatio: "1:1" };
+  }
+
   const conversationText = history.map((turn) => turn.content).join("\n");
+  const userMessages = history.filter((turn) => turn.role === "user");
 
   if (userWantsImageGeneration(lastUserMessage)) {
+    const lastAssistant = getLastAssistantMessage(history);
+    const awaitingDetails =
+      lastAssistant &&
+      assistantAskedClarifyingQuestion(lastAssistant.content) &&
+      userMessages.length > 1;
+
+    if (awaitingDetails) {
+      const startIndex = userMessages.findIndex((turn) =>
+        userWantsImageGeneration(turn.content),
+      );
+      const threadStart = startIndex >= 0 ? startIndex : 0;
+      const prompt = buildCombinedImagePrompt(
+        userMessages.slice(threadStart).map((turn) => turn.content),
+      );
+
+      return {
+        shouldGenerate: true,
+        prompt,
+        aspectRatio: resolveAspectRatio(conversationText),
+      };
+    }
+
     return {
       shouldGenerate: true,
       prompt: buildImagePromptFromMessage(lastUserMessage),
@@ -84,7 +150,6 @@ export function resolveImageGenerationIntent(
     };
   }
 
-  const userMessages = history.filter((turn) => turn.role === "user");
   let imageRequestIndex = -1;
 
   for (let index = userMessages.length - 1; index >= 0; index -= 1) {
@@ -94,21 +159,32 @@ export function resolveImageGenerationIntent(
     }
   }
 
+  if (imageRequestIndex === -1 && conversationMentionsImageIntent(history)) {
+    imageRequestIndex = 0;
+  }
+
   if (imageRequestIndex === -1) {
     return { shouldGenerate: false, prompt: "", aspectRatio: "1:1" };
   }
 
-  const refinements = userMessages
-    .slice(imageRequestIndex + 1)
-    .map((turn) => turn.content.trim())
-    .filter(Boolean);
-
+  const refinements = userMessages.slice(imageRequestIndex + 1);
   if (refinements.length === 0) {
     return { shouldGenerate: false, prompt: "", aspectRatio: "1:1" };
   }
 
-  const basePrompt = buildImagePromptFromMessage(userMessages[imageRequestIndex].content);
-  const prompt = [basePrompt, ...refinements].join(". ");
+  const lastAssistant = getLastAssistantMessage(history);
+  if (!lastAssistant || !assistantAskedClarifyingQuestion(lastAssistant.content)) {
+    return { shouldGenerate: false, prompt: "", aspectRatio: "1:1" };
+  }
+
+  const lastRefinement = refinements[refinements.length - 1]?.content.trim();
+  if (lastRefinement !== lastUserMessage.trim()) {
+    return { shouldGenerate: false, prompt: "", aspectRatio: "1:1" };
+  }
+
+  const prompt = buildCombinedImagePrompt(
+    userMessages.slice(imageRequestIndex).map((turn) => turn.content),
+  );
 
   return {
     shouldGenerate: true,

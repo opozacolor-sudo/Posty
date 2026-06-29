@@ -100,6 +100,7 @@
       "sun": "Du"
     },
     "chatThinking": "Se gândește...",
+    "chatGeneratingImage": "Se generează imaginea... (~30 sec)",
     "chatError": "Nu s-a putut contacta Claude. Încearcă din nou.",
     "chatSessionExpired": "Sesiunea a expirat. Reîncarcă pagina și autentifică-te din nou.",
     "chatNotConfigured": "Mod demo — adaugă ANTHROPIC_API_KEY pe Vercel pentru răspunsuri AI complete.",
