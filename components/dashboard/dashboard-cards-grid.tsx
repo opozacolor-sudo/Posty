@@ -10,11 +10,13 @@ import type {
   PlatformStats,
   ScheduledPost,
 } from "@/lib/dashboard-data";
+import type { PlatformStatsResult } from "@/lib/stats/types";
 
 type DashboardCardsGridProps = {
   accounts: ConnectedAccount[];
   posts: ScheduledPost[];
-  stats: PlatformStats[];
+  stats: PlatformStatsResult[];
+  statsLoading?: boolean;
   scheduledDays: number[];
 };
 
@@ -22,6 +24,7 @@ export function DashboardCardsGrid({
   accounts,
   posts,
   stats,
+  statsLoading = false,
   scheduledDays,
 }: DashboardCardsGridProps) {
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -65,7 +68,11 @@ export function DashboardCardsGrid({
         <UpcomingPostsCard posts={posts} />
       </div>
       <div className={cellClass}>
-        <StatisticsCard stats={stats} />
+        <StatisticsCard
+          accounts={accounts}
+          stats={stats}
+          loading={statsLoading}
+        />
       </div>
       <div
         ref={calendarRef}
