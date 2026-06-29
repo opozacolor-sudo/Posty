@@ -110,6 +110,7 @@ export function ChatBar({
           configured?: boolean;
           generatedImageUrl?: string;
           scheduledPost?: { id: string };
+          scheduleSaveFailed?: boolean;
         };
 
         try {
@@ -127,6 +128,8 @@ export function ChatBar({
         if (response.ok && data.reply) {
           if (data.scheduledPost) {
             onScheduleCreated?.();
+          } else if (data.scheduleSaveFailed) {
+            setChatModeNotice(t("scheduleFailed"));
           }
 
           return {

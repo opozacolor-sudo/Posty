@@ -23,8 +23,10 @@ import {
   extractScheduleFromConversation,
   formatScheduleConfirmation,
   shouldAttemptScheduleExtraction,
+  userConfirmsScheduling,
+  userMentionsScheduling,
 } from "@/lib/schedule-intent";
-import { createScheduledPost } from "@/lib/scheduled-posts";
+import { checkScheduledPostsTable, createScheduledPost } from "@/lib/scheduled-posts";
 import { createClient } from "@/lib/supabase-server";
 import type { ChatAttachment } from "@/lib/chat-upload";
 
@@ -135,41 +137,85 @@ export async function POST(request: Request) {
     let scheduledPost:
       | Awaited<ReturnType<typeof createScheduledPost>>
       | undefined;
+    let scheduleSaveFailed = false;
 
     if (shouldAttemptScheduleExtraction(lastUserMessage, history)) {
       try {
-        const scheduleInput = await extractScheduleFromConversation({
-          messages: history,
-          connectedAccounts,
-          locale,
-        });
+        const tableStatus = await checkScheduledPostsTable();
 
-        if (scheduleInput) {
-          const saved = await createScheduledPost(
-            supabase,
-            user.id,
-            scheduleInput,
-          );
+        if (!tableStatus.ready) {
+          scheduleSaveFailed = true;
+          mediaContext = [
+            "IMPORTANT: Scheduling FAILED — the scheduled_posts table is not set up in Supabase yet.",
+            "Tell the user to open Supabase SQL Editor and run supabase/migrations/20250629130000_scheduled_posts.sql.",
+            "Do NOT claim the post was saved.",
+          ].join("\n");
+        } else {
+          const scheduleInput = await extractScheduleFromConversation({
+            messages: history,
+            connectedAccounts,
+            locale,
+          });
 
-          if (saved) {
-            scheduledPost = saved;
-            mediaContext = [
-              "IMPORTANT: The post was SUCCESSFULLY saved to the Posty calendar.",
-              formatScheduleConfirmation(scheduleInput, locale),
-              "Confirm this to the user briefly. Do NOT say scheduling is unavailable.",
-              `Platform: ${scheduleInput.platform}`,
-              `Scheduled: ${scheduleInput.scheduledAt}`,
-              `Caption preview: ${scheduleInput.title}`,
-            ].join("\n");
-          } else {
-            console.error(
-              "[posty/chat] Schedule save returned null — is scheduled_posts migration applied?",
+          if (scheduleInput) {
+            const saved = await createScheduledPost(
+              supabase,
+              user.id,
+              scheduleInput,
             );
+
+            if (saved) {
+              scheduledPost = saved;
+              mediaContext = [
+                "IMPORTANT: The post was SUCCESSFULLY saved to the Posty calendar.",
+                formatScheduleConfirmation(scheduleInput, locale),
+                "Confirm this to the user briefly. Do NOT say scheduling is unavailable.",
+                `Platform: ${scheduleInput.platform}`,
+                `Scheduled: ${scheduleInput.scheduledAt}`,
+                `Caption preview: ${scheduleInput.title}`,
+              ].join("\n");
+            } else {
+              scheduleSaveFailed = true;
+              mediaContext = [
+                "IMPORTANT: Scheduling FAILED when saving to the database.",
+                "Apologize briefly and ask the user to try again in a moment.",
+                "Do NOT claim the post was saved.",
+              ].join("\n");
+            }
+          } else if (
+            userConfirmsScheduling(lastUserMessage) ||
+            userMentionsScheduling(lastUserMessage)
+          ) {
+            scheduleSaveFailed = true;
+            mediaContext = [
+              "IMPORTANT: Could not extract schedule details from the conversation.",
+              "Ask the user to send platform, caption, and date/time in one message.",
+              "Do NOT claim the post was saved.",
+            ].join("\n");
           }
         }
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error);
-        console.error("[posty/chat] Schedule extraction failed:", detail);
+        console.error("[posty/chat] Schedule failed:", detail);
+        scheduleSaveFailed = true;
+
+        if (detail === "missing_table") {
+          mediaContext = [
+            "IMPORTANT: Scheduling FAILED — run the scheduled_posts migration in Supabase SQL Editor first.",
+            "Do NOT claim the post was saved.",
+          ].join("\n");
+        } else if (detail === "scheduled_at_in_past") {
+          mediaContext = [
+            "IMPORTANT: Scheduling FAILED — the chosen date/time is in the past.",
+            "Ask the user for a future date and time.",
+            "Do NOT claim the post was saved.",
+          ].join("\n");
+        } else {
+          mediaContext = [
+            "IMPORTANT: Scheduling FAILED due to a server error.",
+            "Do NOT claim the post was saved.",
+          ].join("\n");
+        }
       }
     }
 
@@ -220,6 +266,7 @@ export async function POST(request: Request) {
       model,
       generatedImageUrl,
       scheduledPost,
+      scheduleSaveFailed,
       imageGenerationFailed:
         imageIntent.shouldGenerate && !generatedImageUrl && Boolean(mediaContext?.includes("failed")),
     });

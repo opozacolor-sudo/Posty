@@ -1,6 +1,8 @@
 import { PLATFORM_COLORS } from "@/components/dashboard/platform-icon";
 import type { ScheduledPost, SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
+import { createAdminClient, isSupabaseAdminConfigured } from "./supabase-admin";
+import { getSupabaseProjectRef } from "./save-connected-account";
 import type { createClient } from "./supabase-server";
 
 export type ScheduledPostRow = {
@@ -22,6 +24,56 @@ export type CreateScheduledPostInput = {
   scheduledAt: string;
   mediaUrl?: string | null;
 };
+
+export async function checkScheduledPostsTable(): Promise<{
+  ready: boolean;
+  serviceRoleConfigured: boolean;
+  projectRef: string | null;
+  errorCode?: string;
+  errorMessage?: string;
+}> {
+  const projectRef = getSupabaseProjectRef();
+  const serviceRoleConfigured = isSupabaseAdminConfigured();
+
+  if (!serviceRoleConfigured) {
+    return {
+      ready: false,
+      serviceRoleConfigured: false,
+      projectRef,
+      errorCode: "missing_service_role",
+      errorMessage: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server.",
+    };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("scheduled_posts").select("id").limit(1);
+
+  if (!error) {
+    return { ready: true, serviceRoleConfigured: true, projectRef };
+  }
+
+  return {
+    ready: false,
+    serviceRoleConfigured: true,
+    projectRef,
+    errorCode: error.code,
+    errorMessage: error.message,
+  };
+}
+
+function isMissingTableError(error: { code?: string; message?: string }): boolean {
+  const code = error.code ?? "";
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    code === "42P01" ||
+    code === "PGRST205" ||
+    code === "PGRST204" ||
+    message.includes("does not exist") ||
+    message.includes("could not find the table") ||
+    message.includes("schema cache")
+  );
+}
 
 function isSocialPlatform(value: string): value is SocialPlatform {
   return PLATFORMS.includes(value as SocialPlatform);
@@ -94,6 +146,9 @@ export async function createScheduledPost(
 
   if (error) {
     console.error("[posty/scheduled-posts] insert failed:", error.message);
+    if (isMissingTableError(error)) {
+      throw new Error("missing_table");
+    }
     return null;
   }
 

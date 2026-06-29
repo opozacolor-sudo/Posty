@@ -108,6 +108,7 @@ export function buildChatSystemPrompt({
     higgsfieldConfigured ? "- Generating videos (coming soon)" : null,
     "",
     "When scheduling: if details are complete, tell the user Posty will save on confirm; when they say da/yes, the save happens automatically and you confirm success.",
+    "Never claim a post was saved unless context explicitly says it was SUCCESSFULLY saved.",
     mediaContext ? "" : null,
     mediaContext ?? null,
     "",
