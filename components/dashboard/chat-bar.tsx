@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import type { ChatAttachment } from "@/lib/chat-upload";
 import {
   useSpeechInput,
   type SpeechInputError,
@@ -13,7 +14,22 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   imageUrl?: string;
+  attachments?: ChatAttachment[];
 };
+
+type ChatHistoryItem = {
+  role: "user" | "assistant";
+  content: string;
+  attachments?: ChatAttachment[];
+};
+
+function uploadErrorMessage(code: string | undefined, t: (key: string) => string): string {
+  if (code === "unsupported_type") return t("uploadUnsupported");
+  if (code === "image_too_large" || code === "video_too_large") {
+    return t("uploadTooLarge");
+  }
+  return t("uploadFailed");
+}
 
 export function ChatBar() {
   const locale = useLocale();
@@ -30,7 +46,10 @@ export function ChatBar() {
   const [loadingMode, setLoadingMode] = useState<"thinking" | "image">("thinking");
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const [chatModeNotice, setChatModeNotice] = useState<string | null>(null);
+  const [pendingAttachment, setPendingAttachment] = useState<ChatAttachment | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isLoadingRef = useRef(false);
   const messagesRef = useRef(messages);
 
@@ -40,12 +59,25 @@ export function ChatBar() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, pendingAttachment]);
+
+  const buildHistory = useCallback((nextMessages: ChatMessage[]): ChatHistoryItem[] => {
+    return nextMessages
+      .filter((message) => message.id !== "welcome")
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+        attachments: message.attachments,
+        ...(message.imageUrl
+          ? {
+              content: `${message.content}\n[Posty generated image: ${message.imageUrl}]`.trim(),
+            }
+          : {}),
+      }));
+  }, []);
 
   const fetchReply = useCallback(
-    async (
-      history: Array<{ role: "user" | "assistant"; content: string }>,
-    ): Promise<{ text: string; imageUrl?: string }> => {
+    async (history: ChatHistoryItem[]): Promise<{ text: string; imageUrl?: string }> => {
       if (history.length === 0) {
         return { text: t("chatError") };
       }
@@ -107,30 +139,29 @@ export function ChatBar() {
   );
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, attachment?: ChatAttachment | null) => {
       const trimmed = text.trim();
-      if (!trimmed || isLoadingRef.current) return;
+      const activeAttachment = attachment ?? pendingAttachment;
+
+      if ((!trimmed && !activeAttachment) || isLoadingRef.current || isUploading) {
+        return;
+      }
 
       isLoadingRef.current = true;
       setIsLoading(true);
       setVoiceNotice(null);
       setInput("");
+      setPendingAttachment(null);
 
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
         role: "user",
-        content: trimmed,
+        content: trimmed || activeAttachment?.name || "",
+        attachments: activeAttachment ? [activeAttachment] : undefined,
       };
 
       const nextMessages = [...messagesRef.current, userMessage];
-      const history = nextMessages
-        .filter((message) => message.id !== "welcome")
-        .map((message) => ({
-          role: message.role,
-          content: message.imageUrl
-            ? `${message.content}\n[Posty generated image: ${message.imageUrl}]`
-            : message.content,
-        }));
+      const history = buildHistory(nextMessages);
 
       const historyText = history.map((message) => message.content).join("\n");
       const mayGenerateImage =
@@ -156,7 +187,50 @@ export function ChatBar() {
       isLoadingRef.current = false;
       setIsLoading(false);
     },
-    [fetchReply],
+    [buildHistory, fetchReply, isUploading, pendingAttachment],
+  );
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+
+      if (!file || isLoadingRef.current || isUploading) {
+        return;
+      }
+
+      setIsUploading(true);
+      setVoiceNotice(t("uploadingMedia"));
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/chat/upload", {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+        });
+
+        const data = (await response.json()) as {
+          attachment?: ChatAttachment;
+          error?: string;
+        };
+
+        if (!response.ok || !data.attachment) {
+          setVoiceNotice(uploadErrorMessage(data.error, t));
+          return;
+        }
+
+        setPendingAttachment(data.attachment);
+        setVoiceNotice(null);
+      } catch {
+        setVoiceNotice(t("uploadFailed"));
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [isUploading, t],
   );
 
   const handleVoiceError = useCallback(
@@ -182,15 +256,21 @@ export function ChatBar() {
     },
     onTranscript: (text) => {
       setInput(text);
-      void sendMessage(text);
+      void sendMessage(text, pendingAttachment);
     },
     onError: handleVoiceError,
   });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    void sendMessage(input);
+    void sendMessage(input, pendingAttachment);
   }
+
+  const canSend =
+    (input.trim().length > 0 || pendingAttachment !== null) &&
+    !isLoading &&
+    !isListening &&
+    !isUploading;
 
   return (
     <div className="chat-panel flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -213,13 +293,15 @@ export function ChatBar() {
         <div>
           <p className="text-xs font-bold leading-tight">{t("assistantName")}</p>
           <p className="text-[10px] text-green">
-            {isLoading
-              ? loadingMode === "image"
-                ? t("chatGeneratingImage")
-                : t("chatThinking")
-              : isListening
-                ? t("voiceListening")
-                : t("chatOnline")}
+            {isUploading
+              ? t("uploadingMedia")
+              : isLoading
+                ? loadingMode === "image"
+                  ? t("chatGeneratingImage")
+                  : t("chatThinking")
+                : isListening
+                  ? t("voiceListening")
+                  : t("chatOnline")}
           </p>
           {chatModeNotice && (
             <p className="text-[10px] text-muted-foreground">{chatModeNotice}</p>
@@ -242,6 +324,25 @@ export function ChatBar() {
                 }`}
               >
                 {message.content}
+                {message.attachments?.map((attachment) =>
+                  attachment.mediaType.startsWith("image/") ? (
+                    <div key={attachment.url} className="mt-2">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide opacity-80">
+                        {t("attachedPhoto")}
+                      </p>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        className="max-h-56 w-full rounded-xl object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <p key={attachment.url} className="mt-2 text-[10px] opacity-90">
+                      {t("attachedVideo")}: {attachment.name}
+                    </p>
+                  ),
+                )}
                 {message.imageUrl && (
                   <div className="mt-2">
                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -285,7 +386,7 @@ export function ChatBar() {
         {voiceNotice && (
           <p
             className={`mx-auto mb-2 max-w-3xl text-center text-[11px] ${
-              isListening ? "font-medium text-coral" : "text-muted-foreground"
+              isListening || isUploading ? "font-medium text-coral" : "text-muted-foreground"
             }`}
           >
             {voiceNotice}
@@ -293,7 +394,70 @@ export function ChatBar() {
           </p>
         )}
 
+        {pendingAttachment && (
+          <div className="mx-auto mb-2 flex max-w-3xl items-center gap-2 rounded-xl border border-border bg-card p-2">
+            {pendingAttachment.mediaType.startsWith("image/") ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={pendingAttachment.url}
+                alt={pendingAttachment.name}
+                className="h-12 w-12 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-[10px] font-semibold">
+                MP4
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-semibold">{pendingAttachment.name}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {pendingAttachment.mediaType.startsWith("image/")
+                  ? t("attachedPhoto")
+                  : t("attachedVideo")}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendingAttachment(null)}
+              className="rounded-full px-2 py-1 text-[10px] text-muted-foreground hover:bg-white"
+              aria-label={t("removeAttachment")}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         <div className="mx-auto flex max-w-3xl items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading || isListening || isUploading}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-card text-foreground hover:bg-border disabled:opacity-60"
+            aria-label={t("attachMedia")}
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+              />
+            </svg>
+          </button>
+
           <input
             type="text"
             value={input}
@@ -301,14 +465,14 @@ export function ChatBar() {
             placeholder={
               isListening ? t("voiceListeningPlaceholder") : t("chatPlaceholder")
             }
-            disabled={isLoading}
+            disabled={isLoading || isUploading}
             className="input-field flex-1 rounded-full px-4 py-2.5 text-sm disabled:opacity-60"
           />
 
           <button
             type="button"
             onClick={toggleListening}
-            disabled={isLoading}
+            disabled={isLoading || isUploading}
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-60 ${
               isListening
                 ? "animate-pulse bg-coral text-white"
@@ -334,7 +498,7 @@ export function ChatBar() {
 
           <button
             type="submit"
-            disabled={!input.trim() || isLoading || isListening}
+            disabled={!canSend}
             className="btn-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0 disabled:opacity-60"
             aria-label={t("send")}
           >

@@ -20,6 +20,7 @@ import {
 } from "@/lib/higgsfield-generate";
 import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
 import { createClient } from "@/lib/supabase-server";
+import type { ChatAttachment } from "@/lib/chat-upload";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -27,6 +28,7 @@ export const maxDuration = 120;
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+  attachments?: ChatAttachment[];
 };
 
 type ChatRequestBody = {

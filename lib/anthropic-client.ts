@@ -3,10 +3,16 @@ import {
   getAnthropicApiKey,
   getAnthropicModelCandidates,
 } from "./anthropic-env";
+import {
+  isImageMediaType,
+  isVideoMediaType,
+  type ChatAttachment,
+} from "./chat-upload";
 
-type ClaudeMessage = {
+export type ClaudeMessage = {
   role: "user" | "assistant";
   content: string;
+  attachments?: ChatAttachment[];
 };
 
 function extractErrorMessage(error: unknown): string {
@@ -25,6 +31,50 @@ function isRetryableModelError(error: unknown): boolean {
   }
 
   return error.status === 404 || error.status === 400;
+}
+
+function buildAnthropicMessage(
+  message: ClaudeMessage,
+): Anthropic.MessageParam {
+  if (message.role === "assistant" || !message.attachments?.length) {
+    return {
+      role: message.role,
+      content: message.content,
+    };
+  }
+
+  const blocks: Anthropic.ContentBlockParam[] = [];
+  const videoNotes: string[] = [];
+
+  for (const attachment of message.attachments) {
+    if (isImageMediaType(attachment.mediaType)) {
+      blocks.push({
+        type: "image",
+        source: {
+          type: "url",
+          url: attachment.url,
+        },
+      });
+      continue;
+    }
+
+    if (isVideoMediaType(attachment.mediaType)) {
+      videoNotes.push(
+        `[User attached video "${attachment.name}": ${attachment.url}]`,
+      );
+    }
+  }
+
+  const textParts = [message.content.trim(), ...videoNotes].filter(Boolean);
+  blocks.push({
+    type: "text",
+    text: textParts.join("\n\n") || "(User sent a media attachment)",
+  });
+
+  return {
+    role: "user",
+    content: blocks,
+  };
 }
 
 export async function createClaudeReply(options: {
@@ -47,10 +97,7 @@ export async function createClaudeReply(options: {
         model,
         max_tokens: options.maxTokens ?? 1024,
         system: options.system,
-        messages: options.messages.map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
+        messages: options.messages.map(buildAnthropicMessage),
       });
 
       const text =

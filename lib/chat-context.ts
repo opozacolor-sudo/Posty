@@ -94,6 +94,7 @@ export function buildChatSystemPrompt({
     "",
     "Current capabilities:",
     "- Chat (text and voice transcript)",
+    "- Upload photos in chat (Claude can see images; videos are referenced by link)",
     "- OAuth-connected social accounts",
     "- Brand profile aware copywriting",
     higgsfieldConfigured
@@ -104,7 +105,6 @@ export function buildChatSystemPrompt({
     "- Publishing posts directly",
     higgsfieldConfigured ? null : "- Generating images or videos (Higgsfield not configured yet)",
     higgsfieldConfigured ? "- Generating videos (coming soon)" : null,
-    "- Uploading media files from chat",
     "- Saving scheduled posts to the calendar",
     "",
     "When the user asks to post or schedule now, explain what you prepared and say publishing/scheduling will be wired up next.",
