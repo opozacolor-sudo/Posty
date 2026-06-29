@@ -27,6 +27,61 @@ async function resolveInstagramUserId(accessToken: string): Promise<string> {
   return String(userId);
 }
 
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForInstagramContainerReady(
+  containerId: string,
+  accessToken: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const maxAttempts = 20;
+  const delayMs = 2000;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const params = new URLSearchParams({
+      fields: "status_code,status",
+      access_token: accessToken,
+    });
+
+    const response = await fetch(
+      `https://graph.instagram.com/v21.0/${containerId}?${params.toString()}`,
+    );
+    const data = (await response.json()) as GraphError & {
+      status_code?: string;
+      status?: string;
+    };
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: data.error?.message ?? "Instagram container status check failed",
+      };
+    }
+
+    const statusCode = data.status_code;
+    if (statusCode === "FINISHED") {
+      return { ok: true };
+    }
+
+    if (statusCode === "ERROR" || statusCode === "EXPIRED") {
+      return {
+        ok: false,
+        error: data.status ?? `Instagram container ${statusCode}`,
+      };
+    }
+
+    if (attempt < maxAttempts - 1) {
+      await sleep(delayMs);
+    }
+  }
+
+  return {
+    ok: false,
+    error: "Instagram image processing timed out — try again in a moment",
+  };
+}
+
 export async function publishInstagramPost(options: {
   accessToken: string;
   caption: string;
@@ -52,6 +107,14 @@ export async function publishInstagramPost(options: {
         ok: false,
         error: container.error?.message ?? "Instagram media container failed",
       };
+    }
+
+    const ready = await waitForInstagramContainerReady(
+      container.id,
+      options.accessToken,
+    );
+    if (!ready.ok) {
+      return ready;
     }
 
     const publishBody = new URLSearchParams({
