@@ -36,7 +36,7 @@ export const PLATFORM_CAPABILITIES: Record<SocialPlatform, PlatformCapabilities>
   },
   tiktok: {
     oauth: "live",
-    photo: "none",
+    photo: "review",
     video: "review",
     scheduling: true,
   },

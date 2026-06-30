@@ -15,7 +15,7 @@ import { publishLinkedInContent } from "./publish-linkedin";
 import { fetchPublishMediaBytes, resolvePublishMediaUrl } from "./publish-media-url";
 import { publishPinterestPin } from "./publish-pinterest";
 import { publishThreadsPost } from "./publish-threads";
-import { publishTikTokVideo } from "./publish-tiktok";
+import { publishTikTokContent } from "./publish-tiktok";
 import { publishYouTubeVideo } from "./publish-youtube";
 
 export type PublishMediaType = "image" | "video";
@@ -27,6 +27,7 @@ export type PublishInput = {
   targetPlatforms: "all" | SocialPlatform[];
   facebookFormat?: FacebookPublishFormat;
   instagramFormat?: InstagramPublishFormat;
+  tiktokStoryRequested?: boolean;
 };
 
 export type PublishPlatformResult = {
@@ -56,7 +57,7 @@ function requiresImage(platform: SocialPlatform): boolean {
 }
 
 function requiresVideo(platform: SocialPlatform): boolean {
-  return platform === "youtube" || platform === "tiktok";
+  return platform === "youtube";
 }
 
 type PublishMediaPayload = {
@@ -76,7 +77,47 @@ async function publishToPlatform(
   refreshToken: string | null = null,
   facebookFormat: FacebookPublishFormat = "feed",
   instagramFormat: InstagramPublishFormat = "feed",
+  tiktokStoryRequested = false,
 ): Promise<PublishPlatformResult> {
+  if (platform === "tiktok") {
+    if (media.mediaType === "video") {
+      if (!media.videoBytes) {
+        return {
+          platform,
+          success: false,
+          skipped: true,
+          error: `${platform} needs a video attached with 📎 (mp4/mov)`,
+        };
+      }
+    } else if (!media.imageUrl) {
+      return {
+        platform,
+        success: false,
+        error: `${platform} needs a photo or video attached with 📎`,
+      };
+    }
+
+    const result = await publishTikTokContent({
+      accessToken,
+      refreshToken,
+      caption,
+      mediaType: media.mediaType === "video" ? "video" : "image",
+      imageUrl: media.imageUrl,
+      videoBytes: media.videoBytes,
+      contentType: media.videoContentType ?? "video/mp4",
+      storyRequested: tiktokStoryRequested,
+    });
+
+    return result.ok
+      ? {
+          platform,
+          success: true,
+          postId: result.postId,
+          detail: result.detail,
+        }
+      : { platform, success: false, error: result.error };
+  }
+
   if (requiresVideo(platform)) {
     if (media.mediaType !== "video" || !media.videoBytes) {
       return {
@@ -85,25 +126,6 @@ async function publishToPlatform(
         skipped: true,
         error: `${platform} needs a video attached with 📎 (mp4/mov)`,
       };
-    }
-
-    if (platform === "tiktok") {
-      const result = await publishTikTokVideo({
-        accessToken,
-        refreshToken,
-        caption,
-        videoBytes: media.videoBytes,
-        contentType: media.videoContentType ?? "video/mp4",
-      });
-
-      return result.ok
-        ? {
-            platform,
-            success: true,
-            postId: result.postId,
-            detail: result.detail,
-          }
-        : { platform, success: false, error: result.error };
     }
 
     if (platform === "youtube") {
@@ -328,6 +350,14 @@ export async function publishToConnectedPlatforms(
     }
   } else if (mediaUrl) {
     imageUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
+
+    if (targets.some((platform) => platform === "tiktok") && !imageUrl) {
+      return targets.map((platform) => ({
+        platform,
+        success: false,
+        error: "Could not prepare image URL for publishing",
+      }));
+    }
   }
 
   const mediaPayload: PublishMediaPayload = {
@@ -365,6 +395,7 @@ export async function publishToConnectedPlatforms(
         account.refreshToken,
         input.facebookFormat ?? "feed",
         input.instagramFormat ?? "feed",
+        input.tiktokStoryRequested ?? false,
       ),
     );
   }

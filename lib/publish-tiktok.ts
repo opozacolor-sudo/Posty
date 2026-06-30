@@ -49,6 +49,10 @@ function tikTokErrorMessage(error?: TikTokApiError, fallback = "TikTok API error
     return "TikTok: postările publice pentru utilizatori necesită App Review TikTok (Production). În Sandbox, TikTok limitează doar testarea internă — nu e cerința Posty. Trimite aplicația la review în TikTok Developer.";
   }
 
+  if (error.code === "url_ownership_unverified") {
+    return "TikTok: URL-ul imaginii nu e verificat — adaugă posty-ashen.vercel.app în TikTok Developer → Manage URL properties";
+  }
+
   return error.message?.trim() || error.code || fallback;
 }
 
@@ -268,6 +272,113 @@ async function waitForPublishComplete(
   return { ok: false, error: "TikTok publish timed out while processing" };
 }
 
+async function initPhotoPublish(options: {
+  accessToken: string;
+  caption: string;
+  imageUrl: string;
+  creatorInfo: CreatorInfo;
+  privacyLevel?: string;
+}): Promise<
+  | { ok: true; publishId: string; privacyLevel: string }
+  | { ok: false; error: string; retryWithSelfOnly?: boolean }
+> {
+  const privacyLevel =
+    options.privacyLevel ??
+    pickPrivacyLevel(options.creatorInfo.privacy_level_options);
+  const trimmedCaption = options.caption.trim();
+
+  const response = await fetch(`${TIKTOK_API}/v2/post/publish/content/init/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${options.accessToken}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+    body: JSON.stringify({
+      post_info: {
+        title: trimmedCaption.slice(0, 90),
+        description: trimmedCaption.slice(0, 4000),
+        privacy_level: privacyLevel,
+        disable_comment: options.creatorInfo.comment_disabled ?? false,
+        brand_content_toggle: false,
+        brand_organic_toggle: false,
+        auto_add_music: true,
+      },
+      source_info: {
+        source: "PULL_FROM_URL",
+        photo_cover_index: 0,
+        photo_images: [options.imageUrl],
+      },
+      post_mode: "DIRECT_POST",
+      media_type: "PHOTO",
+    }),
+  });
+
+  const payload = (await response.json()) as TikTokApiResponse<{
+    publish_id?: string;
+  }>;
+
+  if (!response.ok || payload.error?.code !== "ok" || !payload.data?.publish_id) {
+    return {
+      ok: false,
+      error: tikTokErrorMessage(payload.error, "TikTok photo init failed"),
+      retryWithSelfOnly: shouldRetryWithSelfOnly(payload.error),
+    };
+  }
+
+  return {
+    ok: true,
+    publishId: payload.data.publish_id,
+    privacyLevel,
+  };
+}
+
+async function publishPhotoWithAccessToken(options: {
+  accessToken: string;
+  caption: string;
+  imageUrl: string;
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
+  const creator = await queryCreatorInfo(options.accessToken);
+  if (!creator.ok) {
+    return creator;
+  }
+
+  let init = await initPhotoPublish({
+    accessToken: options.accessToken,
+    caption: options.caption,
+    imageUrl: options.imageUrl,
+    creatorInfo: creator.info,
+  });
+
+  if (!init.ok && init.retryWithSelfOnly) {
+    init = await initPhotoPublish({
+      accessToken: options.accessToken,
+      caption: options.caption,
+      imageUrl: options.imageUrl,
+      creatorInfo: creator.info,
+      privacyLevel: "SELF_ONLY",
+    });
+  }
+
+  if (!init.ok) {
+    return { ok: false, error: init.error };
+  }
+
+  const published = await waitForPublishComplete(options.accessToken, init.publishId);
+  if (!published.ok) {
+    return published;
+  }
+
+  const detail =
+    init.privacyLevel === "SELF_ONLY"
+      ? "poză privată pe TikTok (Sandbox / fără audit) — vezi în profilul tău"
+      : "poză pe TikTok";
+
+  return { ok: true, postId: published.postId, detail };
+}
+
 async function publishWithAccessToken(options: {
   accessToken: string;
   caption: string;
@@ -326,6 +437,104 @@ async function publishWithAccessToken(options: {
   return { ok: true, postId: published.postId, detail };
 }
 
+export function detectTikTokStoryRequest(text: string): boolean {
+  return (
+    /\b(story|stories|povest)\b/i.test(text) &&
+    /\btiktok\b/i.test(text)
+  );
+}
+
+export async function publishTikTokPhoto(options: {
+  accessToken: string;
+  refreshToken?: string | null;
+  caption: string;
+  imageUrl: string;
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
+  try {
+    let accessToken = options.accessToken;
+    let result = await publishPhotoWithAccessToken({
+      accessToken,
+      caption: options.caption,
+      imageUrl: options.imageUrl,
+    });
+
+    const shouldRefresh =
+      !result.ok &&
+      options.refreshToken &&
+      /access_token_invalid|access token expired|401/i.test(result.error);
+
+    if (shouldRefresh && options.refreshToken) {
+      const refreshed = await refreshTikTokAccessToken(options.refreshToken);
+      accessToken = refreshed.accessToken;
+      result = await publishPhotoWithAccessToken({
+        accessToken,
+        caption: options.caption,
+        imageUrl: options.imageUrl,
+      });
+    }
+
+    return result.ok
+      ? { ok: true, postId: result.postId, detail: result.detail }
+      : { ok: false, error: result.error };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+export async function publishTikTokContent(options: {
+  accessToken: string;
+  refreshToken?: string | null;
+  caption: string;
+  mediaType: "image" | "video";
+  imageUrl?: string | null;
+  videoBytes?: Buffer;
+  contentType?: string;
+  storyRequested?: boolean;
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
+  if (options.storyRequested) {
+    return {
+      ok: false,
+      error:
+        "TikTok API nu suportă Story — doar video sau poză (Photo Mode) în feed",
+    };
+  }
+
+  if (options.mediaType === "video") {
+    if (!options.videoBytes?.length) {
+      return { ok: false, error: "tiktok needs a video attached with 📎" };
+    }
+
+    return publishTikTokVideo({
+      accessToken: options.accessToken,
+      refreshToken: options.refreshToken,
+      caption: options.caption,
+      videoBytes: options.videoBytes,
+      contentType: options.contentType ?? "video/mp4",
+    });
+  }
+
+  if (!options.imageUrl) {
+    return { ok: false, error: "tiktok needs a photo attached with 📎 (JPEG/WebP)" };
+  }
+
+  return publishTikTokPhoto({
+    accessToken: options.accessToken,
+    refreshToken: options.refreshToken,
+    caption: options.caption,
+    imageUrl: options.imageUrl,
+  });
+}
+
+/** @deprecated use publishTikTokContent */
 export async function publishTikTokVideo(options: {
   accessToken: string;
   refreshToken?: string | null;

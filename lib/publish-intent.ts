@@ -11,6 +11,7 @@ import {
 import type { PublishInput } from "./publish";
 import { detectFacebookPublishFormat } from "./publish-facebook";
 import { detectInstagramPublishFormat } from "./publish-instagram";
+import { detectTikTokStoryRequest } from "./publish-tiktok";
 import { extractCaption, findLatestPublishMedia } from "./schedule-intent";
 
 type ChatMessage = {
@@ -264,5 +265,6 @@ export function extractPublishFromConversation(options: {
     targetPlatforms,
     facebookFormat: detectFacebookPublishFormat(publishText),
     instagramFormat: detectInstagramPublishFormat(publishText),
+    tiktokStoryRequested: detectTikTokStoryRequest(publishText),
   };
 }
