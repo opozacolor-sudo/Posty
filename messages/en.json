@@ -144,7 +144,7 @@
     "uploadingMedia": "Uploading file...",
     "uploadFailed": "Could not upload the file. Try again.",
     "uploadUnsupported": "Unsupported file type. Use JPG, PNG, WEBP, GIF, MP4, or MOV.",
-    "uploadTooLarge": "File is too large (max 10MB photo, 25MB video).",
+    "uploadTooLarge": "File is too large (max 10MB photo, 50MB video).",
     "removeAttachment": "Remove attachment",
     "attachedPhoto": "Attached photo",
     "attachedVideo": "Attached video",

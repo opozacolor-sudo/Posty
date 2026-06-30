@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { ChatAttachment } from "@/lib/chat-upload";
+import { uploadChatAttachmentFromBrowser } from "@/lib/chat-upload-client";
+import { createClient } from "@/lib/supabase";
 import { shouldAttemptPublish } from "@/lib/publish-intent";
 import {
   useSpeechInput,
@@ -236,29 +238,27 @@ export function ChatBar({
       setVoiceNotice(t("uploadingMedia"));
 
       try {
-        const formData = new FormData();
-        formData.append("file", file);
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-        const response = await fetch("/api/chat/upload", {
-          method: "POST",
-          body: formData,
-          credentials: "same-origin",
-        });
-
-        const data = (await response.json()) as {
-          attachment?: ChatAttachment;
-          error?: string;
-        };
-
-        if (!response.ok || !data.attachment) {
-          setVoiceNotice(uploadErrorMessage(data.error, t));
+        if (!user) {
+          setVoiceNotice(t("chatSessionExpired"));
           return;
         }
 
-        setPendingAttachment(data.attachment);
+        const attachment = await uploadChatAttachmentFromBrowser(
+          supabase,
+          user.id,
+          file,
+        );
+
+        setPendingAttachment(attachment);
         setVoiceNotice(null);
-      } catch {
-        setVoiceNotice(t("uploadFailed"));
+      } catch (error) {
+        const code = error instanceof Error ? error.message : undefined;
+        setVoiceNotice(uploadErrorMessage(code, t));
       } finally {
         setIsUploading(false);
       }
