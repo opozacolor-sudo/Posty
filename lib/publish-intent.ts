@@ -9,6 +9,7 @@ import {
   userConfirmsSchedule,
 } from "./chat-intent-triggers";
 import type { PublishInput } from "./publish";
+import { detectFacebookPublishFormat } from "./publish-facebook";
 import { extractCaption, findLatestPublishMedia } from "./schedule-intent";
 
 type ChatMessage = {
@@ -219,5 +220,6 @@ export function extractPublishFromConversation(options: {
     mediaUrl: media.url,
     mediaType: media.mediaType,
     targetPlatforms,
+    facebookFormat: detectFacebookPublishFormat(allText),
   };
 }

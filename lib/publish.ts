@@ -3,8 +3,9 @@ import type { SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
 import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
 import {
-  publishFacebookPhotoPost,
-  publishFacebookVideoPost,
+  detectFacebookPublishFormat,
+  publishFacebookContent,
+  type FacebookPublishFormat,
 } from "./publish-facebook";
 import { publishInstagramPost } from "./publish-instagram";
 import { publishLinkedInImagePost } from "./publish-linkedin";
@@ -21,6 +22,7 @@ export type PublishInput = {
   mediaUrl?: string | null;
   mediaType?: PublishMediaType | null;
   targetPlatforms: "all" | SocialPlatform[];
+  facebookFormat?: FacebookPublishFormat;
 };
 
 export type PublishPlatformResult = {
@@ -69,6 +71,7 @@ async function publishToPlatform(
   media: PublishMediaPayload,
   platformMetadata: Record<string, string> = {},
   refreshToken: string | null = null,
+  facebookFormat: FacebookPublishFormat = "feed",
 ): Promise<PublishPlatformResult> {
   if (requiresVideo(platform)) {
     if (media.mediaType !== "video" || !media.videoBytes) {
@@ -119,24 +122,24 @@ async function publishToPlatform(
     }
   }
 
-  if (platform === "facebook" && media.mediaType === "video") {
-    if (!media.videoUrl) {
-      return {
-        platform,
-        success: false,
-        error: "facebook needs a video attached with 📎 (mp4/mov)",
-      };
-    }
-
-    const result = await publishFacebookVideoPost({
+  if (platform === "facebook") {
+    const result = await publishFacebookContent({
       accessToken,
       pageId: platformMetadata.pageId,
       caption,
+      format: facebookFormat,
+      mediaType: media.mediaType === "video" ? "video" : "image",
+      imageUrl: media.imageUrl,
       videoUrl: media.videoUrl,
     });
 
     return result.ok
-      ? { platform, success: true, postId: result.postId }
+      ? {
+          platform,
+          success: true,
+          postId: result.postId,
+          detail: result.detail,
+        }
       : { platform, success: false, error: result.error };
   }
 
@@ -172,19 +175,6 @@ async function publishToPlatform(
   if (platform === "threads") {
     const result = await publishThreadsPost({
       accessToken,
-      caption,
-      imageUrl: media.imageUrl,
-    });
-
-    return result.ok
-      ? { platform, success: true, postId: result.postId }
-      : { platform, success: false, error: result.error };
-  }
-
-  if (platform === "facebook" && media.imageUrl) {
-    const result = await publishFacebookPhotoPost({
-      accessToken,
-      pageId: platformMetadata.pageId,
       caption,
       imageUrl: media.imageUrl,
     });
@@ -326,6 +316,7 @@ export async function publishToConnectedPlatforms(
         mediaPayload,
         account.platformMetadata,
         account.refreshToken,
+        input.facebookFormat ?? "feed",
       ),
     );
   }
