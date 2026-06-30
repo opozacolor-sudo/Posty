@@ -7,7 +7,10 @@ import {
   publishFacebookContent,
   type FacebookPublishFormat,
 } from "./publish-facebook";
-import { publishInstagramPost } from "./publish-instagram";
+import {
+  publishInstagramContent,
+  type InstagramPublishFormat,
+} from "./publish-instagram";
 import { publishLinkedInImagePost } from "./publish-linkedin";
 import { fetchPublishMediaBytes, resolvePublishMediaUrl } from "./publish-media-url";
 import { publishPinterestPin } from "./publish-pinterest";
@@ -23,6 +26,7 @@ export type PublishInput = {
   mediaType?: PublishMediaType | null;
   targetPlatforms: "all" | SocialPlatform[];
   facebookFormat?: FacebookPublishFormat;
+  instagramFormat?: InstagramPublishFormat;
 };
 
 export type PublishPlatformResult = {
@@ -72,6 +76,7 @@ async function publishToPlatform(
   platformMetadata: Record<string, string> = {},
   refreshToken: string | null = null,
   facebookFormat: FacebookPublishFormat = "feed",
+  instagramFormat: InstagramPublishFormat = "feed",
 ): Promise<PublishPlatformResult> {
   if (requiresVideo(platform)) {
     if (media.mediaType !== "video" || !media.videoBytes) {
@@ -143,6 +148,26 @@ async function publishToPlatform(
       : { platform, success: false, error: result.error };
   }
 
+  if (platform === "instagram") {
+    const result = await publishInstagramContent({
+      accessToken,
+      caption,
+      format: instagramFormat,
+      mediaType: media.mediaType === "video" ? "video" : "image",
+      imageUrl: media.imageUrl,
+      videoUrl: media.videoUrl,
+    });
+
+    return result.ok
+      ? {
+          platform,
+          success: true,
+          postId: result.postId,
+          detail: result.detail,
+        }
+      : { platform, success: false, error: result.error };
+  }
+
   if (media.mediaType === "video") {
     return {
       platform,
@@ -158,18 +183,6 @@ async function publishToPlatform(
       success: false,
       error: `${platform} needs an image attached to the post`,
     };
-  }
-
-  if (platform === "instagram" && media.imageUrl) {
-    const result = await publishInstagramPost({
-      accessToken,
-      caption,
-      imageUrl: media.imageUrl,
-    });
-
-    return result.ok
-      ? { platform, success: true, postId: result.postId }
-      : { platform, success: false, error: result.error };
   }
 
   if (platform === "threads") {
@@ -270,13 +283,13 @@ export async function publishToConnectedPlatforms(
     }
 
     if (
-      targets.some((platform) => platform === "facebook") &&
+      targets.some((platform) => platform === "facebook" || platform === "instagram") &&
       !videoUrl
     ) {
       return targets.map((platform) => ({
         platform,
         success: false,
-        error: "Could not prepare video URL for Facebook",
+        error: "Could not prepare video URL for publishing",
       }));
     }
   } else if (mediaUrl) {
@@ -317,6 +330,7 @@ export async function publishToConnectedPlatforms(
         account.platformMetadata,
         account.refreshToken,
         input.facebookFormat ?? "feed",
+        input.instagramFormat ?? "feed",
       ),
     );
   }

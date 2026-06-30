@@ -3,6 +3,7 @@ import type { SocialPlatform } from "./dashboard-data";
 import type { PublishMediaType } from "./publish";
 import { publishToConnectedPlatforms } from "./publish";
 import { detectFacebookPublishFormat } from "./publish-facebook";
+import { detectInstagramPublishFormat } from "./publish-instagram";
 import {
   claimScheduledPostForPublish,
   inferScheduledMediaType,
@@ -81,6 +82,7 @@ async function publishScheduledPost(
       mediaType,
       targetPlatforms: [post.platform as SocialPlatform],
       facebookFormat: detectFacebookPublishFormat(`${post.title}\n${caption}`),
+      instagramFormat: detectInstagramPublishFormat(`${post.title}\n${caption}`),
     },
     { appBaseUrl },
   );

@@ -13,7 +13,7 @@ export const PLATFORM_CAPABILITIES: Record<SocialPlatform, PlatformCapabilities>
   instagram: {
     oauth: "live",
     photo: "live",
-    video: "none",
+    video: "live",
     scheduling: true,
   },
   threads: {

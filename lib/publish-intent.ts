@@ -10,6 +10,7 @@ import {
 } from "./chat-intent-triggers";
 import type { PublishInput } from "./publish";
 import { detectFacebookPublishFormat } from "./publish-facebook";
+import { detectInstagramPublishFormat } from "./publish-instagram";
 import { extractCaption, findLatestPublishMedia } from "./schedule-intent";
 
 type ChatMessage = {
@@ -221,5 +222,6 @@ export function extractPublishFromConversation(options: {
     mediaType: media.mediaType,
     targetPlatforms,
     facebookFormat: detectFacebookPublishFormat(allText),
+    instagramFormat: detectInstagramPublishFormat(allText),
   };
 }
