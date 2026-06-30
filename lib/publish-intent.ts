@@ -11,8 +11,14 @@ import {
 import type { PublishInput } from "./publish";
 import { detectFacebookPublishFormat } from "./publish-facebook";
 import { detectInstagramPublishFormat } from "./publish-instagram";
-import { detectTikTokStoryRequest } from "./publish-tiktok";
 import { extractCaption, findLatestPublishMedia } from "./schedule-intent";
+
+function detectTikTokStoryRequest(text: string): boolean {
+  return (
+    /\b(story|stories|povest)\b/i.test(text) &&
+    /\btiktok\b/i.test(text)
+  );
+}
 
 type ChatMessage = {
   role: "user" | "assistant";

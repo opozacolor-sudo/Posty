@@ -1,4 +1,5 @@
 import { refreshTikTokAccessToken } from "./tiktok-oauth";
+import { convertImageToVideoBytes } from "./tiktok-image-to-video";
 
 type TikTokApiError = {
   code?: string;
@@ -332,7 +333,26 @@ async function initPhotoPublish(options: {
   };
 }
 
+function useTikTokPhotoPullFromUrl(): boolean {
+  return process.env.TIKTOK_PHOTO_PULL_FROM_URL?.trim().toLowerCase() === "true";
+}
+
 async function publishPhotoWithAccessToken(options: {
+  accessToken: string;
+  caption: string;
+  imageUrl: string;
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
+  if (useTikTokPhotoPullFromUrl()) {
+    return publishPhotoPullFromUrl(options);
+  }
+
+  return publishPhotoAsVideoUpload(options);
+}
+
+async function publishPhotoPullFromUrl(options: {
   accessToken: string;
   caption: string;
   imageUrl: string;
@@ -374,7 +394,55 @@ async function publishPhotoWithAccessToken(options: {
   const detail =
     init.privacyLevel === "SELF_ONLY"
       ? "poză privată pe TikTok (Sandbox / fără audit) — vezi în profilul tău"
-      : "poză pe TikTok";
+      : "poză pe TikTok (Photo Mode)";
+
+  return { ok: true, postId: published.postId, detail };
+}
+
+async function publishPhotoAsVideoUpload(options: {
+  accessToken: string;
+  caption: string;
+  imageUrl: string;
+}): Promise<
+  | { ok: true; postId: string; detail?: string }
+  | { ok: false; error: string }
+> {
+  const imageResponse = await fetch(options.imageUrl);
+  if (!imageResponse.ok) {
+    return { ok: false, error: "Could not download image for TikTok upload" };
+  }
+
+  const imageBytes = Buffer.from(await imageResponse.arrayBuffer());
+  const contentType = imageResponse.headers.get("content-type") ?? "image/jpeg";
+
+  let videoBytes: Buffer;
+  try {
+    videoBytes = await convertImageToVideoBytes(imageBytes, contentType);
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Could not prepare image for TikTok upload",
+    };
+  }
+
+  const published = await publishWithAccessToken({
+    accessToken: options.accessToken,
+    caption: options.caption,
+    videoBytes,
+    contentType: "video/mp4",
+  });
+
+  if (!published.ok) {
+    return published;
+  }
+
+  const detail =
+    published.detail?.includes("privat")
+      ? "poză ca video privat pe TikTok (Sandbox) — vezi în profilul tău"
+      : "poză publicată ca video scurt pe TikTok";
 
   return { ok: true, postId: published.postId, detail };
 }
@@ -435,13 +503,6 @@ async function publishWithAccessToken(options: {
       : "live pe TikTok";
 
   return { ok: true, postId: published.postId, detail };
-}
-
-export function detectTikTokStoryRequest(text: string): boolean {
-  return (
-    /\b(story|stories|povest)\b/i.test(text) &&
-    /\btiktok\b/i.test(text)
-  );
 }
 
 export async function publishTikTokPhoto(options: {

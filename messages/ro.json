@@ -75,7 +75,7 @@
       "threads": "Conectează și postează poze, video sau text pe Threads din chat.",
       "linkedin": "Conectează și publică poze sau video pe profilul LinkedIn.",
       "youtube": "Conectează și încarcă video din chat. Procesarea poate dura un minut.",
-      "tiktok": "Conectare OAuth + postare poze sau video din chat. Public = App Review TikTok. Story nu e suportat în API.",
+      "tiktok": "Conectare OAuth + postare poze (ca video scurt) sau video din chat. Photo Mode nativ = domeniu propriu + DNS TikTok.",
       "facebook": "Conectează pagina acum. Postarea cu poză necesită App Review Meta înainte de lansare publică.",
       "pinterest": "Conectare disponibilă. Pin-urile necesită aprobare API Pinterest (re-aplicăm la lansare).",
       "x": "OAuth și publicare pe X nu sunt implementate încă.",

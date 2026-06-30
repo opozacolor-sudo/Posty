@@ -75,7 +75,7 @@
       "threads": "Connect and post photos, videos, or text on Threads from chat.",
       "linkedin": "Connect and publish photos or videos to your LinkedIn profile.",
       "youtube": "Connect and upload videos from chat. Processing may take a minute.",
-      "tiktok": "Connect OAuth and post photos or videos from chat. Public posts need TikTok App Review. Stories are not supported via API.",
+      "tiktok": "Connect OAuth and post photos (as a short video) or videos from chat. Native Photo Mode needs your own domain + TikTok DNS verification.",
       "facebook": "Connect your Page now. Photo posting needs Meta App Review before it works for everyone.",
       "pinterest": "Connect now. Pin publishing needs Pinterest API approval (re-apply when Posty launches).",
       "x": "X (Twitter) OAuth and publishing are not wired yet.",
