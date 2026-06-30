@@ -19,13 +19,13 @@ export const PLATFORM_CAPABILITIES: Record<SocialPlatform, PlatformCapabilities>
   threads: {
     oauth: "live",
     photo: "live",
-    video: "none",
+    video: "live",
     scheduling: true,
   },
   linkedin: {
     oauth: "live",
     photo: "live",
-    video: "none",
+    video: "live",
     scheduling: true,
   },
   youtube: {

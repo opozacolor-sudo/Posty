@@ -11,7 +11,7 @@ import {
   publishInstagramContent,
   type InstagramPublishFormat,
 } from "./publish-instagram";
-import { publishLinkedInImagePost } from "./publish-linkedin";
+import { publishLinkedInContent } from "./publish-linkedin";
 import { fetchPublishMediaBytes, resolvePublishMediaUrl } from "./publish-media-url";
 import { publishPinterestPin } from "./publish-pinterest";
 import { publishThreadsPost } from "./publish-threads";
@@ -51,7 +51,6 @@ function requiresImage(platform: SocialPlatform): boolean {
   return (
     platform === "instagram" ||
     platform === "facebook" ||
-    platform === "linkedin" ||
     platform === "pinterest"
   );
 }
@@ -187,6 +186,45 @@ async function publishToPlatform(
       : { platform, success: false, error: result.error };
   }
 
+  if (platform === "linkedin") {
+    if (media.mediaType === "video") {
+      const result = await publishLinkedInContent({
+        accessToken,
+        caption,
+        mediaType: "video",
+        videoBytes: media.videoBytes,
+      });
+
+      return result.ok
+        ? {
+            platform,
+            success: true,
+            postId: result.postId,
+            detail: result.detail,
+          }
+        : { platform, success: false, error: result.error };
+    }
+
+    if (media.imageUrl) {
+      const result = await publishLinkedInContent({
+        accessToken,
+        caption,
+        mediaType: "image",
+        imageUrl: media.imageUrl,
+      });
+
+      return result.ok
+        ? { platform, success: true, postId: result.postId }
+        : { platform, success: false, error: result.error };
+    }
+
+    return {
+      platform,
+      success: false,
+      error: `${platform} needs a photo or video attached to the post`,
+    };
+  }
+
   if (media.mediaType === "video") {
     return {
       platform,
@@ -202,18 +240,6 @@ async function publishToPlatform(
       success: false,
       error: `${platform} needs an image attached to the post`,
     };
-  }
-
-  if (platform === "linkedin" && media.imageUrl) {
-    const result = await publishLinkedInImagePost({
-      accessToken,
-      caption,
-      imageUrl: media.imageUrl,
-    });
-
-    return result.ok
-      ? { platform, success: true, postId: result.postId }
-      : { platform, success: false, error: result.error };
   }
 
   if (platform === "pinterest" && media.imageUrl) {
@@ -273,7 +299,8 @@ export async function publishToConnectedPlatforms(
   if (mediaType === "video" && mediaUrl) {
     videoUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
     const needsVideoBytes = targets.some(
-      (platform) => platform === "youtube" || platform === "tiktok",
+      (platform) =>
+        platform === "youtube" || platform === "tiktok" || platform === "linkedin",
     );
 
     if (needsVideoBytes) {

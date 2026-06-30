@@ -74,6 +74,41 @@ export function userWantsAllConnectedPlatforms(message: string): boolean {
   );
 }
 
+function extractCaptionFromPublishText(text: string): string | null {
+  const inlineCaption = text.match(
+    /\b(?:cu (?:textul|descrierea|descriere|caption(?:ul)?)|with (?:the )?(?:text|caption|description)|(?:caption|description|descrierea|descriere))[:\s]+([\s\S]+)$/i,
+  );
+
+  return inlineCaption?.[1]?.trim() ?? null;
+}
+
+export function findLatestPublishCommandMessage(
+  messages: ChatMessage[],
+): ChatMessage | null {
+  const userMessages = messages.filter((message) => message.role === "user");
+
+  for (let index = userMessages.length - 1; index >= 0; index -= 1) {
+    const message = userMessages[index];
+    const content = message.content;
+
+    if (
+      userWantsPublishNow(content) ||
+      PLATFORM_PUBLISH_PATTERN.test(content) ||
+      /\bposteaz[aă]?\s+poza\b/i.test(content)
+    ) {
+      return message;
+    }
+
+    if (userConfirmsPublishNow(content) || PUBLISH_RETRY_PATTERN.test(content)) {
+      continue;
+    }
+
+    break;
+  }
+
+  return null;
+}
+
 function detectTargetPlatforms(
   text: string,
   connectedPlatforms: SocialPlatform[],
@@ -196,13 +231,19 @@ export function extractPublishFromConversation(options: {
     return null;
   }
 
-  const caption = extractCaption(messages);
+  const publishMessage = findLatestPublishCommandMessage(messages);
+  const publishText =
+    publishMessage?.content ??
+    [...messages].reverse().find((message) => message.role === "user")?.content ??
+    "";
+
+  const caption =
+    extractCaptionFromPublishText(publishText) ?? extractCaption(messages);
   if (!caption) {
     return null;
   }
 
-  const allText = messages.map((message) => message.content).join("\n");
-  const targetPlatforms = detectTargetPlatforms(allText, connectedPlatforms);
+  const targetPlatforms = detectTargetPlatforms(publishText, connectedPlatforms);
 
   if (
     targetPlatforms !== "all" &&
@@ -221,7 +262,7 @@ export function extractPublishFromConversation(options: {
     mediaUrl: media.url,
     mediaType: media.mediaType,
     targetPlatforms,
-    facebookFormat: detectFacebookPublishFormat(allText),
-    instagramFormat: detectInstagramPublishFormat(allText),
+    facebookFormat: detectFacebookPublishFormat(publishText),
+    instagramFormat: detectInstagramPublishFormat(publishText),
   };
 }
