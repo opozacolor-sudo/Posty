@@ -194,7 +194,7 @@ export async function publishInstagramContent(options: {
         media_type: "REELS",
         video_url: videoUrl,
         caption,
-        share_to_feed: "true",
+        share_to_feed: "false",
         access_token: options.accessToken,
       });
 
@@ -215,9 +215,10 @@ export async function publishInstagramContent(options: {
       }
 
       const containerBody = new URLSearchParams({
-        media_type: "VIDEO",
+        media_type: "REELS",
         video_url: videoUrl,
         caption,
+        share_to_feed: "true",
         access_token: options.accessToken,
       });
 
@@ -227,7 +228,9 @@ export async function publishInstagramContent(options: {
         containerBody,
       });
 
-      return result.ok ? { ok: true, postId: result.postId } : result;
+      return result.ok
+        ? { ok: true, postId: result.postId, detail: "video pe Instagram" }
+        : result;
     }
 
     if (!imageUrl) {
