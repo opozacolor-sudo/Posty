@@ -2,7 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
 import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
-import { publishFacebookPhotoPost } from "./publish-facebook";
+import {
+  publishFacebookPhotoPost,
+  publishFacebookVideoPost,
+} from "./publish-facebook";
 import { publishInstagramPost } from "./publish-instagram";
 import { publishLinkedInImagePost } from "./publish-linkedin";
 import { fetchPublishMediaBytes, resolvePublishMediaUrl } from "./publish-media-url";
@@ -54,6 +57,7 @@ function requiresVideo(platform: SocialPlatform): boolean {
 type PublishMediaPayload = {
   mediaType: PublishMediaType | null;
   imageUrl?: string | null;
+  videoUrl?: string | null;
   videoBytes?: Buffer;
   videoContentType?: string;
 };
@@ -113,6 +117,27 @@ async function publishToPlatform(
           }
         : { platform, success: false, error: result.error };
     }
+  }
+
+  if (platform === "facebook" && media.mediaType === "video") {
+    if (!media.videoUrl) {
+      return {
+        platform,
+        success: false,
+        error: "facebook needs a video attached with 📎 (mp4/mov)",
+      };
+    }
+
+    const result = await publishFacebookVideoPost({
+      accessToken,
+      pageId: platformMetadata.pageId,
+      caption,
+      videoUrl: media.videoUrl,
+    });
+
+    return result.ok
+      ? { platform, success: true, postId: result.postId }
+      : { platform, success: false, error: result.error };
   }
 
   if (media.mediaType === "video") {
@@ -231,20 +256,39 @@ export async function publishToConnectedPlatforms(
         );
 
   let imageUrl: string | null = null;
+  let videoUrl: string | null = null;
   let videoBytes: Buffer | undefined;
   let videoContentType: string | undefined;
 
   if (mediaType === "video" && mediaUrl) {
-    const downloaded = await fetchPublishMediaBytes(mediaUrl);
-    if (!downloaded) {
+    videoUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
+    const needsVideoBytes = targets.some(
+      (platform) => platform === "youtube" || platform === "tiktok",
+    );
+
+    if (needsVideoBytes) {
+      const downloaded = await fetchPublishMediaBytes(mediaUrl);
+      if (!downloaded) {
+        return targets.map((platform) => ({
+          platform,
+          success: false,
+          error: "Could not download video for publishing",
+        }));
+      }
+      videoBytes = downloaded.bytes;
+      videoContentType = downloaded.contentType;
+    }
+
+    if (
+      targets.some((platform) => platform === "facebook") &&
+      !videoUrl
+    ) {
       return targets.map((platform) => ({
         platform,
         success: false,
-        error: "Could not download video for publishing",
+        error: "Could not prepare video URL for Facebook",
       }));
     }
-    videoBytes = downloaded.bytes;
-    videoContentType = downloaded.contentType;
   } else if (mediaUrl) {
     imageUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
   }
@@ -252,6 +296,7 @@ export async function publishToConnectedPlatforms(
   const mediaPayload: PublishMediaPayload = {
     mediaType,
     imageUrl,
+    videoUrl,
     videoBytes,
     videoContentType,
   };

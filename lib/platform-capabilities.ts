@@ -43,7 +43,7 @@ export const PLATFORM_CAPABILITIES: Record<SocialPlatform, PlatformCapabilities>
   facebook: {
     oauth: "live",
     photo: "review",
-    video: "none",
+    video: "review",
     scheduling: true,
   },
   pinterest: {
