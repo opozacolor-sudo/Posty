@@ -13,6 +13,11 @@ export const LINKEDIN_CONNECT_SCOPES = ["openid", "profile", "email"] as const;
 /** Requires "Share on LinkedIn" product in the developer portal. */
 export const LINKEDIN_POST_SCOPE = "w_member_social";
 
+/** LinkedIn Marketing/REST API version header (YYYYMM). Override via env if needed. */
+export function getLinkedInApiVersion(): string {
+  return process.env.LINKEDIN_API_VERSION?.trim() || "202606";
+}
+
 function parseScopeList(value: string | undefined): string[] {
   if (!value?.trim()) return [];
 

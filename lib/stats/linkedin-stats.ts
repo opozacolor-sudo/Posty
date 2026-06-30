@@ -1,8 +1,9 @@
+import { getLinkedInApiVersion } from "../linkedin-env";
 import type { StatsFetchResult } from "./types";
 
 const LINKEDIN_HEADERS = (accessToken: string) => ({
   Authorization: `Bearer ${accessToken}`,
-  "LinkedIn-Version": "202405",
+  "LinkedIn-Version": getLinkedInApiVersion(),
   "X-Restli-Protocol-Version": "2.0.0",
 });
 

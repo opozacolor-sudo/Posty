@@ -1,9 +1,9 @@
+import { getLinkedInApiVersion } from "./linkedin-env";
+
 type LinkedInError = {
   message?: string;
   status?: number;
 };
-
-const LINKEDIN_API_VERSION = "202405";
 
 function linkedInHeaders(
   accessToken: string,
@@ -11,7 +11,7 @@ function linkedInHeaders(
 ): Record<string, string> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${accessToken}`,
-    "LinkedIn-Version": LINKEDIN_API_VERSION,
+    "LinkedIn-Version": getLinkedInApiVersion(),
     "X-Restli-Protocol-Version": "2.0.0",
   };
 
@@ -129,9 +129,10 @@ async function uploadLinkedInVideoAsset(options: {
   if (!initResponse.ok || !videoUrn || uploadInstructions.length === 0) {
     return {
       ok: false,
-      error:
-        linkedInErrorMessage(initData, "LinkedIn video upload registration failed") +
-        " — reconnect with post permission (w_member_social)",
+      error: linkedInErrorMessage(
+        initData,
+        "LinkedIn video upload registration failed",
+      ),
     };
   }
 
