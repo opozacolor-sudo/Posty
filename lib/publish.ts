@@ -168,6 +168,25 @@ async function publishToPlatform(
       : { platform, success: false, error: result.error };
   }
 
+  if (platform === "threads") {
+    const result = await publishThreadsPost({
+      accessToken,
+      caption,
+      mediaType: media.mediaType === "video" ? "video" : media.imageUrl ? "image" : null,
+      imageUrl: media.imageUrl,
+      videoUrl: media.videoUrl,
+    });
+
+    return result.ok
+      ? {
+          platform,
+          success: true,
+          postId: result.postId,
+          detail: result.detail,
+        }
+      : { platform, success: false, error: result.error };
+  }
+
   if (media.mediaType === "video") {
     return {
       platform,
@@ -183,18 +202,6 @@ async function publishToPlatform(
       success: false,
       error: `${platform} needs an image attached to the post`,
     };
-  }
-
-  if (platform === "threads") {
-    const result = await publishThreadsPost({
-      accessToken,
-      caption,
-      imageUrl: media.imageUrl,
-    });
-
-    return result.ok
-      ? { platform, success: true, postId: result.postId }
-      : { platform, success: false, error: result.error };
   }
 
   if (platform === "linkedin" && media.imageUrl) {
