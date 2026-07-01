@@ -29,6 +29,7 @@ type ChatHistoryItem = {
 
 function uploadErrorMessage(code: string | undefined, t: (key: string) => string): string {
   if (code === "unsupported_type") return t("uploadUnsupported");
+  if (code === "blob_not_configured") return t("uploadBlobNotConfigured");
   if (code === "storage_bucket_limit") return t("uploadStorageLimit");
   if (code === "image_too_large" || code === "video_too_large") {
     return t("uploadTooLarge");

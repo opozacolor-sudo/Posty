@@ -5,16 +5,19 @@ export type ChatAttachment = {
 };
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-export const MAX_VIDEO_BYTES = 1024 * 1024 * 1024; // 1 GB
+/** Max video size Posty accepts in chat. */
+export const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
+/** Supabase Free global cap — larger videos use Vercel Blob. */
+export const MAX_SUPABASE_VIDEO_BYTES = 50 * 1024 * 1024;
 
-const ALLOWED_IMAGE_TYPES = new Set([
+export const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
 ]);
 
-const ALLOWED_VIDEO_TYPES = new Set([
+export const ALLOWED_VIDEO_TYPES = new Set([
   "video/mp4",
   "video/quicktime",
   "video/webm",
@@ -46,6 +49,10 @@ export function validateChatUploadFile(file: File): string | null {
   }
 
   return "unsupported_type";
+}
+
+export function shouldUploadVideoViaBlob(fileSize: number): boolean {
+  return fileSize > MAX_SUPABASE_VIDEO_BYTES;
 }
 
 export function sanitizeUploadFilename(name: string): string {
