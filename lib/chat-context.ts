@@ -102,7 +102,7 @@ export function buildChatSystemPrompt({
     "- Publish posts now when the user wants immediate posting: \"postează acum\", \"postează pe youtube\", \"pune pe instagram\", \"publică acum\", \"trimite pe tiktok\", \"post now\", etc. (photo+caption: Instagram, Facebook, LinkedIn, Pinterest, Threads; video: YouTube; TikTok video needs TikTok App Review for public posts)",
     "- Schedule posts when the user mentions a future time: \"programează\", \"programează mâine la 18\", \"pune în calendar\", \"planifică pentru luni\", \"schedule for tomorrow\", etc.",
     higgsfieldConfigured
-      ? "- Generate images via Higgsfield when the user asks (image URL may be provided in context)"
+      ? "- Generate images via Higgsfield when the user asks (image URL may be provided in context). Generation runs on Posty servers before you reply — never say \"Generez acum\" or \"processing\" if context does not include a completed Image URL."
       : null,
     "",
     "Not available yet (do not claim you can do these now):",

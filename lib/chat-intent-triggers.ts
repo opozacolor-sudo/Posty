@@ -15,6 +15,10 @@ export const SCHEDULE_ACTION_VERB =
 export const PLATFORM_NAME_PATTERN =
   /\b(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|twitter|\bx\b|bluesky)\b/i;
 
+/** Broad publish-to-everywhere intent (may still name IG/FB for story format hints). */
+export const ALL_PLATFORMS_PUBLISH_PATTERN =
+  /\b(?:pe\s+toate|toate\s+(?:re[tț]elele|platformele|conturile)|(?:video|poz[aă])\s+pe\s+toate|posteaz[aă]?\s+(?:video\s+)?pe\s+toate|all\s+(?:connected|networks|platforms)|post\s+(?:video\s+)?to\s+all)\b/i;
+
 export const PUBLISH_CONFIRM_NOW =
   /^(?:acum|now)[\s!.?,]*$|^\s*(?:da|yes|ok|okay|sigur|perfect|mergi|confirm[aă]?)[,!.?\s]*(?:acum|now)?[\s!.?,]*$/i;
 
@@ -44,9 +48,7 @@ export function messageWantsPublishAction(message: string): boolean {
 
   return (
     PLATFORM_NAME_PATTERN.test(message) ||
-    /\b(?:pe\s+toate|toate\s+(?:re[tț]elele|platformele|conturile)|all\s+(?:connected|networks|platforms))\b/i.test(
-      message,
-    ) ||
+    ALL_PLATFORMS_PUBLISH_PATTERN.test(message) ||
     /\b(?:cu\s+(?:textul|caption|descrierea)|with\s+(?:the\s+)?(?:text|caption))\b/i.test(
       message,
     )

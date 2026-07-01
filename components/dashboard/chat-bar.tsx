@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import type { ChatAttachment } from "@/lib/chat-upload";
 import { uploadChatAttachmentFromBrowser } from "@/lib/chat-upload-client";
 import { createClient } from "@/lib/supabase";
+import { userWantsImageGeneration } from "@/lib/higgsfield-intent";
 import { shouldAttemptPublish } from "@/lib/publish-intent";
 import {
   useSpeechInput,
@@ -197,9 +198,8 @@ export function ChatBar({
       const mayGenerateImage =
         !mayPublish &&
         !/\bvideo|mp4|youtube|tiktok\b/i.test(historyText) &&
-        (/\b(genereaz[aă]|imagine|story|povest|photo|image|graphic)\b/i.test(
-          historyText,
-        ) ||
+        (userWantsImageGeneration(trimmed) ||
+          userWantsImageGeneration(historyText) ||
           /instagram|ig/i.test(historyText));
 
       setLoadingMode(

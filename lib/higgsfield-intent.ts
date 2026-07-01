@@ -127,7 +127,9 @@ export function resolveImageGenerationIntent(
   history: ChatTurn[],
   lastUserMessage: string,
 ): { shouldGenerate: boolean; prompt: string; aspectRatio: ImageAspectRatio } {
-  if (historyHasGeneratedImage(history)) {
+  const explicitNewRequest = userWantsImageGeneration(lastUserMessage);
+
+  if (historyHasGeneratedImage(history) && !explicitNewRequest) {
     return { shouldGenerate: false, prompt: "", aspectRatio: "1:1" };
   }
 
@@ -207,10 +209,29 @@ export function resolveImageGenerationIntent(
   };
 }
 
+/** Romanian verbs with diacritics — avoid \\b (JS treats ă/â/î/ș/ț as non-word). */
+const RO_IMAGE_VERB =
+  /(?:genereaz[aă]|genereaza|creeaz[aă]|creeaza|f[aă]|fa)\s+(?:o\s+|un[aă]\s+)?(?:imagine|poz[aă]|poza|photo|image|picture|grafic)/iu;
+
+const RO_IMAGE_NOUN =
+  /(?:imagine|poz[aă]|poza)\s+(?:pentru|for|on|cu|de\s)/iu;
+
+const RO_STORY =
+  /(?:story|povest(?:e|i)?)\s+(?:pe\s+|on\s+|for\s+)?(?:instagram|ig)\b|(?:instagram|ig)\s+.*(?:story|povest)/iu;
+
+const EN_IMAGE =
+  /\b(?:make|create|generate)\b[\s\S]{0,40}\b(?:image|photo|picture|graphic)\b/i;
+
+const EN_VIDEO =
+  /\b(?:make|create|generate)\b[\s\S]{0,40}\b(?:video|clip|reel)\b/i;
+
+const RO_VIDEO =
+  /(?:genereaz[aă]|genereaza|creeaz[aă]|creeaza|f[aă]|fa)\s+(?:un\s+|o\s+)?(?:video|clip|reel)/iu;
+
 export function buildImagePromptFromMessage(message: string): string {
   const cleaned = message
     .replace(
-      /^(please\s+)?(genereaz[aă]|creeaz[aă]|f[aă]|make|create|generate)\s+(o\s+)?(imagine|poz[aă]|photo|image|picture|grafic)\s*(pentru|for|on|de\s)?/i,
+      /^(?:please\s+)?(?:genereaz[aă]|genereaza|creeaz[aă]|creeaza|f[aă]|fa|make|create|generate)\s+(?:o\s+|un[aă]\s+)?(?:imagine|poz[aă]|poza|photo|image|picture|grafic)\s*(?:pentru|for|on|de\s+|cu\s+)?/iu,
       "",
     )
     .trim();
@@ -219,22 +240,14 @@ export function buildImagePromptFromMessage(message: string): string {
 }
 
 export function userWantsImageGeneration(message: string): boolean {
-  const lower = message.toLowerCase();
-
   return (
-    /\b(genereaz[aă]|creeaz[aă]|f[aă])\b.*\b(imagine|poz[aă]|photo|image|grafic)\b/i.test(
-      message,
-    ) ||
-    /\b(make|create|generate)\b.*\b(image|photo|picture|graphic)\b/i.test(lower) ||
-    /\b(imagine|poz[aă])\b.*\b(pentru|for|on)\b/i.test(lower) ||
-    /\b(story|povest)\b.*\b(instagram|ig)\b/i.test(lower) ||
-    /\b(instagram|ig)\b.*\b(story|povest)\b/i.test(lower)
+    RO_IMAGE_VERB.test(message) ||
+    EN_IMAGE.test(message) ||
+    RO_IMAGE_NOUN.test(message) ||
+    RO_STORY.test(message)
   );
 }
 
 export function userWantsVideoGeneration(message: string): boolean {
-  return (
-    /\b(genereaz[aă]|creeaz[aă]|f[aă])\b.*\b(video|clip|reel)\b/i.test(message) ||
-    /\b(make|create|generate)\b.*\b(video|clip|reel)\b/i.test(message.toLowerCase())
-  );
+  return RO_VIDEO.test(message) || EN_VIDEO.test(message);
 }

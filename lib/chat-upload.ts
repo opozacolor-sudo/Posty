@@ -5,7 +5,7 @@ export type ChatAttachment = {
 };
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+export const MAX_VIDEO_BYTES = 1024 * 1024 * 1024; // 1 GB
 
 const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",

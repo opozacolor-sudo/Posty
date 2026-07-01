@@ -2,6 +2,7 @@ import type { ConnectedAccount } from "./dashboard-data";
 import { PLATFORMS, type SocialPlatform } from "./dashboard-data";
 import type { ChatAttachment } from "./chat-upload";
 import {
+  ALL_PLATFORMS_PUBLISH_PATTERN,
   messageWantsPublishAction,
   messageWantsScheduleAction,
   POST_NOW_VERB,
@@ -27,7 +28,7 @@ type ChatMessage = {
 };
 
 const PUBLISH_KEYWORDS =
-  /\b(?:posteaz[aă]?\s+poza|poza anterioar[aă]|posteaz[aă]\s+pe\s+toate|pe\s+toate\s+(re[tț]elele|platformele|conturile)|toate\s+(re[tț]elele|platformele|conturile)|all\s+(connected|networks|platforms)|post\s+to\s+all)\b/i;
+  /\b(?:posteaz[aă]?\s+poza|poza anterioar[aă]|posteaz[aă]\s+pe\s+toate|posteaz[aă]\s+video\s+pe\s+toate)\b/i;
 
 const PLATFORM_PUBLISH_PATTERN =
   /\b(?:posteaz[aă]?|postez|post|public[aă]|publica|trimite|pune(?:-l|-o)?|upload(?:eaz[aă]?|ez)?)\s+(?:acum\s+)?(?:pe\s+)?(?:video(?:ul)?\s+(?:pe\s+)?)?(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b)\b/i;
@@ -69,16 +70,13 @@ export function userWantsPublishNow(message: string): boolean {
   return (
     messageWantsPublishAction(message) ||
     PUBLISH_KEYWORDS.test(message) ||
+    ALL_PLATFORMS_PUBLISH_PATTERN.test(message) ||
     PLATFORM_PUBLISH_PATTERN.test(message)
   );
 }
 
 export function userWantsAllConnectedPlatforms(message: string): boolean {
-  return (
-    /\b(pe\s+toate|toate\s+(re[tț]elele|platformele|conturile)|all\s+(connected|networks|platforms)|post\s+to\s+all)\b/i.test(
-      message,
-    ) || POST_NOW_VERB.test(message)
-  );
+  return ALL_PLATFORMS_PUBLISH_PATTERN.test(message) || POST_NOW_VERB.test(message);
 }
 
 function extractCaptionFromPublishText(text: string): string | null {
@@ -120,6 +118,12 @@ function detectTargetPlatforms(
   text: string,
   connectedPlatforms: SocialPlatform[],
 ): "all" | SocialPlatform[] {
+  // "pe toate platformele, inclusiv story pe facebook și instagram" → all connected,
+  // not only facebook + instagram (platform names there are format hints).
+  if (userWantsAllConnectedPlatforms(text)) {
+    return "all";
+  }
+
   const patterns: Array<[SocialPlatform, RegExp]> = [
     ["instagram", /\b(instagram|insta|\big\b)\b/i],
     ["tiktok", /\btiktok\b/i],
@@ -141,10 +145,6 @@ function detectTargetPlatforms(
 
   if (selected.length > 0) {
     return selected;
-  }
-
-  if (userWantsAllConnectedPlatforms(text)) {
-    return "all";
   }
 
   return "all";

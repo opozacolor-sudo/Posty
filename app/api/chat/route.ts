@@ -16,6 +16,7 @@ import {
   formatHiggsfieldError,
   generateHiggsfieldImage,
   resolveImageGenerationIntent,
+  userWantsImageGeneration,
   userWantsVideoGeneration,
 } from "@/lib/higgsfield-generate";
 import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
@@ -340,6 +341,23 @@ export async function POST(request: Request) {
         console.error("[posty/chat] Higgsfield image failed:", detail);
         mediaContext = `Image generation was requested but failed (${detail}). Apologize briefly and offer to retry with a clearer prompt.`;
       }
+    } else if (
+      !scheduledPost &&
+      !publishResults &&
+      userWantsImageGeneration(lastUserMessage) &&
+      !isHiggsfieldGenerationAvailable()
+    ) {
+      mediaContext =
+        "Image generation was requested but Higgsfield is not configured on the server (HF_API_KEY + HF_API_SECRET). Do NOT say you are generating. Tell the user to add keys on Vercel and redeploy.";
+    } else if (
+      !scheduledPost &&
+      !publishResults &&
+      userWantsImageGeneration(lastUserMessage) &&
+      isHiggsfieldGenerationAvailable() &&
+      !imageIntent.shouldGenerate
+    ) {
+      mediaContext =
+        "The user wants an image but Posty needs one more detail before generating (e.g. answer Claude's clarifying question). Do NOT say the image is processing or will arrive later.";
     } else if (!scheduledPost && !publishResults && userWantsVideoGeneration(lastUserMessage)) {
       mediaContext =
         "The user asked for video generation. Video via Higgsfield is not wired in Posty yet. Explain that image generation works now and video is next.";
