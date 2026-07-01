@@ -52,7 +52,7 @@ export async function uploadChatAttachmentFromBrowser(
   if (uploadError) {
     const message = uploadError.message.toLowerCase();
     if (message.includes("size") || message.includes("limit") || message.includes("large")) {
-      throw new Error("video_too_large");
+      throw new Error("storage_bucket_limit");
     }
     throw new Error("upload_failed");
   }
