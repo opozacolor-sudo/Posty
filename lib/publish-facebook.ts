@@ -12,11 +12,11 @@ type GraphError = {
 export type FacebookPublishFormat = "feed" | "story" | "reel";
 
 export function detectFacebookPublishFormat(text: string): FacebookPublishFormat {
-  if (/\b(story|stories|povest)\b/i.test(text)) {
+  if (/\b(?:fb|facebook)\s+(?:story|stories|povest)\b/i.test(text)) {
     return "story";
   }
 
-  if (/\b(reel|reels)\b/i.test(text)) {
+  if (/\b(?:fb|facebook)\s+reels?\b/i.test(text)) {
     return "reel";
   }
 
@@ -51,6 +51,68 @@ function graphErrorMessage(
   fallback: string,
 ): string {
   return data.error?.message ?? fallback;
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForFacebookVideoReady(options: {
+  videoId: string;
+  accessToken: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const maxAttempts = 30;
+  const delayMs = 2000;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const params = new URLSearchParams({
+      fields: "status",
+      access_token: options.accessToken,
+    });
+
+    const response = await fetch(`${GRAPH_API}/${options.videoId}?${params.toString()}`);
+    const data = (await response.json()) as GraphError & {
+      status?: {
+        uploading_phase?: { status?: string };
+        processing_phase?: { status?: string };
+      };
+    };
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: graphErrorMessage(data, "Facebook video status check failed"),
+      };
+    }
+
+    const uploadStatus = data.status?.uploading_phase?.status;
+    const processingStatus = data.status?.processing_phase?.status;
+
+    if (
+      uploadStatus === "complete" &&
+      (processingStatus === "complete" ||
+        processingStatus === "not_started" ||
+        !processingStatus)
+    ) {
+      return { ok: true };
+    }
+
+    if (uploadStatus === "error" || processingStatus === "error") {
+      return {
+        ok: false,
+        error: "Facebook video processing failed before publish",
+      };
+    }
+
+    if (attempt < maxAttempts - 1) {
+      await sleep(delayMs);
+    }
+  }
+
+  return {
+    ok: false,
+    error: "Facebook video upload timed out — try again in a moment",
+  };
 }
 
 async function startFacebookVideoSession(options: {
@@ -180,6 +242,17 @@ async function publishFacebookResumableVideo(options: {
 
     if (!upload.ok) {
       return upload;
+    }
+
+    if (options.edge === "video_stories") {
+      const ready = await waitForFacebookVideoReady({
+        videoId: session.videoId,
+        accessToken: options.accessToken,
+      });
+
+      if (!ready.ok) {
+        return ready;
+      }
     }
 
     return finishFacebookVideoSession({

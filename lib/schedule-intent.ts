@@ -330,6 +330,7 @@ export type PublishMedia = {
   url: string;
   mediaType: "image" | "video";
   contentType: string;
+  storagePaths?: string[];
 };
 
 export function findLatestPublishMedia(messages: ChatMessage[]): PublishMedia | null {
@@ -347,6 +348,7 @@ export function findLatestPublishMedia(messages: ChatMessage[]): PublishMedia | 
         url: video.url,
         mediaType: "video",
         contentType: video.mediaType,
+        storagePaths: video.storagePaths,
       };
     }
 

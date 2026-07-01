@@ -51,7 +51,7 @@ async function waitForLinkedInVideoAvailable(
   accessToken: string,
   videoUrn: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const maxAttempts = 30;
+  const maxAttempts = 20;
   const delayMs = 2000;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {

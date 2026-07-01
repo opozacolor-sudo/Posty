@@ -2,13 +2,17 @@ export type ChatAttachment = {
   url: string;
   mediaType: string;
   name: string;
+  /** Multi-part Supabase paths for videos larger than the Free-tier single-upload cap. */
+  storagePaths?: string[];
 };
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 /** Max video size Posty accepts in chat. */
 export const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
-/** Supabase Free global cap — larger videos use Vercel Blob. */
+/** Supabase Free single-upload cap — larger videos are split into parts. */
 export const MAX_SUPABASE_VIDEO_BYTES = 50 * 1024 * 1024;
+/** Keep each stored part small enough for Supabase resumable uploads. */
+export const SUPABASE_VIDEO_CHUNK_BYTES = 6 * 1024 * 1024;
 
 export const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -51,8 +55,13 @@ export function validateChatUploadFile(file: File): string | null {
   return "unsupported_type";
 }
 
-export function shouldUploadVideoViaBlob(fileSize: number): boolean {
+export function shouldUploadVideoChunked(fileSize: number): boolean {
   return fileSize > MAX_SUPABASE_VIDEO_BYTES;
+}
+
+/** @deprecated use shouldUploadVideoChunked */
+export function shouldUploadVideoViaBlob(fileSize: number): boolean {
+  return shouldUploadVideoChunked(fileSize);
 }
 
 export function sanitizeUploadFilename(name: string): string {

@@ -9,15 +9,74 @@ import {
   userConfirmsPublishNow,
   userConfirmsSchedule,
 } from "./chat-intent-triggers";
-import type { PublishInput } from "./publish";
-import { detectFacebookPublishFormat } from "./publish-facebook";
-import { detectInstagramPublishFormat } from "./publish-instagram";
+import type { PublishInput, PublishTarget } from "./publish";
+import {
+  detectFacebookPublishFormat,
+  type FacebookPublishFormat,
+} from "./publish-facebook";
+import {
+  detectInstagramPublishFormat,
+  type InstagramPublishFormat,
+} from "./publish-instagram";
 import { extractCaption, findLatestPublishMedia } from "./schedule-intent";
 
+export function resolveFacebookPublishFormats(text: string): FacebookPublishFormat[] {
+  const formats: FacebookPublishFormat[] = [];
+
+  if (/\b(?:fb|facebook)\s+(?:story|stories|povest)\b/i.test(text)) {
+    formats.push("story");
+  }
+
+  if (/\b(?:fb|facebook)\s+reels?\b/i.test(text)) {
+    formats.push("reel");
+  }
+
+  if (formats.length > 0) {
+    return formats;
+  }
+
+  const wantsAll = ALL_PLATFORMS_PUBLISH_PATTERN.test(text);
+  const wantsStoryOnFacebook =
+    /\b(?:story|stories|povest)\b/i.test(text) &&
+    /\b(?:fb|facebook)\b/i.test(text);
+
+  if (wantsAll && wantsStoryOnFacebook) {
+    return ["story", "reel"];
+  }
+
+  return [detectFacebookPublishFormat(text)];
+}
+
+export function resolveInstagramPublishFormats(text: string): InstagramPublishFormat[] {
+  const formats: InstagramPublishFormat[] = [];
+
+  if (/\b(?:insta(?:gram)?|\big\b)\s+(?:story|stories|povest)\b/i.test(text)) {
+    formats.push("story");
+  }
+
+  if (/\b(?:insta(?:gram)?|\big\b)\s+reels?\b/i.test(text)) {
+    formats.push("reel");
+  }
+
+  if (formats.length > 0) {
+    return formats;
+  }
+
+  const wantsAll = ALL_PLATFORMS_PUBLISH_PATTERN.test(text);
+  const wantsStoryOnInstagram =
+    /\b(?:story|stories|povest)\b/i.test(text) &&
+    /\b(?:insta(?:gram)?|\big\b)\b/i.test(text);
+
+  if (wantsAll && wantsStoryOnInstagram) {
+    return ["story", "reel"];
+  }
+
+  return [detectInstagramPublishFormat(text)];
+}
+
 function detectTikTokStoryRequest(text: string): boolean {
-  return (
-    /\b(story|stories|povest)\b/i.test(text) &&
-    /\btiktok\b/i.test(text)
+  return /\b(?:tiktok\s+(?:story|stories|povest)|(?:story|stories|povest)\s+(?:pe\s+)?tiktok)\b/i.test(
+    text,
   );
 }
 
@@ -35,6 +94,219 @@ const PLATFORM_PUBLISH_PATTERN =
 
 const PUBLISH_RETRY_PATTERN =
   /\b(ai postat|s-a postat|a mers|re[iî]ncearc[aă]|(?:mai\s+)?(?:o\s+dat[aă]|din nou)|retry|post again|did it post|n-a mers|nu merge)\b/i;
+
+export const RETRY_FAILED_ONLY_PATTERN =
+  /\b(?:doar\s+(?:unde|pe\s+(?:cele|platformele)?)?(?:nu\s+s-a\s+postat|a\s+e[sș]uat|e[sș]uat(?:e)?)|(?:re[iî]ncearc[aă]|posteaz[aă]?)\s+(?:doar\s+)?(?:unde\s+(?:nu\s+s-a\s+postat|a\s+e[sș]uat)|(?:pe\s+)?(?:cele\s+)?e[sș]uate)|nu\s+mai\s+vreau\s+aceea[sș]i\s+comand[aă].*doar|only\s+(?:where|on)\s+(?:it\s+)?failed|retry\s+(?:only\s+)?failed)\b/i;
+
+export function userWantsRetryFailedOnly(message: string): boolean {
+  return RETRY_FAILED_ONLY_PATTERN.test(message);
+}
+
+function addPublishTarget(
+  targets: PublishTarget[],
+  target: PublishTarget,
+): void {
+  if (
+    targets.some(
+      (item) => item.platform === target.platform && item.format === target.format,
+    )
+  ) {
+    return;
+  }
+
+  targets.push(target);
+}
+
+function parseFormatFromLabel(
+  platform: SocialPlatform,
+  format?: string,
+): FacebookPublishFormat | InstagramPublishFormat | undefined {
+  if (!format) {
+    return undefined;
+  }
+
+  if (platform === "facebook" && (format === "feed" || format === "story" || format === "reel")) {
+    return format;
+  }
+
+  if (platform === "instagram" && (format === "feed" || format === "story" || format === "reel")) {
+    return format;
+  }
+
+  return undefined;
+}
+
+export function parseFailedFromPublishSummary(messages: ChatMessage[]): PublishTarget[] {
+  const targets: PublishTarget[] = [];
+
+  for (const message of [...messages].reverse()) {
+    if (message.role !== "assistant") {
+      continue;
+    }
+
+    if (!/Publicare finalizată|Publishing finished/i.test(message.content)) {
+      continue;
+    }
+
+    for (const line of message.content.split("\n")) {
+      const match = line.match(
+        /^-\s+(\w+)(?:\s+\((\w+)\))?:\s+(?:e[sș]uat|failed|omis|skipped)\b/i,
+      );
+
+      if (!match?.[1] || !isSocialPlatform(match[1])) {
+        continue;
+      }
+
+      addPublishTarget(targets, {
+        platform: match[1],
+        format: parseFormatFromLabel(match[1], match[2]),
+      });
+    }
+
+    if (targets.length > 0) {
+      return targets;
+    }
+  }
+
+  return [];
+}
+
+export function parseFailedFromUserReport(text: string): PublishTarget[] {
+  if (
+    !/(?:nu s-a postat|n-a mers|nu merge|failed|e[sș]uat|didn't post|did not post)/i.test(
+      text,
+    )
+  ) {
+    return [];
+  }
+
+  const targets: PublishTarget[] = [];
+
+  if (/\btiktok\b/i.test(text)) {
+    addPublishTarget(targets, { platform: "tiktok" });
+  }
+
+  if (/\blinkedin\b/i.test(text)) {
+    addPublishTarget(targets, { platform: "linkedin" });
+  }
+
+  if (/\b(?:fb|facebook)\s+(?:story|stories|povest)/i.test(text)) {
+    addPublishTarget(targets, { platform: "facebook", format: "story" });
+  }
+
+  if (/\b(?:fb|facebook)\s+reels?\b/i.test(text)) {
+    addPublishTarget(targets, { platform: "facebook", format: "reel" });
+  }
+
+  if (/\b(?:insta(?:gram)?|\big\b)\s+(?:story|stories|povest)/i.test(text)) {
+    addPublishTarget(targets, { platform: "instagram", format: "story" });
+  }
+
+  if (/\b(?:insta(?:gram)?|\big\b)\s+reels?\b/i.test(text)) {
+    addPublishTarget(targets, { platform: "instagram", format: "reel" });
+  }
+
+  if (
+    /\b(?:fb|facebook)\b/i.test(text) &&
+    !targets.some((item) => item.platform === "facebook")
+  ) {
+    addPublishTarget(targets, { platform: "facebook", format: "feed" });
+  }
+
+  if (
+    /\b(?:insta(?:gram)?|\big\b)\b/i.test(text) &&
+    !targets.some((item) => item.platform === "instagram")
+  ) {
+    addPublishTarget(targets, { platform: "instagram", format: "feed" });
+  }
+
+  return targets;
+}
+
+export function findFailedPublishTargets(messages: ChatMessage[]): PublishTarget[] {
+  const fromSummary = parseFailedFromPublishSummary(messages);
+  if (fromSummary.length > 0) {
+    return fromSummary;
+  }
+
+  for (const message of [...messages].reverse()) {
+    if (message.role !== "user") {
+      continue;
+    }
+
+    const parsed = parseFailedFromUserReport(message.content);
+    if (parsed.length > 0) {
+      return parsed;
+    }
+  }
+
+  return [];
+}
+
+function parseExplicitPublishTargets(
+  text: string,
+  connectedPlatforms: SocialPlatform[],
+): PublishTarget[] {
+  if (userWantsAllConnectedPlatforms(text)) {
+    return [];
+  }
+
+  const targets: PublishTarget[] = [];
+  const add = (target: PublishTarget) => {
+    if (!connectedPlatforms.includes(target.platform)) {
+      return;
+    }
+    addPublishTarget(targets, target);
+  };
+
+  if (/\b(?:fb|facebook)\s+(?:story|stories|povest)\b/i.test(text)) {
+    add({ platform: "facebook", format: "story" });
+  }
+
+  if (/\b(?:fb|facebook)\s+reels?\b/i.test(text)) {
+    add({ platform: "facebook", format: "reel" });
+  }
+
+  if (/\b(?:insta(?:gram)?|\big\b)\s+(?:story|stories|povest)\b/i.test(text)) {
+    add({ platform: "instagram", format: "story" });
+  }
+
+  if (/\b(?:insta(?:gram)?|\big\b)\s+reels?\b/i.test(text)) {
+    add({ platform: "instagram", format: "reel" });
+  }
+
+  const barePlatforms: Array<[SocialPlatform, RegExp]> = [
+    ["tiktok", /\btiktok\b/i],
+    ["linkedin", /\blinkedin\b/i],
+    ["youtube", /\b(youtube|\byt\b)\b/i],
+    ["threads", /\bthreads\b/i],
+    ["pinterest", /\bpinterest\b/i],
+    ["x", /\b(\bx\b|twitter)\b/i],
+    ["bluesky", /\bbluesky\b/i],
+  ];
+
+  for (const [platform, pattern] of barePlatforms) {
+    if (pattern.test(text)) {
+      add({ platform });
+    }
+  }
+
+  if (
+    /\b(?:fb|facebook)\b/i.test(text) &&
+    !targets.some((item) => item.platform === "facebook")
+  ) {
+    add({ platform: "facebook", format: "feed" });
+  }
+
+  if (
+    /\b(?:insta(?:gram)?|\big\b)\b/i.test(text) &&
+    !targets.some((item) => item.platform === "instagram")
+  ) {
+    add({ platform: "instagram", format: "feed" });
+  }
+
+  return targets;
+}
 
 function conversationReadyToPublish(messages: ChatMessage[]): boolean {
   return Boolean(extractCaption(messages) && findLatestPublishMedia(messages));
@@ -190,6 +462,10 @@ export function shouldAttemptPublish(
     return true;
   }
 
+  if (userWantsRetryFailedOnly(lastUserMessage) && conversationReadyToPublish(messages)) {
+    return findFailedPublishTargets(messages).length > 0;
+  }
+
   if (
     userConfirmsPublishNow(lastUserMessage) &&
     conversationHasPendingPublish(messages) &&
@@ -239,15 +515,62 @@ export function extractPublishFromConversation(options: {
   }
 
   const publishMessage = findLatestPublishCommandMessage(messages);
+  const lastUserMessage =
+    [...messages].reverse().find((message) => message.role === "user")?.content ?? "";
   const publishText =
-    publishMessage?.content ??
-    [...messages].reverse().find((message) => message.role === "user")?.content ??
-    "";
+    publishMessage?.content ?? lastUserMessage;
+
+  const retryFailedOnly = userWantsRetryFailedOnly(lastUserMessage);
+  const failedTargets = retryFailedOnly ? findFailedPublishTargets(messages) : [];
 
   const caption =
     extractCaptionFromPublishText(publishText) ?? extractCaption(messages);
   if (!caption) {
     return null;
+  }
+
+  const media = findLatestPublishMedia(messages);
+  if (!media) {
+    return null;
+  }
+
+  if (retryFailedOnly) {
+    if (failedTargets.length === 0) {
+      return null;
+    }
+
+    return {
+      caption,
+      mediaUrl: media.url,
+      mediaStoragePaths: media.storagePaths,
+      mediaType: media.mediaType,
+      targetPlatforms: failedTargets.map((target) => target.platform),
+      publishTargets: failedTargets,
+      facebookFormats: resolveFacebookPublishFormats(publishText),
+      instagramFormats: resolveInstagramPublishFormats(publishText),
+      facebookFormat: detectFacebookPublishFormat(publishText),
+      instagramFormat: detectInstagramPublishFormat(publishText),
+      tiktokStoryRequested: detectTikTokStoryRequest(publishText),
+      publishText,
+    };
+  }
+
+  const explicitTargets = parseExplicitPublishTargets(publishText, connectedPlatforms);
+  if (explicitTargets.length > 0) {
+    return {
+      caption,
+      mediaUrl: media.url,
+      mediaStoragePaths: media.storagePaths,
+      mediaType: media.mediaType,
+      targetPlatforms: explicitTargets.map((target) => target.platform),
+      publishTargets: explicitTargets,
+      facebookFormats: resolveFacebookPublishFormats(publishText),
+      instagramFormats: resolveInstagramPublishFormats(publishText),
+      facebookFormat: detectFacebookPublishFormat(publishText),
+      instagramFormat: detectInstagramPublishFormat(publishText),
+      tiktokStoryRequested: detectTikTokStoryRequest(publishText),
+      publishText,
+    };
   }
 
   const targetPlatforms = detectTargetPlatforms(publishText, connectedPlatforms);
@@ -259,18 +582,17 @@ export function extractPublishFromConversation(options: {
     return null;
   }
 
-  const media = findLatestPublishMedia(messages);
-  if (!media) {
-    return null;
-  }
-
   return {
     caption,
     mediaUrl: media.url,
+    mediaStoragePaths: media.storagePaths,
     mediaType: media.mediaType,
     targetPlatforms,
+    facebookFormats: resolveFacebookPublishFormats(publishText),
+    instagramFormats: resolveInstagramPublishFormats(publishText),
     facebookFormat: detectFacebookPublishFormat(publishText),
     instagramFormat: detectInstagramPublishFormat(publishText),
     tiktokStoryRequested: detectTikTokStoryRequest(publishText),
+    publishText,
   };
 }

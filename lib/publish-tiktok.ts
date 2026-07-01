@@ -26,7 +26,7 @@ type PublishStatus = {
 };
 
 const TIKTOK_API = "https://open.tiktokapis.com";
-const MAX_POLL_ATTEMPTS = 60;
+const MAX_POLL_ATTEMPTS = 25;
 const POLL_DELAY_MS = 3000;
 
 function sleep(ms: number): Promise<void> {

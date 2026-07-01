@@ -62,6 +62,43 @@ export function verifyPublishMediaSignature(
   }
 }
 
+function signChunkedPublishMediaPaths(
+  storagePaths: string[],
+  expiresAt: number,
+): string {
+  const secret = getPublishMediaSecret();
+  if (!secret) {
+    throw new Error("PUBLISH_MEDIA_SIGNING_SECRET missing");
+  }
+
+  return createHmac("sha256", secret)
+    .update(`${storagePaths.join("\0")}:${expiresAt}`)
+    .digest("base64url");
+}
+
+export function verifyChunkedPublishMediaSignature(
+  storagePaths: string[],
+  expiresAt: number,
+  signature: string,
+): boolean {
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now() || storagePaths.length === 0) {
+    return false;
+  }
+
+  if (!getPublishMediaSecret()) {
+    return false;
+  }
+
+  try {
+    const expected = signChunkedPublishMediaPaths(storagePaths, expiresAt);
+    const left = Buffer.from(signature);
+    const right = Buffer.from(expected);
+    return left.length === right.length && timingSafeEqual(left, right);
+  } catch {
+    return false;
+  }
+}
+
 export function buildPublishMediaProxyUrl(
   storagePath: string,
   baseUrl?: string,
@@ -75,6 +112,26 @@ export function buildPublishMediaProxyUrl(
   const origin = (baseUrl ?? getAppBaseUrl()).replace(/\/$/, "");
   const params = new URLSearchParams({
     path: storagePath,
+    exp: String(expiresAt),
+    sig: signature,
+  });
+
+  return `${origin}/api/media/publish?${params.toString()}`;
+}
+
+export function buildChunkedPublishMediaProxyUrl(
+  storagePaths: string[],
+  baseUrl?: string,
+): string | null {
+  if (!getPublishMediaSecret() || storagePaths.length === 0) {
+    return null;
+  }
+
+  const expiresAt = Date.now() + PUBLISH_MEDIA_TTL_SECONDS * 1000;
+  const signature = signChunkedPublishMediaPaths(storagePaths, expiresAt);
+  const origin = (baseUrl ?? getAppBaseUrl()).replace(/\/$/, "");
+  const params = new URLSearchParams({
+    paths: storagePaths.join(","),
     exp: String(expiresAt),
     sig: signature,
   });
@@ -139,9 +196,36 @@ export async function fetchChatMediaBytes(
   return { bytes, contentType };
 }
 
+export async function fetchChunkedChatMediaBytes(
+  storagePaths: string[],
+): Promise<{ bytes: Buffer; contentType: string } | null> {
+  if (!isSupabaseAdminConfigured()) {
+    return null;
+  }
+
+  const parts: Buffer[] = [];
+  let contentType = "video/mp4";
+
+  for (const storagePath of storagePaths) {
+    const part = await fetchChatMediaBytes(storagePath);
+    if (!part) {
+      return null;
+    }
+    parts.push(part.bytes);
+    contentType = part.contentType;
+  }
+
+  return { bytes: Buffer.concat(parts), contentType };
+}
+
 export async function fetchPublishMediaBytes(
   mediaUrl: string,
+  storagePaths?: string[],
 ): Promise<{ bytes: Buffer; contentType: string } | null> {
+  if (storagePaths?.length) {
+    return fetchChunkedChatMediaBytes(storagePaths);
+  }
+
   const storagePath = parseChatMediaStoragePath(mediaUrl);
   if (storagePath) {
     return fetchChatMediaBytes(storagePath);

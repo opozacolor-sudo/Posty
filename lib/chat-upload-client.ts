@@ -1,15 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { upload } from "@vercel/blob/client";
-import { isVercelBlobConfigured } from "./blob-env";
 import {
   sanitizeUploadFilename,
-  shouldUploadVideoViaBlob,
+  shouldUploadVideoChunked,
+  SUPABASE_VIDEO_CHUNK_BYTES,
   validateChatUploadFile,
   type ChatAttachment,
 } from "./chat-upload";
+import { mapStorageUploadError, uploadBlobViaTus } from "./chat-upload-tus";
 
 const CHAT_MEDIA_BUCKET = "chat-media";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+function getSupabaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!url) {
+    throw new Error("SUPABASE_NOT_CONFIGURED");
+  }
+  return url;
+}
 
 function inferMediaType(file: File): string {
   const declared = file.type.trim().toLowerCase();
@@ -29,33 +37,83 @@ function inferMediaType(file: File): string {
   return declared;
 }
 
-async function uploadVideoViaBlob(
-  userId: string,
-  file: File,
+async function createSignedAttachmentUrl(
+  supabase: SupabaseClient,
+  objectPath: string,
   mediaType: string,
   safeName: string,
 ): Promise<ChatAttachment> {
-  if (!isVercelBlobConfigured()) {
-    throw new Error("blob_not_configured");
+  const { data: signed, error: signError } = await supabase.storage
+    .from(CHAT_MEDIA_BUCKET)
+    .createSignedUrl(objectPath, SIGNED_URL_TTL_SECONDS);
+
+  if (signError || !signed?.signedUrl) {
+    throw new Error("signed_url_failed");
   }
 
-  const objectPath = `${userId}/${Date.now()}-${safeName}`;
-  const result = await upload(objectPath, file, {
-    access: "public",
-    handleUploadUrl: "/api/chat/upload/blob",
-    clientPayload: JSON.stringify({ userId }),
-    contentType: mediaType,
-    multipart: file.size > 5 * 1024 * 1024,
-  });
-
   return {
-    url: result.url,
+    url: signed.signedUrl,
     mediaType,
     name: safeName,
   };
 }
 
-async function uploadViaSupabase(
+async function uploadVideoInChunks(
+  supabase: SupabaseClient,
+  supabaseUrl: string,
+  userId: string,
+  file: File,
+  mediaType: string,
+  safeName: string,
+): Promise<ChatAttachment> {
+  const sessionId = `${Date.now()}`;
+  const storagePaths: string[] = [];
+  let offset = 0;
+  let partIndex = 0;
+
+  while (offset < file.size) {
+    const chunk = file.slice(offset, offset + SUPABASE_VIDEO_CHUNK_BYTES);
+    const objectPath = `${userId}/chunks/${sessionId}/${partIndex}-${safeName}`;
+
+    try {
+      await uploadBlobViaTus(supabase, supabaseUrl, objectPath, chunk, mediaType);
+    } catch (error) {
+      throw new Error(mapStorageUploadError(error));
+    }
+
+    storagePaths.push(objectPath);
+    offset += SUPABASE_VIDEO_CHUNK_BYTES;
+    partIndex += 1;
+  }
+
+  return {
+    url: URL.createObjectURL(file),
+    mediaType,
+    name: safeName,
+    storagePaths,
+  };
+}
+
+async function uploadVideoViaTus(
+  supabase: SupabaseClient,
+  supabaseUrl: string,
+  userId: string,
+  file: File,
+  mediaType: string,
+  safeName: string,
+): Promise<ChatAttachment> {
+  const objectPath = `${userId}/${Date.now()}-${safeName}`;
+
+  try {
+    await uploadBlobViaTus(supabase, supabaseUrl, objectPath, file, mediaType);
+  } catch (error) {
+    throw new Error(mapStorageUploadError(error));
+  }
+
+  return createSignedAttachmentUrl(supabase, objectPath, mediaType, safeName);
+}
+
+async function uploadImageViaSupabase(
   supabase: SupabaseClient,
   userId: string,
   file: File,
@@ -72,29 +130,10 @@ async function uploadViaSupabase(
     });
 
   if (uploadError) {
-    const message = uploadError.message.toLowerCase();
-    if (message.includes("size") || message.includes("limit") || message.includes("large")) {
-      if (isVercelBlobConfigured() && shouldUploadVideoViaBlob(file.size)) {
-        return uploadVideoViaBlob(userId, file, mediaType, safeName);
-      }
-      throw new Error("storage_bucket_limit");
-    }
-    throw new Error("upload_failed");
+    throw new Error(mapStorageUploadError(uploadError));
   }
 
-  const { data: signed, error: signError } = await supabase.storage
-    .from(CHAT_MEDIA_BUCKET)
-    .createSignedUrl(objectPath, SIGNED_URL_TTL_SECONDS);
-
-  if (signError || !signed?.signedUrl) {
-    throw new Error("signed_url_failed");
-  }
-
-  return {
-    url: signed.signedUrl,
-    mediaType,
-    name: safeName,
-  };
+  return createSignedAttachmentUrl(supabase, objectPath, mediaType, safeName);
 }
 
 export async function uploadChatAttachmentFromBrowser(
@@ -111,10 +150,22 @@ export async function uploadChatAttachmentFromBrowser(
   }
 
   const safeName = sanitizeUploadFilename(file.name);
+  const supabaseUrl = getSupabaseUrl();
 
-  if (mediaType.startsWith("video/") && shouldUploadVideoViaBlob(file.size)) {
-    return uploadVideoViaBlob(userId, file, mediaType, safeName);
+  if (mediaType.startsWith("video/")) {
+    if (shouldUploadVideoChunked(file.size)) {
+      return uploadVideoInChunks(
+        supabase,
+        supabaseUrl,
+        userId,
+        file,
+        mediaType,
+        safeName,
+      );
+    }
+
+    return uploadVideoViaTus(supabase, supabaseUrl, userId, file, mediaType, safeName);
   }
 
-  return uploadViaSupabase(supabase, userId, file, mediaType, safeName);
+  return uploadImageViaSupabase(supabase, userId, file, mediaType, safeName);
 }

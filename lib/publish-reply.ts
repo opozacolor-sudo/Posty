@@ -25,7 +25,8 @@ export function formatPublishMissingDetailsReply(locale: string): string {
       "- ai atașat poza sau videoul cu 📎",
       "- există un caption (text + hashtag-uri) în chat",
       "",
-      "Apoi scrie: „postează pe youtube”, „postează pe tiktok cu descrierea …” sau „postează pe instagram”.",
+      "Pentru retry doar unde a eșuat: „reîncearcă doar unde nu s-a postat” (după un rezumat de publicare în chat).",
+      "Sau spune explicit: „postează doar pe tiktok, linkedin și facebook”.",
     ].join("\n");
   }
 
@@ -36,6 +37,7 @@ export function formatPublishMissingDetailsReply(locale: string): string {
     "- you attached a photo or video with 📎",
     "- a caption exists in the chat",
     "",
-    "Then try: “post on youtube”, “post on tiktok”, or “post on instagram”.",
+    "To retry failed platforms only: “retry only where it failed” (after a publish summary in chat).",
+    "Or say explicitly: “post only on tiktok, linkedin and facebook”.",
   ].join("\n");
 }

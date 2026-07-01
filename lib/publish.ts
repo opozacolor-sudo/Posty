@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
+import { expandPublishTargets } from "./publish-all-targets";
 import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
 import {
   detectFacebookPublishFormat,
@@ -12,7 +13,11 @@ import {
   type InstagramPublishFormat,
 } from "./publish-instagram";
 import { publishLinkedInContent } from "./publish-linkedin";
-import { fetchPublishMediaBytes, resolvePublishMediaUrl } from "./publish-media-url";
+import {
+  buildChunkedPublishMediaProxyUrl,
+  fetchPublishMediaBytes,
+  resolvePublishMediaUrl,
+} from "./publish-media-url";
 import { publishPinterestPin } from "./publish-pinterest";
 import { publishThreadsPost } from "./publish-threads";
 import { publishTikTokContent } from "./publish-tiktok";
@@ -20,18 +25,33 @@ import { publishYouTubeVideo } from "./publish-youtube";
 
 export type PublishMediaType = "image" | "video";
 
+export type PublishTarget = {
+  platform: SocialPlatform;
+  format?: FacebookPublishFormat | InstagramPublishFormat;
+};
+
 export type PublishInput = {
   caption: string;
   mediaUrl?: string | null;
+  mediaStoragePaths?: string[];
   mediaType?: PublishMediaType | null;
   targetPlatforms: "all" | SocialPlatform[];
+  /** When set, only these platform/format pairs are published (retry failed). */
+  publishTargets?: PublishTarget[];
+  facebookFormats?: FacebookPublishFormat[];
+  instagramFormats?: InstagramPublishFormat[];
+  /** @deprecated use facebookFormats */
   facebookFormat?: FacebookPublishFormat;
+  /** @deprecated use instagramFormats */
   instagramFormat?: InstagramPublishFormat;
   tiktokStoryRequested?: boolean;
+  /** Original user command — used to expand “all platforms” targets. */
+  publishText?: string;
 };
 
 export type PublishPlatformResult = {
   platform: SocialPlatform;
+  format?: FacebookPublishFormat | InstagramPublishFormat;
   success: boolean;
   postId?: string;
   detail?: string;
@@ -285,6 +305,18 @@ async function publishToPlatform(
   };
 }
 
+async function runPublishTasks(
+  tasks: Array<() => Promise<PublishPlatformResult>>,
+): Promise<PublishPlatformResult[]> {
+  const results: PublishPlatformResult[] = [];
+
+  for (const task of tasks) {
+    results.push(await task());
+  }
+
+  return results;
+}
+
 export async function publishToConnectedPlatforms(
   userId: string,
   input: PublishInput,
@@ -306,12 +338,12 @@ export async function publishToConnectedPlatforms(
   const mediaType = input.mediaType ?? null;
 
   const connectedPlatforms = accounts.map((account) => account.platform);
-  const targets =
-    input.targetPlatforms === "all"
-      ? connectedPlatforms
-      : input.targetPlatforms.filter((platform) =>
-          connectedPlatforms.includes(platform),
-        );
+  const publishText = input.publishText ?? "";
+  const resolvedTargets = expandPublishTargets(
+    input,
+    connectedPlatforms,
+    publishText,
+  );
 
   let imageUrl: string | null = null;
   let videoUrl: string | null = null;
@@ -319,17 +351,28 @@ export async function publishToConnectedPlatforms(
   let videoContentType: string | undefined;
 
   if (mediaType === "video" && mediaUrl) {
-    videoUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
-    const needsVideoBytes = targets.some(
-      (platform) =>
-        platform === "youtube" || platform === "tiktok" || platform === "linkedin",
+    if (input.mediaStoragePaths?.length) {
+      videoUrl =
+        buildChunkedPublishMediaProxyUrl(
+          input.mediaStoragePaths,
+          options?.appBaseUrl,
+        ) ?? (await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl));
+    } else {
+      videoUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
+    }
+    const needsVideoBytes = resolvedTargets.some(
+      (target) =>
+        target.platform === "youtube" ||
+        target.platform === "tiktok" ||
+        target.platform === "linkedin",
     );
 
     if (needsVideoBytes) {
-      const downloaded = await fetchPublishMediaBytes(mediaUrl);
+      const downloaded = await fetchPublishMediaBytes(mediaUrl, input.mediaStoragePaths);
       if (!downloaded) {
-        return targets.map((platform) => ({
-          platform,
+        return resolvedTargets.map((target) => ({
+          platform: target.platform,
+          format: target.format,
           success: false,
           error: "Could not download video for publishing",
         }));
@@ -339,11 +382,17 @@ export async function publishToConnectedPlatforms(
     }
 
     if (
-      targets.some((platform) => platform === "facebook" || platform === "instagram") &&
+      resolvedTargets.some(
+        (target) =>
+          target.platform === "facebook" ||
+          target.platform === "instagram" ||
+          target.platform === "threads",
+      ) &&
       !videoUrl
     ) {
-      return targets.map((platform) => ({
-        platform,
+      return resolvedTargets.map((target) => ({
+        platform: target.platform,
+        format: target.format,
         success: false,
         error: "Could not prepare video URL for publishing",
       }));
@@ -351,9 +400,10 @@ export async function publishToConnectedPlatforms(
   } else if (mediaUrl) {
     imageUrl = await resolvePublishMediaUrl(mediaUrl, options?.appBaseUrl);
 
-    if (targets.some((platform) => platform === "tiktok") && !imageUrl) {
-      return targets.map((platform) => ({
-        platform,
+    if (resolvedTargets.some((target) => target.platform === "tiktok") && !imageUrl) {
+      return resolvedTargets.map((target) => ({
+        platform: target.platform,
+        format: target.format,
         success: false,
         error: "Could not prepare image URL for publishing",
       }));
@@ -368,39 +418,61 @@ export async function publishToConnectedPlatforms(
     videoContentType,
   };
 
-  const results: PublishPlatformResult[] = [];
+  const parallelTasks: Array<() => Promise<PublishPlatformResult>> = [];
+  const facebookTasks: Array<() => Promise<PublishPlatformResult>> = [];
 
-  for (const platform of targets) {
+  for (const target of resolvedTargets) {
+    const platform = target.platform;
     if (!isSocialPlatform(platform)) {
       continue;
     }
 
     const account = accounts.find((item) => item.platform === platform);
-    if (!account) {
-      results.push({
-        platform,
-        success: false,
-        error: "Account not connected",
-      });
-      continue;
-    }
+    const run = (): Promise<PublishPlatformResult> => {
+      if (!account) {
+        return Promise.resolve({
+          platform,
+          format: target.format,
+          success: false,
+          error: "Account not connected",
+        });
+      }
 
-    results.push(
-      await publishToPlatform(
+      const facebookFormat =
+        platform === "facebook"
+          ? ((target.format as FacebookPublishFormat | undefined) ?? "feed")
+          : (input.facebookFormat ?? "feed");
+      const instagramFormat =
+        platform === "instagram"
+          ? ((target.format as InstagramPublishFormat | undefined) ?? "feed")
+          : (input.instagramFormat ?? "feed");
+
+      return publishToPlatform(
         platform,
         account.accessToken,
         input.caption,
         mediaPayload,
         account.platformMetadata,
         account.refreshToken,
-        input.facebookFormat ?? "feed",
-        input.instagramFormat ?? "feed",
+        facebookFormat,
+        instagramFormat,
         input.tiktokStoryRequested ?? false,
-      ),
-    );
+      ).then((result) => ({ ...result, format: target.format }));
+    };
+
+    if (platform === "facebook") {
+      facebookTasks.push(run);
+    } else {
+      parallelTasks.push(run);
+    }
   }
 
-  return results;
+  const [parallelResults, facebookResults] = await Promise.all([
+    Promise.all(parallelTasks.map((task) => task())),
+    runPublishTasks(facebookTasks),
+  ]);
+
+  return [...parallelResults, ...facebookResults];
 }
 
 export function formatPublishResultsSummary(
@@ -414,7 +486,7 @@ export function formatPublishResultsSummary(
   }
 
   const lines = results.map((result) => {
-    const label = result.platform;
+    const label = result.format ? `${result.platform} (${result.format})` : result.platform;
     if (result.success) {
       const extra = result.detail ? ` → ${result.detail}` : result.postId ? ` (id: ${result.postId})` : "";
       return locale === "ro"

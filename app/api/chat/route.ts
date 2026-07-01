@@ -22,6 +22,7 @@ import {
 import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
 import {
   extractPublishFromConversation,
+  findLatestPublishCommandMessage,
   shouldAttemptPublish,
 } from "@/lib/publish-intent";
 import {
@@ -37,6 +38,10 @@ import {
   formatPublishMissingDetailsReply,
   formatPublishUserReply,
 } from "@/lib/publish-reply";
+import {
+  formatPreflightSummary,
+  runPublishPreflight,
+} from "@/lib/publish-preflight";
 import { getAppBaseUrl } from "@/lib/app-url";
 import {
   extractScheduleFromConversation,
@@ -50,7 +55,7 @@ import { createClient } from "@/lib/supabase-server";
 import type { ChatAttachment } from "@/lib/chat-upload";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -172,42 +177,72 @@ export async function POST(request: Request) {
 
         if (publishInput) {
           const appBaseUrl = getAppBaseUrl(request);
+          const connectedPlatforms = connectedAccounts
+            .filter((account) => account.connected)
+            .map((account) => account.platform);
 
-          publishResults = await publishToConnectedPlatforms(user.id, publishInput, {
-            sessionClient: supabase,
+          const preflight = await runPublishPreflight({
+            input: publishInput,
+            connectedPlatforms,
+            publishText:
+              publishInput.publishText ??
+              findLatestPublishCommandMessage(history)?.content ??
+              lastUserMessage,
             appBaseUrl,
+            locale,
           });
-          publishSummary = formatPublishResultsSummary(publishResults, locale);
-          const anySuccess = publishResults.some((result) => result.success);
 
-          if (anySuccess) {
-            mediaContext = [
-              "IMPORTANT: Publishing COMPLETED. Per-platform results:",
-              publishSummary,
-              "Tell the user which platforms succeeded, failed, or were skipped.",
-              "Do NOT claim success for platforms that failed or were skipped.",
-              "Do NOT say you are waiting for confirmation — publishing already finished.",
-            ].join("\n");
-          } else if (publishResults.length === 0) {
+          if (!preflight.ready) {
             publishFailed = true;
-            publishSummary =
-              locale === "ro"
-                ? "Publicare eșuată: nu am putut încărca token-urile conturilor (verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel)."
-                : "Publishing failed: could not load connected account tokens (check SUPABASE_SERVICE_ROLE_KEY on Vercel).";
+            publishSummary = formatPreflightSummary(preflight, locale);
             mediaContext = [
-              "IMPORTANT: Publishing FAILED before any platform was attempted.",
+              "IMPORTANT: Publishing BLOCKED by pre-flight checks.",
               publishSummary,
+              "Tell the user what to fix before trying again.",
               "Do NOT claim anything was published.",
             ].join("\n");
           } else {
-            publishFailed = true;
-            mediaContext = [
-              "IMPORTANT: Publishing FAILED on all attempted platforms.",
-              publishSummary,
-              "Explain the errors and suggest fixes (e.g. attach a photo for Instagram).",
-              "Do NOT claim any platform published successfully.",
-              "Do NOT say you are waiting for confirmation — publishing already finished.",
-            ].join("\n");
+            publishInput.publishTargets = preflight.targets;
+
+            publishResults = await publishToConnectedPlatforms(user.id, publishInput, {
+              sessionClient: supabase,
+              appBaseUrl,
+            });
+            publishSummary = [
+              formatPreflightSummary(preflight, locale),
+              formatPublishResultsSummary(publishResults, locale),
+            ].join("\n\n");
+            const anySuccess = publishResults.some((result) => result.success);
+
+            if (anySuccess) {
+              mediaContext = [
+                "IMPORTANT: Publishing COMPLETED. Per-platform results:",
+                publishSummary,
+                "Tell the user which platforms succeeded, failed, or were skipped.",
+                "Do NOT claim success for platforms that failed or were skipped.",
+                "Do NOT say you are waiting for confirmation — publishing already finished.",
+              ].join("\n");
+            } else if (publishResults.length === 0) {
+              publishFailed = true;
+              publishSummary =
+                locale === "ro"
+                  ? "Publicare eșuată: nu am putut încărca token-urile conturilor (verifică SUPABASE_SERVICE_ROLE_KEY pe Vercel)."
+                  : "Publishing failed: could not load connected account tokens (check SUPABASE_SERVICE_ROLE_KEY on Vercel).";
+              mediaContext = [
+                "IMPORTANT: Publishing FAILED before any platform was attempted.",
+                publishSummary,
+                "Do NOT claim anything was published.",
+              ].join("\n");
+            } else {
+              publishFailed = true;
+              mediaContext = [
+                "IMPORTANT: Publishing FAILED on all attempted platforms.",
+                publishSummary,
+                "Explain the errors and suggest fixes (e.g. attach a photo for Instagram).",
+                "Do NOT claim any platform published successfully.",
+                "Do NOT say you are waiting for confirmation — publishing already finished.",
+              ].join("\n");
+            }
           }
         } else {
           publishFailed = true;

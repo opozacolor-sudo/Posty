@@ -6,11 +6,11 @@ type GraphError = {
 export type InstagramPublishFormat = "feed" | "story" | "reel";
 
 export function detectInstagramPublishFormat(text: string): InstagramPublishFormat {
-  if (/\b(story|stories|povest)\b/i.test(text)) {
+  if (/\b(?:insta(?:gram)?|\big\b)\s+(?:story|stories|povest)\b/i.test(text)) {
     return "story";
   }
 
-  if (/\b(reel|reels)\b/i.test(text)) {
+  if (/\b(?:insta(?:gram)?|\big\b)\s+reels?\b/i.test(text)) {
     return "reel";
   }
 
@@ -53,7 +53,7 @@ async function waitForInstagramContainerReady(
   containerId: string,
   accessToken: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const maxAttempts = 30;
+  const maxAttempts = 20;
   const delayMs = 2000;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
