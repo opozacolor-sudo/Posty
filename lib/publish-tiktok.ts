@@ -51,7 +51,7 @@ function tikTokErrorMessage(error?: TikTokApiError, fallback = "TikTok API error
   }
 
   if (error.code === "url_ownership_unverified") {
-    return "TikTok: URL-ul imaginii nu e verificat — adaugă posty-ashen.vercel.app în TikTok Developer → Manage URL properties";
+    return "TikTok: media URL domain not verified — add posty.now in TikTok Developer → Manage URL properties";
   }
 
   return error.message?.trim() || error.code || fallback;

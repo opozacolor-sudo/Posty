@@ -1,12 +1,33 @@
 import { execFile } from "child_process";
 import { randomUUID } from "crypto";
-import ffmpegPath from "ffmpeg-static";
+import ffmpegStatic from "ffmpeg-static";
+import { existsSync } from "fs";
 import { readFile, unlink, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
+
+function resolveFfmpegPath(): string {
+  const envPath = process.env.FFMPEG_PATH?.trim();
+  if (envPath && existsSync(envPath)) {
+    return envPath;
+  }
+
+  const candidates = [
+    typeof ffmpegStatic === "string" ? ffmpegStatic : null,
+    join(process.cwd(), "node_modules/ffmpeg-static/ffmpeg"),
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error("ffmpeg binary unavailable on server");
+}
 
 function imageExtension(contentType: string): string {
   const normalized = contentType.split(";")[0]?.trim().toLowerCase() ?? "image/jpeg";
@@ -26,9 +47,7 @@ export async function convertImageToVideoBytes(
   imageBytes: Buffer,
   contentType: string,
 ): Promise<Buffer> {
-  if (!ffmpegPath) {
-    throw new Error("ffmpeg binary unavailable");
-  }
+  const ffmpegPath = resolveFfmpegPath();
 
   const id = randomUUID();
   const inputPath = join(tmpdir(), `posty-tiktok-${id}.${imageExtension(contentType)}`);
