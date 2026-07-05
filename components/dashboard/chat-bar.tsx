@@ -310,7 +310,7 @@ export function ChatBar({
   return (
     <div className="chat-panel flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 items-center gap-2 border-b border-border bg-white px-3 py-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-coral">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green">
           <svg
             className="h-3.5 w-3.5 text-white"
             fill="none"

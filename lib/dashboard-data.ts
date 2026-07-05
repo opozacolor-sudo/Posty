@@ -5,6 +5,7 @@ export type SocialPlatform =
   | "facebook"
   | "linkedin"
   | "threads"
+  | "google_business"
   | "x"
   | "pinterest"
   | "bluesky";
@@ -37,6 +38,7 @@ export const PLATFORMS: SocialPlatform[] = [
   "facebook",
   "linkedin",
   "threads",
+  "google_business",
   "x",
   "pinterest",
   "bluesky",
@@ -91,6 +93,7 @@ export const MOCK_PLATFORM_STATS: PlatformStats[] = [
   { platform: "facebook", views: 5600, likes: 234, comments: 67 },
   { platform: "linkedin", views: 3200, likes: 178, comments: 45 },
   { platform: "threads", views: 1800, likes: 92, comments: 23 },
+  { platform: "google_business", views: 0, likes: 0, comments: 0 },
   { platform: "x", views: 7600, likes: 412, comments: 98 },
   { platform: "pinterest", views: 4100, likes: 256, comments: 34 },
   { platform: "bluesky", views: 2200, likes: 145, comments: 28 },

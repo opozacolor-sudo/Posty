@@ -9,6 +9,7 @@ import { PLATFORMS, type SocialPlatform } from "./dashboard-data";
 import type { ChatAttachment } from "./chat-upload";
 import type { CreateScheduledPostInput } from "./scheduled-posts";
 import { formatScheduleDateTime } from "./schedule-display";
+import { parseChatMediaStoragePath } from "./publish-media-url";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -141,6 +142,7 @@ function detectPlatform(
     ["linkedin", /\blinkedin\b/i],
     ["threads", /\bthreads\b/i],
     ["pinterest", /\bpinterest\b/i],
+    ["google_business", /\b(google\s+business|google\s+maps|gbp|business\s+profile)\b/i],
     ["x", /\b(\bx\b|twitter)\b/i],
     ["bluesky", /\bbluesky\b/i],
   ];
@@ -267,16 +269,56 @@ export function parseScheduleHeuristic(options: {
     return null;
   }
 
-  const media = findLatestPublishMedia(messages);
-  const mediaUrl = media?.url ?? findLatestMediaUrl(messages);
+  return buildScheduledPostInput({
+    platform,
+    caption,
+    scheduledAt,
+    messages,
+  });
+}
+
+function buildScheduledPostInput(options: {
+  platform: SocialPlatform;
+  caption: string;
+  scheduledAt: string;
+  messages: ChatMessage[];
+  title?: string;
+}): CreateScheduledPostInput {
+  const { platform, caption, scheduledAt, messages, title } = options;
+  const media = buildScheduleMediaFromMessages(messages);
 
   return {
     platform,
-    title: caption.slice(0, 80),
+    title: title?.trim() || caption.slice(0, 80),
     caption,
     scheduledAt,
+    mediaUrl: media.mediaUrl,
+    mediaStoragePaths: media.mediaStoragePaths,
+    mediaType: media.mediaType,
+  };
+}
+
+function buildScheduleMediaFromMessages(messages: ChatMessage[]): {
+  mediaUrl: string | null;
+  mediaType: "image" | "video" | null;
+  mediaStoragePaths?: string[];
+} {
+  const publishMedia = findLatestPublishMedia(messages);
+  const mediaUrl = publishMedia?.url ?? findLatestMediaUrl(messages);
+  const mediaType = publishMedia?.mediaType ?? (mediaUrl ? "image" : null);
+
+  let mediaStoragePaths = publishMedia?.storagePaths;
+  if (!mediaStoragePaths?.length && mediaUrl) {
+    const path = parseChatMediaStoragePath(mediaUrl);
+    if (path) {
+      mediaStoragePaths = [path];
+    }
+  }
+
+  return {
     mediaUrl,
-    mediaType: media?.mediaType ?? (mediaUrl ? "image" : null),
+    mediaType,
+    mediaStoragePaths,
   };
 }
 
@@ -485,18 +527,13 @@ export async function extractScheduleFromConversation(options: {
     findLatestMediaUrl(messages) ||
     null;
 
-  const publishMedia = findLatestPublishMedia(messages);
-
-  return {
+  return buildScheduledPostInput({
     platform: extraction.platform,
-    title:
-      extraction.title?.trim() ||
-      extraction.caption.trim().slice(0, 80),
     caption: extraction.caption.trim(),
     scheduledAt: scheduledAt.toISOString(),
-    mediaUrl,
-    mediaType: publishMedia?.mediaType ?? (mediaUrl ? "image" : null),
-  };
+    messages,
+    title: extraction.title?.trim() || extraction.caption.trim().slice(0, 80),
+  });
 }
 
 export function formatScheduleConfirmation(

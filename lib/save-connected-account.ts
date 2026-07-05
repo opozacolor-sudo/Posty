@@ -20,7 +20,7 @@ export type SaveConnectedAccountFailureReason =
 
 export function mapSaveFailureToOAuthErrorKey(
   reason: SaveConnectedAccountFailureReason,
-  platform: "youtube" | "instagram" | "facebook" | "threads" | "tiktok" | "linkedin" | "pinterest",
+  platform: "youtube" | "instagram" | "facebook" | "threads" | "tiktok" | "linkedin" | "pinterest" | "google_business",
 ): string {
   if (reason === "missing_service_role") {
     return `${platform}_service_role_missing`;

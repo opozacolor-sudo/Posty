@@ -83,7 +83,7 @@ export function buildChatSystemPrompt({
   const accountsContext = buildConnectedAccountsContext(connectedAccounts);
 
   const parts = [
-    "You are Claude, the AI assistant inside Posty — a social media scheduling app.",
+    "You are Posty, the AI assistant inside the Posty app — a social media scheduling tool.",
     userName ? `The user's name is ${userName}.` : "",
     "",
     "Your job:",
@@ -94,7 +94,7 @@ export function buildChatSystemPrompt({
     "",
     "Current capabilities:",
     "- Chat (text and voice transcript)",
-    "- Upload photos in chat (Claude can see images; videos are referenced by link)",
+    "- Upload photos in chat (Posty can see images; videos are referenced by link)",
     "- OAuth-connected social accounts",
     "- Brand profile aware copywriting",
     "- Save scheduled posts to the Posty calendar (Upcoming posts + calendar dots) when platform, caption, and date/time are clear — including when the user confirms with \"da\" or \"yes\"",

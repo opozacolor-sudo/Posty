@@ -22,6 +22,7 @@ const STEPS = [1, 2, 3] as const;
 
 export function OnboardingFlow({ initialName, accounts }: OnboardingFlowProps) {
   const t = useTranslations("onboarding");
+  const tDashboard = useTranslations("dashboard");
   const locale = useLocale();
   const router = useRouter();
   const [step, setStep] = useState<(typeof STEPS)[number]>(1);
@@ -211,7 +212,7 @@ export function OnboardingFlow({ initialName, accounts }: OnboardingFlowProps) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold capitalize">{platform}</p>
+                      <p className="font-semibold">{tDashboard(`platforms.${platform}`)}</p>
                       <PlatformCapabilityBadge platform={platform} />
                     </div>
                     <p

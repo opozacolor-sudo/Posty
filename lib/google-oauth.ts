@@ -29,12 +29,16 @@ type TokenResponse = {
   error_description?: string;
 };
 
-export async function exchangeGoogleCodeForTokens(code: string): Promise<{
+export async function exchangeGoogleCodeForTokens(
+  code: string,
+  redirectUriOverride?: string,
+): Promise<{
   accessToken: string;
   refreshToken: string | null;
   expiresIn?: number;
 }> {
   const { clientId, clientSecret, redirectUri } = assertGoogleConfigured();
+  const effectiveRedirectUri = redirectUriOverride ?? redirectUri;
 
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -43,7 +47,7 @@ export async function exchangeGoogleCodeForTokens(code: string): Promise<{
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: redirectUri,
+      redirect_uri: effectiveRedirectUri,
       grant_type: "authorization_code",
     }),
   });

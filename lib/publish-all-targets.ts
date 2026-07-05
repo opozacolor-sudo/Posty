@@ -43,7 +43,7 @@ export function buildAllPlatformsVideoTargets(
   const includeMetaStories = wantsStoryOnMeta(publishText);
 
   for (const platform of connectedPlatforms) {
-    if (platform === "pinterest" || platform === "x" || platform === "bluesky") {
+    if (platform === "pinterest" || platform === "x" || platform === "bluesky" || platform === "google_business") {
       continue;
     }
 

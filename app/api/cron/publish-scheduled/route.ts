@@ -4,7 +4,7 @@ import { runScheduledPublish } from "@/lib/run-scheduled-publish";
 import { isSupabaseAdminConfigured } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function isAuthorizedCronRequest(request: Request): boolean {
   const cronSecret = process.env.CRON_SECRET?.trim();
@@ -17,7 +17,7 @@ function isAuthorizedCronRequest(request: Request): boolean {
   return authHeader === `Bearer ${cronSecret}`;
 }
 
-export async function GET(request: Request) {
+async function handleCronPublish(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -43,4 +43,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
+}
+
+export async function GET(request: Request) {
+  return handleCronPublish(request);
+}
+
+export async function POST(request: Request) {
+  return handleCronPublish(request);
 }

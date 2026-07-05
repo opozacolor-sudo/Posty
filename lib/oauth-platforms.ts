@@ -6,6 +6,7 @@ export const OAUTH_CONNECT_PLATFORMS: SocialPlatform[] = [
   "youtube",
   "facebook",
   "threads",
+  "google_business",
   "tiktok",
   "linkedin",
   "pinterest",
@@ -21,6 +22,10 @@ export function getPlatformConnectHref(
 
   if (platform === "tiktok") {
     return buildTikTokConnectPath(locale, "basic");
+  }
+
+  if (platform === "google_business") {
+    return `/api/auth/google-business?locale=${encodeURIComponent(locale)}`;
   }
 
   return buildConnectUrl(platform, locale);

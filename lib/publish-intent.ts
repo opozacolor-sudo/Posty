@@ -90,7 +90,7 @@ const PUBLISH_KEYWORDS =
   /\b(?:posteaz[aă]?\s+poza|poza anterioar[aă]|posteaz[aă]\s+pe\s+toate|posteaz[aă]\s+video\s+pe\s+toate)\b/i;
 
 const PLATFORM_PUBLISH_PATTERN =
-  /\b(?:posteaz[aă]?|postez|post|public[aă]|publica|trimite|pune(?:-l|-o)?|upload(?:eaz[aă]?|ez)?)\s+(?:acum\s+)?(?:pe\s+)?(?:video(?:ul)?\s+(?:pe\s+)?)?(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b)\b/i;
+  /\b(?:posteaz[aă]?|postez|post|public[aă]|publica|trimite|pune(?:-l|-o)?|upload(?:eaz[aă]?|ez)?)\s+(?:acum\s+)?(?:pe\s+)?(?:video(?:ul)?\s+(?:pe\s+)?)?(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|google\s+business|gbp)\b/i;
 
 const PUBLISH_RETRY_PATTERN =
   /\b(ai postat|s-a postat|a mers|re[iî]ncearc[aă]|(?:mai\s+)?(?:o\s+dat[aă]|din nou)|retry|post again|did it post|n-a mers|nu merge)\b/i;
@@ -281,6 +281,7 @@ function parseExplicitPublishTargets(
     ["youtube", /\b(youtube|\byt\b)\b/i],
     ["threads", /\bthreads\b/i],
     ["pinterest", /\bpinterest\b/i],
+    ["google_business", /\b(google\s+business|google\s+maps|gbp|business\s+profile)\b/i],
     ["x", /\b(\bx\b|twitter)\b/i],
     ["bluesky", /\bbluesky\b/i],
   ];
@@ -404,6 +405,7 @@ function detectTargetPlatforms(
     ["linkedin", /\blinkedin\b/i],
     ["threads", /\bthreads\b/i],
     ["pinterest", /\bpinterest\b/i],
+    ["google_business", /\b(google\s+business|google\s+maps|gbp|business\s+profile)\b/i],
     ["x", /\b(\bx\b|twitter)\b/i],
     ["bluesky", /\bbluesky\b/i],
   ];

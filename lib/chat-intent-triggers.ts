@@ -13,7 +13,7 @@ export const SCHEDULE_ACTION_VERB =
   /\b(?:programeaz[aă]?|program(?:ez|are|at|ezi)?|planific[aă]?|plan(?:ez|ific)?|schedul(?:e|ing)|pune(?:\s+)?(?:în|in)\s+calendar|salveaz[aă]?\s+(?:în|in)\s+calendar|salveaz[aă]?\s+post|pune(?:\s+)?pe\s+calendar)\b/i;
 
 export const PLATFORM_NAME_PATTERN =
-  /\b(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|twitter|\bx\b|bluesky)\b/i;
+  /\b(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|twitter|\bx\b|bluesky|google\s+business|google\s+maps|gbp|business\s+profile)\b/i;
 
 /** Broad publish-to-everywhere intent (may still name IG/FB for story format hints). */
 export const ALL_PLATFORMS_PUBLISH_PATTERN =

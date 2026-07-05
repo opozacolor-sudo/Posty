@@ -17,19 +17,11 @@ type ConnectedAccountsCardProps = {
 };
 
 function connectionDotClass(connected: boolean, publishStatus: CapabilityLevel): string {
-  if (!connected) {
+  if (!connected || publishStatus === "soon") {
     return "bg-muted-foreground/40";
   }
 
-  if (publishStatus === "live") {
-    return "bg-green";
-  }
-
-  if (publishStatus === "review") {
-    return "bg-amber-500";
-  }
-
-  return "bg-muted-foreground/40";
+  return "bg-green";
 }
 
 export function ConnectedAccountsCard({ accounts }: ConnectedAccountsCardProps) {

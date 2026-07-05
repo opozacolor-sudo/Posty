@@ -22,6 +22,7 @@ import { publishPinterestPin } from "./publish-pinterest";
 import { publishThreadsPost } from "./publish-threads";
 import { publishTikTokContent } from "./publish-tiktok";
 import { publishYouTubeVideo } from "./publish-youtube";
+import { publishGoogleBusinessLocalPost } from "./publish-google-business";
 
 export type PublishMediaType = "image" | "video";
 
@@ -72,7 +73,8 @@ function requiresImage(platform: SocialPlatform): boolean {
   return (
     platform === "instagram" ||
     platform === "facebook" ||
-    platform === "pinterest"
+    platform === "pinterest" ||
+    platform === "google_business"
   );
 }
 
@@ -294,6 +296,42 @@ async function publishToPlatform(
 
     return result.ok
       ? { platform, success: true, postId: result.postId }
+      : { platform, success: false, error: result.error };
+  }
+
+  if (platform === "google_business") {
+    const locationName = platformMetadata.gbp_location_name;
+    if (!locationName) {
+      return {
+        platform,
+        success: false,
+        error: "Google Business location missing — reconnect the account",
+      };
+    }
+
+    if (!media.imageUrl) {
+      return {
+        platform,
+        success: false,
+        error: "Google Business needs a photo attached with 📎",
+      };
+    }
+
+    const result = await publishGoogleBusinessLocalPost({
+      accessToken,
+      refreshToken,
+      locationName,
+      caption,
+      imageUrl: media.imageUrl,
+    });
+
+    return result.ok
+      ? {
+          platform,
+          success: true,
+          postId: result.postId,
+          detail: result.detail,
+        }
       : { platform, success: false, error: result.error };
   }
 

@@ -3,6 +3,12 @@ import { getDatePartsInTimeZone, getScheduleDisplayTimeZone } from "./schedule-d
 import type { ScheduledPost, SocialPlatform } from "./dashboard-data";
 import { PLATFORMS } from "./dashboard-data";
 import type { PublishMediaType } from "./publish";
+import {
+  buildChunkedPublishMediaProxyUrl,
+  buildPublishMediaProxyUrl,
+  parseChatMediaStoragePath,
+  resolvePublishMediaUrl,
+} from "./publish-media-url";
 import { createAdminClient, isSupabaseAdminConfigured } from "./supabase-admin";
 import { getSupabaseProjectRef } from "./save-connected-account";
 import type { createClient } from "./supabase-server";
@@ -15,6 +21,7 @@ export type ScheduledPostRow = {
   caption: string | null;
   scheduled_at: string;
   media_url: string | null;
+  media_storage_paths: string[] | null;
   media_type: string | null;
   status: string;
   published_at: string | null;
@@ -29,8 +36,61 @@ export type CreateScheduledPostInput = {
   caption?: string | null;
   scheduledAt: string;
   mediaUrl?: string | null;
+  mediaStoragePaths?: string[] | null;
   mediaType?: "image" | "video" | null;
 };
+
+function normalizeStoragePaths(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.length === 0) {
+    return null;
+  }
+
+  const paths = value.filter((item): item is string => typeof item === "string" && item.length > 0);
+  return paths.length > 0 ? paths : null;
+}
+
+export function getScheduledPostStoragePaths(post: ScheduledPostRow): string[] | undefined {
+  const stored = normalizeStoragePaths(post.media_storage_paths);
+  if (stored) {
+    return stored;
+  }
+
+  if (post.media_url) {
+    const path = parseChatMediaStoragePath(post.media_url);
+    if (path) {
+      return [path];
+    }
+  }
+
+  return undefined;
+}
+
+export async function resolveScheduledPostMedia(
+  post: ScheduledPostRow,
+  appBaseUrl: string,
+): Promise<{ mediaUrl: string | null; mediaStoragePaths?: string[] }> {
+  const storagePaths = getScheduledPostStoragePaths(post);
+
+  if (storagePaths?.length) {
+    const proxyUrl =
+      storagePaths.length > 1
+        ? buildChunkedPublishMediaProxyUrl(storagePaths, appBaseUrl)
+        : buildPublishMediaProxyUrl(storagePaths[0], appBaseUrl);
+
+    return {
+      mediaUrl: proxyUrl ?? post.media_url,
+      mediaStoragePaths: storagePaths,
+    };
+  }
+
+  if (post.media_url) {
+    return {
+      mediaUrl: await resolvePublishMediaUrl(post.media_url, appBaseUrl),
+    };
+  }
+
+  return { mediaUrl: null };
+}
 
 export async function checkScheduledPostsTable(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -173,6 +233,7 @@ export async function createScheduledPost(
       caption: input.caption?.slice(0, 5000) ?? null,
       scheduled_at: scheduledAt.toISOString(),
       media_url: input.mediaUrl ?? null,
+      media_storage_paths: normalizeStoragePaths(input.mediaStoragePaths),
       media_type: input.mediaType ?? null,
       status: "scheduled",
     })

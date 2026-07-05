@@ -1,15 +1,19 @@
 import { getAppBaseUrl } from "./app-url";
 import type { SocialPlatform } from "./dashboard-data";
-import type { PublishMediaType } from "./publish";
+import type { PublishInput, PublishMediaType } from "./publish";
 import { publishToConnectedPlatforms } from "./publish";
+import { fetchConnectedAccountsWithTokens } from "./publish-accounts";
 import { detectFacebookPublishFormat } from "./publish-facebook";
 import { detectInstagramPublishFormat } from "./publish-instagram";
+import { runPublishPreflight } from "./publish-preflight";
 import {
   claimScheduledPostForPublish,
+  getScheduledPostStoragePaths,
   inferScheduledMediaType,
   markScheduledPostFailed,
   markScheduledPostPublished,
   releaseScheduledPostAfterFailure,
+  resolveScheduledPostMedia,
   type ScheduledPostRow,
 } from "./scheduled-posts";
 
@@ -27,6 +31,10 @@ const PERMANENT_FAILURE_PATTERNS = [
   /scope_not_authorized/i,
   /access token expired/i,
   /reconnect/i,
+  /cont neconectat/i,
+  /lipsește/i,
+  /missing caption/i,
+  /missing media/i,
 ];
 
 export type ScheduledPublishRunResult = {
@@ -65,25 +73,56 @@ async function publishScheduledPost(
     return { ok: false, error: "Missing caption", permanent: true };
   }
 
+  const storagePaths = getScheduledPostStoragePaths(post);
   const mediaType: PublishMediaType | null =
     post.media_type === "video" || post.media_type === "image"
       ? post.media_type
       : inferScheduledMediaType(post.media_url);
 
-  if (!post.media_url && mediaType !== null) {
-    return { ok: false, error: "Missing media URL", permanent: true };
+  if (!post.media_url && !storagePaths?.length && mediaType !== null) {
+    return { ok: false, error: "Missing media storage paths", permanent: true };
+  }
+
+  const media = await resolveScheduledPostMedia(post, appBaseUrl);
+  const publishText = `${post.title}\n${caption}`;
+
+  const input: PublishInput = {
+    caption,
+    mediaUrl: media.mediaUrl,
+    mediaStoragePaths: media.mediaStoragePaths,
+    mediaType,
+    targetPlatforms: [post.platform as SocialPlatform],
+    facebookFormat: detectFacebookPublishFormat(publishText),
+    instagramFormat: detectInstagramPublishFormat(publishText),
+  };
+
+  const accounts = await fetchConnectedAccountsWithTokens(post.user_id);
+  const connectedPlatforms = accounts.map((account) => account.platform);
+
+  const preflight = await runPublishPreflight({
+    input,
+    connectedPlatforms,
+    publishText,
+    appBaseUrl,
+    locale: "ro",
+  });
+
+  if (!preflight.ready) {
+    const error = preflight.checks
+      .filter((check) => !check.ok)
+      .map((check) => check.message)
+      .join("; ");
+
+    return {
+      ok: false,
+      error,
+      permanent: isPermanentPublishFailure(error),
+    };
   }
 
   const results = await publishToConnectedPlatforms(
     post.user_id,
-    {
-      caption,
-      mediaUrl: post.media_url,
-      mediaType,
-      targetPlatforms: [post.platform as SocialPlatform],
-      facebookFormat: detectFacebookPublishFormat(`${post.title}\n${caption}`),
-      instagramFormat: detectInstagramPublishFormat(`${post.title}\n${caption}`),
-    },
+    input,
     { appBaseUrl },
   );
 

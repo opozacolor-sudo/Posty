@@ -22,6 +22,12 @@ export const PLATFORM_CAPABILITIES: Record<SocialPlatform, PlatformCapabilities>
     video: "live",
     scheduling: true,
   },
+  google_business: {
+    oauth: "live",
+    photo: "review",
+    video: "none",
+    scheduling: true,
+  },
   linkedin: {
     oauth: "live",
     photo: "live",

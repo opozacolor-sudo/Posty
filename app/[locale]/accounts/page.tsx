@@ -14,12 +14,28 @@ import {
 } from "@/lib/connected-accounts";
 import { isOnboardingInProgress } from "@/lib/onboarding";
 import { canConnectPlatform } from "@/lib/platform-capabilities";
-import { getPlatformConnectHref } from "@/lib/oauth-platforms";
+import { getPlatformConnectHref, OAUTH_CONNECT_PLATFORMS } from "@/lib/oauth-platforms";
 import { buildTikTokConnectPath } from "@/lib/tiktok-oauth";
+import { PlatformCapabilityBadge } from "@/components/accounts/platform-capability";
+import type { ConnectedAccount, SocialPlatform } from "@/lib/dashboard-data";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
+
+const ACCOUNTS_DISPLAY_ORDER: SocialPlatform[] = [
+  ...OAUTH_CONNECT_PLATFORMS,
+  "x",
+  "bluesky",
+];
+
+function orderAccountsForDisplay(accounts: ConnectedAccount[]): ConnectedAccount[] {
+  const byPlatform = new Map(accounts.map((account) => [account.platform, account]));
+
+  return ACCOUNTS_DISPLAY_ORDER.map((platform) => byPlatform.get(platform)).filter(
+    (account): account is ConnectedAccount => Boolean(account),
+  );
+}
 
 export default async function AccountsPage({ params }: Props) {
   const { locale } = await params;
@@ -43,6 +59,8 @@ export default async function AccountsPage({ params }: Props) {
       onboardingInProgress = isOnboardingInProgress(user);
     }
   }
+
+  const displayAccounts = orderAccountsForDisplay(accounts);
 
   return (
     <div className="min-h-screen bg-background px-4 py-6 sm:px-6">
@@ -75,7 +93,10 @@ export default async function AccountsPage({ params }: Props) {
         </Suspense>
 
         <ul className="mt-6 flex flex-col gap-3">
-          {accounts.map(({ platform, connected, accountName }) => (
+          {displayAccounts.map(({ platform, connected, accountName }) => {
+            const connectHref = getPlatformConnectHref(platform, locale);
+
+            return (
             <li
               key={platform}
               className="relative flex flex-col gap-3 overflow-visible rounded-[14px] border border-border bg-card p-4 shadow-[var(--shadow)] sm:flex-row sm:items-start"
@@ -92,7 +113,10 @@ export default async function AccountsPage({ params }: Props) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold capitalize">{t(`platforms.${platform}`)}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-bold">{t(`platforms.${platform}`)}</p>
+                    <PlatformCapabilityBadge platform={platform} />
+                  </div>
                   <p
                     className={`text-sm font-medium ${
                       connected ? "text-green" : "text-muted-foreground"
@@ -137,9 +161,9 @@ export default async function AccountsPage({ params }: Props) {
                     </button>
                   </form>
                   </>
-                ) : canConnectPlatform(platform) ? (
+                ) : connectHref && canConnectPlatform(platform) ? (
                   <a
-                    href={getPlatformConnectHref(platform, locale) ?? "#"}
+                    href={connectHref}
                     className="btn-primary inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold no-underline"
                   >
                     {t("connect")}
@@ -151,7 +175,8 @@ export default async function AccountsPage({ params }: Props) {
                 )}
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </div>
     </div>

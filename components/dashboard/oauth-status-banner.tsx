@@ -14,6 +14,7 @@ const SUCCESS_KEYS: Record<string, string> = {
   tiktok: "tiktokConnected",
   linkedin: "linkedinConnected",
   pinterest: "pinterestConnected",
+  google_business: "googleBusinessConnected",
 };
 
 const ERROR_KEYS: Record<string, string> = {
@@ -78,6 +79,19 @@ const ERROR_KEYS: Record<string, string> = {
   youtube_save_unknown: "youtubeSaveUnknown",
   youtube_service_role_missing: "youtubeServiceRoleMissing",
   youtube_token_failed: "youtubeTokenFailed",
+  google_business_denied: "googleBusinessDenied",
+  google_business_invalid_state: "googleBusinessInvalidState",
+  google_business_no_location: "googleBusinessNoLocation",
+  google_business_no_account: "googleBusinessNoAccount",
+  google_business_api_disabled: "googleBusinessApiDisabled",
+  google_business_api_access: "googleBusinessApiAccess",
+  google_business_api_error: "googleBusinessApiError",
+  google_business_not_configured: "googleBusinessNotConfigured",
+  google_business_save_failed: "googleBusinessSaveFailed",
+  google_business_save_permission: "googleBusinessSavePermission",
+  google_business_save_unknown: "googleBusinessSaveUnknown",
+  google_business_service_role_missing: "googleBusinessServiceRoleMissing",
+  google_business_token_failed: "googleBusinessTokenFailed",
 };
 
 export function OAuthStatusBanner() {

@@ -17,5 +17,11 @@ export async function GET() {
   return NextResponse.json({
     ...status,
     setupSqlFile: "supabase/migrations/20250629130000_scheduled_posts.sql",
+    setupSqlFiles: [
+      "supabase/migrations/20250629130000_scheduled_posts.sql",
+      "supabase/migrations/20250629160000_scheduled_posts_publish_worker.sql",
+      "supabase/migrations/20250629170000_scheduled_posts_media_storage_paths.sql",
+    ],
+    cronSetupUrl: "/api/setup/cron",
   });
 }
