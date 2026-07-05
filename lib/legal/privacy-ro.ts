@@ -7,7 +7,7 @@ export function getPrivacyPolicyRo(): LegalDocumentContent {
 
   return {
     title: "Politica de confidențialitate",
-    lastUpdated: "28 iunie 2026",
+    lastUpdated: "5 iulie 2026",
     intro:
       "Această Politică de confidențialitate explică modul în care Posty („noi”) colectează, utilizează și protejează informațiile când folosești serviciul nostru de programare social media cu AI, disponibil la " +
       siteUrl +
@@ -53,7 +53,8 @@ export function getPrivacyPolicyRo(): LegalDocumentContent {
       {
         title: "5. Servicii terțe",
         paragraphs: [
-          "Folosim furnizori pentru hosting, autentificare, bază de date, stocare și inferență AI. Rețelele sociale (Meta/Instagram, Google/YouTube, TikTok, LinkedIn, Pinterest etc.) primesc conținut și token-uri doar când conectezi un cont și soliciți publicarea.",
+          "Folosim furnizori care procesează date în numele nostru, inclusiv:",
+          "Supabase (autentificare, bază de date și stocare fișiere), Vercel (hosting aplicație) și Anthropic (răspunsuri AI în chat). Rețelele sociale (Meta/Instagram, Google/YouTube, TikTok, LinkedIn, Pinterest etc.) primesc conținut și token-uri doar când conectezi un cont și soliciți publicarea.",
           "Fiecare terț are propria politică de confidențialitate. Utilizarea platformelor conectate rămâne supusă termenilor lor.",
         ],
       },
@@ -71,7 +72,18 @@ export function getPrivacyPolicyRo(): LegalDocumentContent {
         ],
       },
       {
-        title: "8. Drepturile tale",
+        title: "8. Cum îți ștergi datele",
+        paragraphs: ["Poți elimina datele tale din Posty astfel:"],
+        list: [
+          "Ștergere cont Posty: deschide Profil în aplicație și alege Șterge contul. Se elimină permanent datele contului, postările programate, profilul de brand și înregistrările conturilor conectate stocate în Posty.",
+          "Deconectare cont social: deschide Conturi și deconectează platforma dorită. Se elimină token-urile OAuth stocate în Posty (nu șterge profilul tău de pe rețeaua socială).",
+          "Solicitare prin email: scrie la " +
+            contactEmail +
+            " de pe adresa asociată contului Posty. Răspundem la cereri de acces, rectificare și ștergere într-un termen rezonabil, conform drepturilor descrise mai jos.",
+        ],
+      },
+      {
+        title: "9. Drepturile tale",
         paragraphs: [
           "În funcție de locație (inclusiv SEE și România), poți avea dreptul de acces, rectificare, ștergere, restricționare, portabilitate și opoziție. Poți depune plângere la autoritatea locală de protecție a datelor.",
           "Pentru exercitarea drepturilor, scrie la " +
@@ -80,25 +92,25 @@ export function getPrivacyPolicyRo(): LegalDocumentContent {
         ],
       },
       {
-        title: "9. Copii",
+        title: "10. Copii",
         paragraphs: [
           "Serviciul nu este destinat copiilor sub 16 ani. Nu colectăm în mod conștient date de la copii.",
         ],
       },
       {
-        title: "10. Transferuri internaționale",
+        title: "11. Transferuri internaționale",
         paragraphs: [
           "Datele pot fi procesate în alte țări decât a ta, acolo unde operează furnizorii noștri. Luăm măsuri pentru garanții adecvate acolo unde legea o cere.",
         ],
       },
       {
-        title: "11. Modificări",
+        title: "12. Modificări",
         paragraphs: [
           "Putem actualiza această politică. Publicăm versiunea revizuită pe această pagină și actualizăm data „Ultima actualizare”. Continuarea utilizării după modificări înseamnă acceptarea politicii actualizate.",
         ],
       },
       {
-        title: "12. Contact",
+        title: "13. Contact",
         paragraphs: [
           "Întrebări despre confidențialitate: " + contactEmail + ".",
         ],

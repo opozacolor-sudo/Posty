@@ -7,7 +7,7 @@ export function getPrivacyPolicyEn(): LegalDocumentContent {
 
   return {
     title: "Privacy Policy",
-    lastUpdated: "June 28, 2026",
+    lastUpdated: "July 5, 2026",
     intro:
       "This Privacy Policy explains how Posty (“we”, “us”, “our”) collects, uses, and protects information when you use our AI-powered social media scheduling service at " +
       siteUrl +
@@ -53,7 +53,8 @@ export function getPrivacyPolicyEn(): LegalDocumentContent {
       {
         title: "5. Third-party services",
         paragraphs: [
-          "We rely on service providers that process data on our behalf, including hosting, authentication, database, storage, and AI inference. Social networks (such as Meta/Instagram, Google/YouTube, TikTok, LinkedIn, Pinterest, and others) receive content and tokens only when you connect an account and request publishing.",
+          "We rely on service providers that process data on our behalf, including:",
+          "Supabase (authentication, database, and file storage), Vercel (application hosting), and Anthropic (AI chat responses). Social networks (such as Meta/Instagram, Google/YouTube, TikTok, LinkedIn, Pinterest, and others) receive content and tokens only when you connect an account and request publishing.",
           "Each third party has its own privacy policy. Your use of connected platforms remains subject to their terms.",
         ],
       },
@@ -71,7 +72,20 @@ export function getPrivacyPolicyEn(): LegalDocumentContent {
         ],
       },
       {
-        title: "8. Your rights",
+        title: "8. How to delete your data",
+        paragraphs: [
+          "You can remove your data from Posty in the following ways:",
+        ],
+        list: [
+          "Delete your Posty account: open Profile in the app and choose Delete account. This permanently removes your account data, scheduled posts, brand profile, and connected-account records stored in Posty.",
+          "Disconnect a social account: open Accounts and disconnect any platform you no longer want linked. This removes stored OAuth tokens for that platform from Posty (it does not delete your profile on the social network itself).",
+          "Request help: email " +
+            contactEmail +
+            " from the address linked to your Posty account. We respond to access, correction, and deletion requests within a reasonable time, as described in your privacy rights below.",
+        ],
+      },
+      {
+        title: "9. Your rights",
         paragraphs: [
           "Depending on your location (including the European Economic Area and Romania), you may have the right to access, correct, delete, restrict, or port your personal data, and to object to certain processing. You may also lodge a complaint with your local data protection authority.",
           "To exercise these rights, email " +
@@ -80,25 +94,25 @@ export function getPrivacyPolicyEn(): LegalDocumentContent {
         ],
       },
       {
-        title: "9. Children",
+        title: "10. Children",
         paragraphs: [
           "The Service is not directed to children under 16. We do not knowingly collect personal data from children.",
         ],
       },
       {
-        title: "10. International transfers",
+        title: "11. International transfers",
         paragraphs: [
           "Your data may be processed in countries other than your own where our providers operate. We take steps to ensure appropriate safeguards where required by law.",
         ],
       },
       {
-        title: "11. Changes",
+        title: "12. Changes",
         paragraphs: [
           "We may update this Privacy Policy from time to time. We will post the revised version on this page and update the “Last updated” date. Continued use of the Service after changes means you accept the updated policy.",
         ],
       },
       {
-        title: "12. Contact",
+        title: "13. Contact",
         paragraphs: ["Questions about this Privacy Policy: " + contactEmail + "."],
       },
     ],
