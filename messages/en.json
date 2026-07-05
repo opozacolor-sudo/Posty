@@ -10,6 +10,14 @@
     "signOut": "Sign out",
     "defaultUser": "User"
   },
+  "landing": {
+    "tagline": "AI social media scheduler",
+    "description": "Posty helps you connect your social accounts, create posts with AI in chat, and publish or schedule content to your own Instagram, YouTube, TikTok, LinkedIn, Threads, and other supported platforms.",
+    "featureConnect": "Connect your own social accounts securely via OAuth.",
+    "featureChat": "Create captions and posts in a chat interface with AI assistance.",
+    "featureSchedule": "Publish immediately or schedule posts to go live at the time you choose.",
+    "getStarted": "Log in to get started"
+  },
   "auth": {
     "welcomeBack": "Welcome back",
     "createAccount": "Create your account",

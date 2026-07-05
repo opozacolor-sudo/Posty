@@ -10,6 +10,14 @@
     "signOut": "Deconectare",
     "defaultUser": "Utilizator"
   },
+  "landing": {
+    "tagline": "Planificator social media cu AI",
+    "description": "Posty te ajută să conectezi conturile sociale, să creezi postări cu AI în chat și să publici sau programezi conținut pe Instagram, YouTube, TikTok, LinkedIn, Threads și alte platforme suportate.",
+    "featureConnect": "Conectezi conturile tale prin OAuth, în siguranță.",
+    "featureChat": "Creezi caption-uri și postări într-un chat cu asistență AI.",
+    "featureSchedule": "Publici imediat sau programezi postările la ora aleasă de tine.",
+    "getStarted": "Autentifică-te pentru a începe"
+  },
   "auth": {
     "welcomeBack": "Bine ai revenit",
     "createAccount": "Creează-ți contul",

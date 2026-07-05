@@ -28,5 +28,5 @@ function getPreferredLocale(acceptLanguage: string | null): Locale {
 export default async function RootPage() {
   const headersList = await headers();
   const locale = getPreferredLocale(headersList.get("accept-language"));
-  redirect(`/${locale}/dashboard`);
+  redirect(`/${locale}`);
 }

@@ -18,6 +18,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       ...(englishMessages ?? {}),
       ...localeMessages,
       legal: localeMessages.legal ?? englishMessages?.legal,
+      landing: localeMessages.landing ?? englishMessages?.landing,
       platformStatus:
         localeMessages.platformStatus ?? englishMessages?.platformStatus,
     },

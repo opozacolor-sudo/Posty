@@ -81,7 +81,9 @@ export async function updateSession(
 
   const isAuthCallback = pathname.startsWith("/auth");
   const isLoginPage = pathWithoutLocale === "/login";
-  const isPublicRoute = isAuthCallback || isLoginPage || isLegalRoute(pathWithoutLocale);
+  const isHomePage = pathWithoutLocale === "/";
+  const isPublicRoute =
+    isAuthCallback || isLoginPage || isHomePage || isLegalRoute(pathWithoutLocale);
 
   if (!user && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
