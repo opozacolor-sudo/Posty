@@ -24,7 +24,7 @@ export const PLATFORM_CAPABILITIES: Record<SocialPlatform, PlatformCapabilities>
   },
   google_business: {
     oauth: "live",
-    photo: "review",
+    photo: "live",
     video: "none",
     scheduling: true,
   },
@@ -42,19 +42,19 @@ export const PLATFORM_CAPABILITIES: Record<SocialPlatform, PlatformCapabilities>
   },
   tiktok: {
     oauth: "live",
-    photo: "review",
-    video: "review",
+    photo: "live",
+    video: "live",
     scheduling: true,
   },
   facebook: {
     oauth: "live",
-    photo: "review",
-    video: "review",
+    photo: "live",
+    video: "live",
     scheduling: true,
   },
   pinterest: {
     oauth: "live",
-    photo: "review",
+    photo: "live",
     video: "none",
     scheduling: true,
   },
