@@ -162,7 +162,7 @@
     "chatWelcome": "Hey! 👋 Attach a photo, tell me where to post — I'll handle the rest.",
     "chatOnline": "Online",
     "chatThinking": "Thinking...",
-    "chatPublishing": "Publishing... (up to 2 minutes for video)",
+    "chatPublishing": "Publishing... (videos can take up to 3 minutes)",
     "chatGeneratingImage": "Generating image... (~30 sec)",
     "attachMedia": "Attach photo or video",
     "uploadingMedia": "Uploading file...",

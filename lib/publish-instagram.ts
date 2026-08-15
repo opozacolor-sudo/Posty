@@ -52,9 +52,15 @@ function graphErrorMessage(data: GraphError, fallback: string): string {
 async function waitForInstagramContainerReady(
   containerId: string,
   accessToken: string,
+  options?: { isVideo?: boolean },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const maxAttempts = 20;
-  const delayMs = 2000;
+  const isVideo = options?.isVideo ?? false;
+  const maxAttempts = isVideo ? 40 : 20;
+  const delayMs = isVideo ? 5000 : 2000;
+
+  if (isVideo) {
+    await sleep(8000);
+  }
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const params = new URLSearchParams({
@@ -77,7 +83,7 @@ async function waitForInstagramContainerReady(
       };
     }
 
-    const statusCode = data.status_code;
+    const statusCode = (data.status_code ?? "").toUpperCase();
     if (statusCode === "FINISHED") {
       return { ok: true };
     }
@@ -96,8 +102,14 @@ async function waitForInstagramContainerReady(
 
   return {
     ok: false,
-    error: "Instagram media processing timed out — try again in a moment",
+    error: isVideo
+      ? "Instagram video processing timed out — Meta may still be processing. Wait 1–2 minutes and try again."
+      : "Instagram media processing timed out — try again in a moment",
   };
+}
+
+function containerUsesVideo(containerBody: URLSearchParams): boolean {
+  return Boolean(containerBody.get("video_url"));
 }
 
 async function publishInstagramContainer(options: {
@@ -118,7 +130,9 @@ async function publishInstagramContainer(options: {
     };
   }
 
-  const ready = await waitForInstagramContainerReady(container.id, options.accessToken);
+  const ready = await waitForInstagramContainerReady(container.id, options.accessToken, {
+    isVideo: containerUsesVideo(options.containerBody),
+  });
   if (!ready.ok) {
     return ready;
   }
