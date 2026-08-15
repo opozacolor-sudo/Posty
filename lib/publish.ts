@@ -214,6 +214,7 @@ async function publishToPlatform(
   if (platform === "threads") {
     const result = await publishThreadsPost({
       accessToken,
+      userId: platformMetadata.userId,
       caption,
       mediaType: media.mediaType === "video" ? "video" : media.imageUrl ? "image" : null,
       imageUrl: media.imageUrl,

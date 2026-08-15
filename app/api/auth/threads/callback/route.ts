@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
       refresh_token: null,
       token_expires_at: tokenExpiresAt,
       is_active: true,
+      platform_metadata: { userId: shortLived.userId },
     });
 
     if (!saveResult.ok) {

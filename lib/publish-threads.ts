@@ -82,7 +82,6 @@ async function publishThreadsContainer(options: {
   accessToken: string;
   userId: string;
   containerBody: URLSearchParams;
-  waitForProcessing: boolean;
 }): Promise<{ ok: true; postId: string } | { ok: false; error: string }> {
   const containerResponse = await fetch(
     `https://graph.threads.net/v1.0/${options.userId}/threads`,
@@ -97,11 +96,9 @@ async function publishThreadsContainer(options: {
     };
   }
 
-  if (options.waitForProcessing) {
-    const ready = await waitForThreadsContainerReady(container.id, options.accessToken);
-    if (!ready.ok) {
-      return ready;
-    }
+  const ready = await waitForThreadsContainerReady(container.id, options.accessToken);
+  if (!ready.ok) {
+    return ready;
   }
 
   const publishBody = new URLSearchParams({
@@ -127,13 +124,15 @@ async function publishThreadsContainer(options: {
 
 export async function publishThreadsPost(options: {
   accessToken: string;
+  userId?: string | null;
   caption: string;
   mediaType?: "image" | "video" | null;
   imageUrl?: string | null;
   videoUrl?: string | null;
 }): Promise<{ ok: true; postId: string; detail?: string } | { ok: false; error: string }> {
   try {
-    const userId = await resolveThreadsUserId(options.accessToken);
+    const userId =
+      options.userId?.trim() || (await resolveThreadsUserId(options.accessToken));
     const { caption, imageUrl, videoUrl } = options;
     const mediaType = options.mediaType ?? (videoUrl ? "video" : imageUrl ? "image" : null);
 
@@ -153,7 +152,6 @@ export async function publishThreadsPost(options: {
         accessToken: options.accessToken,
         userId,
         containerBody,
-        waitForProcessing: true,
       });
 
       return result.ok
@@ -177,7 +175,6 @@ export async function publishThreadsPost(options: {
         accessToken: options.accessToken,
         userId,
         containerBody,
-        waitForProcessing: false,
       });
 
       return result.ok ? { ok: true, postId: result.postId } : result;
@@ -193,7 +190,6 @@ export async function publishThreadsPost(options: {
       accessToken: options.accessToken,
       userId,
       containerBody,
-      waitForProcessing: false,
     });
 
     return result.ok ? { ok: true, postId: result.postId } : result;
