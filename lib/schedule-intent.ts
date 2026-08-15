@@ -7,6 +7,8 @@ import {
 import type { BrandProfile } from "./brand-profile";
 import {
   generateCaptionForMedia,
+  looksLikeCaptionInstruction,
+  resolveCaptionIfInstruction,
   shouldAutoGenerateCaption,
 } from "./caption-generate";
 import type { ConnectedAccount } from "./dashboard-data";
@@ -485,6 +487,21 @@ export async function extractScheduleFromConversation(options: {
     overrideCaption: autoCaption ?? undefined,
   });
   if (heuristic) {
+    if (heuristic.caption && looksLikeCaptionInstruction(heuristic.caption)) {
+      const caption = await resolveCaptionIfInstruction({
+        caption: heuristic.caption,
+        messages,
+        locale,
+        brandContext,
+        brandProfile,
+        userHint: lastUserMessage,
+      });
+      return {
+        ...heuristic,
+        caption,
+        title: caption.slice(0, 80),
+      };
+    }
     return heuristic;
   }
 
@@ -537,11 +554,20 @@ export async function extractScheduleFromConversation(options: {
     return null;
   }
 
-  const caption =
+  let caption =
     extraction.caption?.trim() || autoCaption?.trim() || null;
   if (!caption) {
     return null;
   }
+
+  caption = await resolveCaptionIfInstruction({
+    caption,
+    messages,
+    locale,
+    brandContext,
+    brandProfile,
+    userHint: lastUserMessage,
+  });
 
   if (!connectedPlatforms.includes(extraction.platform)) {
     return null;

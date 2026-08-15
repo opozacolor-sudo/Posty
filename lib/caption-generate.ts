@@ -19,10 +19,41 @@ type ChatMessage = {
 const GENZ_STYLE_PATTERN =
   /\b(?:gen[\s-]?z|genz|tineri|youth|slang|provocat(?:iv|or)?|curaj|îndr[aă]zne[sș]te|indrazneste|vibe|hook|scurt[aă]?|punchy|bold| edgy)\b/i;
 
+/**
+ * Short style-only instructions like "descriere genz" — not literal caption text.
+ */
+const CAPTION_INSTRUCTION_PATTERN =
+  /\b(gen\s?z|genz|amuzant[aă]?|funny|haio[sș]?|profesional[aă]?|professional|captivant[aă]?|catchy|cool|creativ[aă]?|scrie(?:-mi|-o|-i)?\s*tu|genereaz[aă]|creaz[aă]|write\s+(?:a|the|me)\s+caption|generate\s+(?:a|the)\s+caption|ai\s+(?:o\s+)?descriere|make\s+it\s+(?:sound|catchy|funny)|hook|virald?[aă]?)\b/i;
+
 const LOCALE_LANGUAGE: Record<string, string> = {
   ro: "Romanian",
   en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+  pt: "Portuguese",
+  ru: "Russian",
+  ja: "Japanese",
+  ko: "Korean",
+  zh: "Chinese",
+  ar: "Arabic",
+  hi: "Hindi",
 };
+
+export function looksLikeCaptionInstruction(text: string | null | undefined): boolean {
+  if (!text) {
+    return false;
+  }
+
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  const wordCount = trimmed.split(/\s+/).length;
+  return wordCount <= 14 && CAPTION_INSTRUCTION_PATTERN.test(trimmed);
+}
 
 export function detectCaptionStyle(
   text: string,
@@ -135,6 +166,7 @@ export async function generateCaptionForMedia(options: {
   brandContext?: string;
   brandProfile?: BrandProfile;
   userHint?: string;
+  instruction?: string;
 }): Promise<string | null> {
   const sourceMessage = findCaptionSourceMessage(options.messages);
   if (!sourceMessage) {
@@ -142,12 +174,13 @@ export async function generateCaptionForMedia(options: {
   }
 
   const hint =
-    options.userHint ??
-    [...options.messages]
+    options.instruction?.trim() ||
+    options.userHint ||
+    ([...options.messages]
       .reverse()
       .find((message) => message.role === "user")
       ?.content ??
-    "";
+      "");
 
   const style = detectCaptionStyle(hint, options.brandProfile);
   const platformHint = detectPlatformHint(hint);
@@ -178,4 +211,28 @@ export async function generateCaptionForMedia(options: {
     );
     return null;
   }
+}
+
+export async function resolveCaptionIfInstruction(options: {
+  caption: string;
+  messages: ChatMessage[];
+  locale: string;
+  brandContext?: string;
+  brandProfile?: BrandProfile;
+  userHint?: string;
+}): Promise<string> {
+  if (!looksLikeCaptionInstruction(options.caption)) {
+    return options.caption;
+  }
+
+  const generated = await generateCaptionForMedia({
+    messages: options.messages,
+    locale: options.locale,
+    brandContext: options.brandContext,
+    brandProfile: options.brandProfile,
+    userHint: options.userHint,
+    instruction: options.caption,
+  });
+
+  return generated?.trim() || options.caption;
 }

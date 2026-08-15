@@ -9,6 +9,7 @@ import {
 } from "@/lib/brand-profile";
 import {
   generateCaptionForMedia,
+  resolveCaptionIfInstruction,
   shouldAutoGenerateCaption,
 } from "@/lib/caption-generate";
 import {
@@ -199,6 +200,20 @@ export async function POST(request: Request) {
               overrideCaption: autoCaption,
             });
           }
+        }
+
+        if (publishInput?.caption) {
+          publishInput = {
+            ...publishInput,
+            caption: await resolveCaptionIfInstruction({
+              caption: publishInput.caption,
+              messages: history,
+              locale,
+              brandContext,
+              brandProfile,
+              userHint: lastUserMessage,
+            }),
+          };
         }
 
         if (publishInput) {
