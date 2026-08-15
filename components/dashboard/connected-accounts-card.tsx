@@ -43,10 +43,10 @@ export function ConnectedAccountsCard({ accounts }: ConnectedAccountsCardProps) 
           openAccounts();
         }
       }}
-      className="dashboard-card flex h-full min-h-0 cursor-pointer flex-col overflow-hidden p-2.5 transition-opacity hover:opacity-95 active:scale-[0.99]"
+      className="dashboard-card flex h-full min-h-0 cursor-pointer flex-col overflow-hidden p-2 transition-opacity hover:opacity-95 active:scale-[0.99]"
     >
-      <div className="mb-1.5 flex shrink-0 items-center justify-between gap-1">
-        <h2 className="truncate text-[11px] font-bold md:text-xs">
+      <div className="mb-1 flex shrink-0 items-center justify-between gap-1">
+        <h2 className="truncate text-[10px] font-bold">
           {t("connectedAccounts")}
         </h2>
         <svg
@@ -61,23 +61,20 @@ export function ConnectedAccountsCard({ accounts }: ConnectedAccountsCardProps) 
         </svg>
       </div>
 
-      <div className="pointer-events-none grid min-h-0 flex-1 grid-cols-3 place-content-center gap-1">
+      <div className="pointer-events-none grid min-h-0 flex-1 grid-cols-3 place-content-start gap-0.5 overflow-hidden">
         {accounts.map(({ platform, connected, accountName }) => (
           <div
             key={platform}
-            className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white p-1"
+            className="flex flex-col items-center justify-center gap-0 rounded-md bg-white p-0.5"
           >
             <div
-              className="relative flex h-6 w-6 items-center justify-center rounded-md md:h-7 md:w-7"
+              className="relative flex h-5 w-5 items-center justify-center rounded-md sm:h-6 sm:w-6"
               style={{
                 color: PLATFORM_COLORS[platform],
                 backgroundColor: `${PLATFORM_COLORS[platform]}14`,
               }}
             >
-              <PlatformIcon
-                platform={platform}
-                className="h-3 w-3 md:h-3.5 md:w-3.5"
-              />
+              <PlatformIcon platform={platform} className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               <span
                 className={`absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full ring-1 ring-white ${connectionDotClass(
                   connected,
@@ -86,7 +83,7 @@ export function ConnectedAccountsCard({ accounts }: ConnectedAccountsCardProps) 
               />
             </div>
             {connected && accountName && platform === "instagram" && (
-              <span className="max-w-full truncate text-[9px] font-medium text-muted-foreground">
+              <span className="max-w-full truncate text-[7px] font-medium text-muted-foreground">
                 @{accountName.replace(/^@/, "")}
               </span>
             )}

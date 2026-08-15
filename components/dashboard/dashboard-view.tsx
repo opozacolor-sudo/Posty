@@ -59,7 +59,7 @@ export function DashboardView({
 
   return (
     <div className="dashboard-shell flex flex-col">
-      <section className="shrink-0 px-3 pt-2 lg:px-4">
+      <section className="shrink-0 px-3 pt-1.5 lg:px-4">
         <HeaderCard displayName={displayName} avatarUrl={avatarUrl} />
         <DashboardCardsGrid
           accounts={connectedAccounts}

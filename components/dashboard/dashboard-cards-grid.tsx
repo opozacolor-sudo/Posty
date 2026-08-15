@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { ConnectedAccountsCard } from "@/components/dashboard/connected-accounts-card";
 import { UpcomingPostsCard } from "@/components/dashboard/upcoming-posts-card";
 import { CalendarCard } from "@/components/dashboard/calendar-card";
@@ -17,52 +16,11 @@ export function DashboardCardsGrid({
   posts,
   scheduledDays,
 }: DashboardCardsGridProps) {
-  const calendarRef = useRef<HTMLDivElement>(null);
-  const [cardHeight, setCardHeight] = useState<number | null>(null);
-
-  useEffect(() => {
-    const element = calendarRef.current;
-    if (!element) return;
-
-    const updateHeight = () => {
-      setCardHeight(element.offsetHeight);
-    };
-
-    updateHeight();
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(element);
-    window.addEventListener("resize", updateHeight);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateHeight);
-    };
-  }, []);
-
-  const synced = cardHeight !== null;
-  const rowStyle = synced ? { gridAutoRows: `${cardHeight}px` } : undefined;
-  const cellClass = synced
-    ? "h-full min-h-0 overflow-hidden"
-    : "min-h-0 overflow-hidden";
-
   return (
-    <div
-      className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-3"
-      style={rowStyle}
-    >
-      <div className={cellClass}>
-        <ConnectedAccountsCard accounts={accounts} />
-      </div>
-      <div className={cellClass}>
-        <UpcomingPostsCard posts={posts} />
-      </div>
-      <div
-        ref={calendarRef}
-        className={synced ? cellClass : "self-start"}
-      >
-        <CalendarCard scheduledDays={scheduledDays} fillHeight={synced} />
-      </div>
+    <div className="mt-1.5 grid max-h-[148px] grid-cols-3 gap-1.5 sm:max-h-[156px] sm:gap-2 lg:max-h-[164px]">
+      <ConnectedAccountsCard accounts={accounts} />
+      <UpcomingPostsCard posts={posts} />
+      <CalendarCard scheduledDays={scheduledDays} />
     </div>
   );
 }

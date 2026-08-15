@@ -6,14 +6,9 @@ import { useFormatter, useTranslations } from "next-intl";
 type CalendarCardProps = {
   scheduledDays: number[];
   className?: string;
-  fillHeight?: boolean;
 };
 
-export function CalendarCard({
-  scheduledDays,
-  className = "",
-  fillHeight = false,
-}: CalendarCardProps) {
+export function CalendarCard({ scheduledDays, className = "" }: CalendarCardProps) {
   const t = useTranslations("dashboard");
   const format = useFormatter();
   const [currentDate] = useState(() => new Date());
@@ -64,21 +59,17 @@ export function CalendarCard({
   ];
 
   return (
-    <div
-      className={`dashboard-card w-full p-2.5 ${fillHeight ? "flex h-full min-h-0 flex-col" : ""} ${className}`}
-    >
-      <div className="mb-1.5 flex items-center justify-between">
-        <h2 className="text-[11px] font-bold md:text-xs">{t("calendar")}</h2>
-        <span className="text-[10px] font-medium text-muted-foreground">
-          {monthLabel}
-        </span>
+    <div className={`dashboard-card flex h-full min-h-0 flex-col overflow-hidden p-2 ${className}`}>
+      <div className="mb-1 flex shrink-0 items-center justify-between">
+        <h2 className="text-[10px] font-bold">{t("calendar")}</h2>
+        <span className="text-[9px] font-medium text-muted-foreground">{monthLabel}</span>
       </div>
 
-      <div className="mb-0.5 grid grid-cols-7 gap-px">
+      <div className="mb-0.5 grid shrink-0 grid-cols-7 gap-px">
         {weekDays.map((label) => (
           <div
             key={label}
-            className="text-center text-[7px] font-semibold text-muted-foreground md:text-[8px]"
+            className="text-center text-[6px] font-semibold text-muted-foreground sm:text-[7px]"
           >
             {label.charAt(0)}
           </div>
@@ -86,26 +77,27 @@ export function CalendarCard({
       </div>
 
       <div
-        className="grid grid-cols-7 gap-px"
+        className="grid min-h-0 flex-1 grid-cols-7 gap-px"
         style={{ gridTemplateRows: `repeat(${weekCount}, minmax(0, 1fr))` }}
       >
         {calendarDays.map((cell, index) =>
           cell.day === null ? (
             <div key={`empty-${index}`} />
           ) : (
-            <div
-              key={cell.day}
-              className={`relative flex aspect-square items-center justify-center rounded text-[9px] font-semibold md:text-[10px] ${
-                cell.isToday
-                  ? "bg-coral text-white"
-                  : cell.hasPost
-                    ? "bg-white text-foreground"
-                    : "text-muted-foreground"
-              }`}
-            >
-              {cell.day}
+            <div key={cell.day} className="relative flex items-center justify-center">
+              <div
+                className={`flex h-3.5 w-3.5 items-center justify-center rounded text-[7px] font-semibold sm:h-4 sm:w-4 sm:text-[8px] ${
+                  cell.isToday
+                    ? "bg-coral text-white"
+                    : cell.hasPost
+                      ? "bg-white text-foreground"
+                      : "text-muted-foreground"
+                }`}
+              >
+                {cell.day}
+              </div>
               {cell.hasPost && !cell.isToday && (
-                <span className="absolute bottom-0.5 h-0.5 w-0.5 rounded-full bg-coral" />
+                <span className="absolute bottom-0 h-0.5 w-0.5 rounded-full bg-coral" />
               )}
             </div>
           ),
