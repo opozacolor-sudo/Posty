@@ -3,23 +3,24 @@ export function formatPublishUserReply(
   locale: string,
   anySuccess: boolean,
   caption?: string,
+  showCaption = true,
 ): string {
   if (locale === "ro") {
     const lead = anySuccess
       ? "Gata! Am postat pentru tine ✨"
       : "Nu a mers peste tot — iată detaliile:";
-    const captionBlock = caption?.trim()
-      ? `\n\n📝 Caption:\n${caption.trim()}`
-      : "";
+    const captionBlock =
+      showCaption && caption?.trim()
+        ? `\n\n📝 Caption:\n${caption.trim()}`
+        : "";
     return `${lead}${captionBlock}\n\n---\n${summary}`;
   }
 
   const lead = anySuccess
     ? "Done! Posted for you ✨"
     : "Didn't work everywhere — here's what happened:";
-  const captionBlock = caption?.trim()
-    ? `\n\n📝 Caption:\n${caption.trim()}`
-    : "";
+  const captionBlock =
+    showCaption && caption?.trim() ? `\n\n📝 Caption:\n${caption.trim()}` : "";
   return `${lead}${captionBlock}\n\n---\n${summary}`;
 }
 

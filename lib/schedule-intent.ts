@@ -163,6 +163,12 @@ function detectPlatform(
   return null;
 }
 
+function isAssistantPublishResult(content: string): boolean {
+  return /(?:Pre-publish checks|Verificări înainte de publicare|Publishing finished|publicat cu succes|Didn't work everywhere|Nu a mers peste tot|0\/\d+ succeeded|📝\s*Caption:)/i.test(
+    content,
+  );
+}
+
 export function extractCaption(messages: ChatMessage[]): string | null {
   for (const message of messages) {
     if (message.role !== "user") {
@@ -193,6 +199,10 @@ export function extractCaption(messages: ChatMessage[]): string | null {
 
   for (const message of [...messages].reverse()) {
     if (message.role !== "assistant") {
+      continue;
+    }
+
+    if (isAssistantPublishResult(message.content)) {
       continue;
     }
 

@@ -9,6 +9,7 @@ import {
 } from "@/lib/brand-profile";
 import {
   generateCaptionForMedia,
+  looksLikeCaptionInstruction,
   resolveCaptionIfInstruction,
   shouldAutoGenerateCaption,
 } from "@/lib/caption-generate";
@@ -25,6 +26,7 @@ import {
   userWantsVideoGeneration,
 } from "@/lib/higgsfield-generate";
 import { isHiggsfieldGenerationAvailable } from "@/lib/higgsfield-env";
+import { userRequestsCaption } from "@/lib/chat-intent-triggers";
 import {
   extractPublishFromConversation,
   findLatestPublishCommandMessage,
@@ -172,6 +174,7 @@ export async function POST(request: Request) {
     let publishSummary: string | undefined;
     let publishAttempted = false;
     let publishedCaption: string | undefined;
+    let showPublishedCaption = false;
 
     if (shouldAttemptPublish(lastUserMessage, history)) {
       publishAttempted = true;
@@ -185,6 +188,7 @@ export async function POST(request: Request) {
           !publishInput &&
           shouldAutoGenerateCaption(lastUserMessage, history)
         ) {
+          showPublishedCaption = true;
           const autoCaption = await generateCaptionForMedia({
             messages: history,
             locale,
@@ -203,6 +207,9 @@ export async function POST(request: Request) {
         }
 
         if (publishInput?.caption) {
+          if (looksLikeCaptionInstruction(publishInput.caption)) {
+            showPublishedCaption = true;
+          }
           publishInput = {
             ...publishInput,
             caption: await resolveCaptionIfInstruction({
@@ -445,7 +452,13 @@ export async function POST(request: Request) {
     if (publishAttempted) {
       const anySuccess = publishResults?.some((result) => result.success) ?? false;
       const reply = publishSummary
-        ? formatPublishUserReply(publishSummary, locale, anySuccess, publishedCaption)
+        ? formatPublishUserReply(
+            publishSummary,
+            locale,
+            anySuccess,
+            publishedCaption,
+            showPublishedCaption,
+          )
         : formatPublishMissingDetailsReply(locale);
 
       return NextResponse.json({

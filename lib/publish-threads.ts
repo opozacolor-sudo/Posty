@@ -131,8 +131,7 @@ export async function publishThreadsPost(options: {
   videoUrl?: string | null;
 }): Promise<{ ok: true; postId: string; detail?: string } | { ok: false; error: string }> {
   try {
-    const userId =
-      options.userId?.trim() || (await resolveThreadsUserId(options.accessToken));
+    const userId = await resolveThreadsUserId(options.accessToken);
     const { caption, imageUrl, videoUrl } = options;
     const mediaType = options.mediaType ?? (videoUrl ? "video" : imageUrl ? "image" : null);
 

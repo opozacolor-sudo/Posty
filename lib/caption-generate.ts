@@ -2,11 +2,9 @@ import { createClaudeReply, type ClaudeMessage } from "./anthropic-client";
 import type { BrandProfile } from "./brand-profile";
 import type { ChatAttachment } from "./chat-upload";
 import {
-  messageWantsPublishAction,
-  messageWantsScheduleAction,
   userRequestsCaption,
 } from "./chat-intent-triggers";
-import { findLatestPublishMedia } from "./schedule-intent";
+import { findLatestPublishMedia, type PublishMedia } from "./schedule-intent";
 
 export type CaptionStyle = "normal" | "genz";
 
@@ -73,22 +71,9 @@ export function detectCaptionStyle(
 
 export function shouldAutoGenerateCaption(
   lastUserMessage: string,
-  messages: ChatMessage[],
+  _messages: ChatMessage[],
 ): boolean {
-  const media = findLatestPublishMedia(messages);
-  if (!media) {
-    return false;
-  }
-
-  const wantsAction =
-    messageWantsPublishAction(lastUserMessage) ||
-    messageWantsScheduleAction(lastUserMessage);
-
-  if (!wantsAction) {
-    return false;
-  }
-
-  return userRequestsCaption(lastUserMessage) || wantsAction;
+  return userRequestsCaption(lastUserMessage);
 }
 
 function buildCaptionSystemPrompt(options: {
@@ -100,21 +85,28 @@ function buildCaptionSystemPrompt(options: {
   const language = LOCALE_LANGUAGE[options.locale] ?? "English";
   const styleGuide =
     options.style === "genz"
-      ? [
-          "Style: Gen-Z / social-native — very short, punchy, conversational.",
-          "Use hooks like questions or bold one-liners (e.g. \"Ai curaj să porți asta? Îndrăznește.\").",
-          "1-2 short sentences max. Optional 2-4 hashtags at the end.",
-          "No corporate tone. No filler. No emojis overload (0-2 max).",
-        ].join("\n")
+      ? options.locale === "ro"
+        ? [
+            "Style: Gen-Z / social-native — very short, punchy, conversational.",
+            "Use hooks like questions or bold one-liners (e.g. \"Ai curaj să porți asta? Îndrăznește.\").",
+            "1-2 short sentences max. Optional 2-4 hashtags at the end.",
+            "No corporate tone. No filler. No emojis overload (0-2 max).",
+          ].join("\n")
+        : [
+            "Style: Gen-Z / social-native — very short, punchy, conversational.",
+            "Use hooks like questions or bold one-liners.",
+            "1-2 short sentences max. Optional 2-4 hashtags at the end.",
+            "No corporate tone. No filler. No emojis overload (0-2 max).",
+          ].join("\n")
       : [
-          "Style: Normal Instagram/social caption — friendly, clear, on-brand.",
+          "Style: Normal social caption — friendly, clear, on-brand.",
           "1-3 short sentences. Add 3-6 relevant hashtags at the end.",
           "Sound human, not robotic.",
         ].join("\n");
 
   return [
     "You write social media captions for Posty. Reply with ONLY the caption text — no quotes, no labels, no questions back to the user.",
-    `Language: ${language}.`,
+    `Language: ${language}. Write the entire caption in ${language} only — do not mix languages.`,
     styleGuide,
     options.platformHint ? `Platform: ${options.platformHint}.` : "",
     options.brandContext?.trim()
@@ -122,7 +114,8 @@ function buildCaptionSystemPrompt(options: {
       : "",
     "",
     "Rules:",
-    "- Look at the attached image if present.",
+    "- Look at the attached image or video context if present.",
+    "- Describe what is actually in the current attachment — never reuse an older caption from the chat.",
     "- Never ask clarifying questions.",
     "- Never say \"Here is your caption\" — output the caption directly.",
     "- Do not mention Posty or that you are an AI.",
@@ -141,7 +134,38 @@ function detectPlatformHint(text: string): string | undefined {
   return undefined;
 }
 
-function findCaptionSourceMessage(messages: ChatMessage[]): ClaudeMessage | null {
+function findCaptionSourceMessage(
+  messages: ChatMessage[],
+  media: PublishMedia | null,
+): ClaudeMessage | null {
+  if (media) {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (message.role !== "user" || !message.attachments?.length) {
+        continue;
+      }
+
+      const matchesMedia = message.attachments.some(
+        (attachment) =>
+          attachment.url === media.url ||
+          (media.storagePaths?.length &&
+            attachment.storagePaths?.join(",") === media.storagePaths.join(",")),
+      );
+
+      if (matchesMedia) {
+        return {
+          role: "user",
+          content:
+            message.content.trim() ||
+            (media.mediaType === "video"
+              ? "Write a caption for this video."
+              : "Write a caption for this photo."),
+          attachments: message.attachments,
+        };
+      }
+    }
+  }
+
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
     if (message.role !== "user") {
@@ -168,7 +192,8 @@ export async function generateCaptionForMedia(options: {
   userHint?: string;
   instruction?: string;
 }): Promise<string | null> {
-  const sourceMessage = findCaptionSourceMessage(options.messages);
+  const media = findLatestPublishMedia(options.messages);
+  const sourceMessage = findCaptionSourceMessage(options.messages, media);
   if (!sourceMessage) {
     return null;
   }

@@ -38,12 +38,23 @@ export async function runPublishPreflight(options: {
   const checks: PreflightCheck[] = [];
 
   if (!input.caption?.trim()) {
-    checks.push({
-      id: "caption",
-      ok: false,
-      blocking: true,
-      message: ro ? "Lipsește textul postării (caption)." : "Post caption is missing.",
-    });
+    if (input.mediaUrl || input.mediaStoragePaths?.length) {
+      checks.push({
+        id: "caption",
+        ok: true,
+        blocking: false,
+        message: ro
+          ? "Fără caption — doar media."
+          : "No caption — media only.",
+      });
+    } else {
+      checks.push({
+        id: "caption",
+        ok: false,
+        blocking: true,
+        message: ro ? "Lipsește textul postării (caption)." : "Post caption is missing.",
+      });
+    }
   } else {
     checks.push({
       id: "caption",

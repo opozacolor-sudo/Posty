@@ -91,7 +91,7 @@ const PUBLISH_KEYWORDS =
   /\b(?:posteaz[aă]?\s+poza|poza anterioar[aă]|posteaz[aă]\s+pe\s+toate|posteaz[aă]\s+video\s+pe\s+toate)\b/i;
 
 const PLATFORM_PUBLISH_PATTERN =
-  /\b(?:posteaz[aă]?|postez|post|public[aă]|publică|publica|trimite|pune(?:-l|-o|-ti|-ți)?|upload(?:eaz[aă]?|ez)?|share|distribuie|bag[aă])\s+(?:acum\s+)?(?:asta|poz[aă]|video(?:ul)?\s+)?(?:pe\s+)?(?:video(?:ul)?\s+(?:pe\s+)?)?(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|google\s+business|gbp)\b/i;
+  /\b(?:posteaz[aă]?|postez|post|public[aă]|publică|publica|trimite|pune(?:-l|-o|-ti|-ți)?|upload(?:eaz[aă]?|ez)?|share|distribuie|bag[aă])\s+(?:acum\s+)?(?:asta|this|it|poz[aă]|video(?:ul)?\s+)?(?:on\s+|pe\s+)?(?:video(?:ul)?\s+(?:(?:on|pe)\s+)?)?(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|google\s+business|gbp)\b/i;
 
 const PUBLISH_RETRY_PATTERN =
   /\b(ai postat|s-a postat|a mers|re[iî]ncearc[aă]|(?:mai\s+)?(?:o\s+dat[aă]|din nou)|retry|post again|did it post|n-a mers|nu merge)\b/i;
@@ -542,13 +542,15 @@ export function extractPublishFromConversation(options: {
   const caption =
     overrideCaption?.trim() ||
     extractCaptionFromPublishText(publishText) ||
-    extractCaption(messages);
-  if (!caption) {
-    return null;
-  }
+    extractCaption(messages) ||
+    "";
 
   const media = findLatestPublishMedia(messages);
   if (!media) {
+    return null;
+  }
+
+  if (!caption.trim() && userRequestsCaption(publishText)) {
     return null;
   }
 
