@@ -8,6 +8,10 @@ import {
   parseBrandProfile,
 } from "@/lib/brand-profile";
 import {
+  generateCaptionForMedia,
+  shouldAutoGenerateCaption,
+} from "@/lib/caption-generate";
+import {
   buildChatSystemPrompt,
   trimChatHistory,
 } from "@/lib/chat-context";
@@ -166,16 +170,39 @@ export async function POST(request: Request) {
     let publishFailed = false;
     let publishSummary: string | undefined;
     let publishAttempted = false;
+    let publishedCaption: string | undefined;
 
     if (shouldAttemptPublish(lastUserMessage, history)) {
       publishAttempted = true;
       try {
-        const publishInput = extractPublishFromConversation({
+        let publishInput = extractPublishFromConversation({
           messages: history,
           connectedAccounts,
         });
 
+        if (
+          !publishInput &&
+          shouldAutoGenerateCaption(lastUserMessage, history)
+        ) {
+          const autoCaption = await generateCaptionForMedia({
+            messages: history,
+            locale,
+            brandContext,
+            brandProfile,
+            userHint: lastUserMessage,
+          });
+
+          if (autoCaption) {
+            publishInput = extractPublishFromConversation({
+              messages: history,
+              connectedAccounts,
+              overrideCaption: autoCaption,
+            });
+          }
+        }
+
         if (publishInput) {
+          publishedCaption = publishInput.caption;
           const appBaseUrl = getAppBaseUrl(request);
           const connectedPlatforms = connectedAccounts
             .filter((account) => account.connected)
@@ -285,6 +312,8 @@ export async function POST(request: Request) {
             messages: history,
             connectedAccounts,
             locale,
+            brandContext,
+            brandProfile,
           });
 
           if (scheduleInput) {
@@ -319,7 +348,7 @@ export async function POST(request: Request) {
             scheduleSaveFailed = true;
             mediaContext = [
               "IMPORTANT: Could not extract schedule details from the conversation.",
-              "Ask the user to send platform, caption, and date/time in one message.",
+              "Tell the user briefly to include platform and time in one message (e.g. programează mâine la 18 pe instagram). Do NOT ask multiple questions.",
               "Do NOT claim the post was saved.",
             ].join("\n");
           }
@@ -401,7 +430,7 @@ export async function POST(request: Request) {
     if (publishAttempted) {
       const anySuccess = publishResults?.some((result) => result.success) ?? false;
       const reply = publishSummary
-        ? formatPublishUserReply(publishSummary, locale, anySuccess)
+        ? formatPublishUserReply(publishSummary, locale, anySuccess, publishedCaption)
         : formatPublishMissingDetailsReply(locale);
 
       return NextResponse.json({

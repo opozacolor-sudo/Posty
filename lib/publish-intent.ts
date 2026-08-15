@@ -8,6 +8,7 @@ import {
   POST_NOW_VERB,
   userConfirmsPublishNow,
   userConfirmsSchedule,
+  userRequestsCaption,
 } from "./chat-intent-triggers";
 import type { PublishInput, PublishTarget } from "./publish";
 import {
@@ -90,7 +91,7 @@ const PUBLISH_KEYWORDS =
   /\b(?:posteaz[aă]?\s+poza|poza anterioar[aă]|posteaz[aă]\s+pe\s+toate|posteaz[aă]\s+video\s+pe\s+toate)\b/i;
 
 const PLATFORM_PUBLISH_PATTERN =
-  /\b(?:posteaz[aă]?|postez|post|public[aă]|publica|trimite|pune(?:-l|-o)?|upload(?:eaz[aă]?|ez)?)\s+(?:acum\s+)?(?:pe\s+)?(?:video(?:ul)?\s+(?:pe\s+)?)?(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|google\s+business|gbp)\b/i;
+  /\b(?:posteaz[aă]?|postez|post|public[aă]|publică|publica|trimite|pune(?:-l|-o|-ti|-ți)?|upload(?:eaz[aă]?|ez)?|share|distribuie|bag[aă])\s+(?:acum\s+)?(?:asta|poz[aă]|video(?:ul)?\s+)?(?:pe\s+)?(?:video(?:ul)?\s+(?:pe\s+)?)?(instagram|insta|\big\b|facebook|fb|linkedin|threads|pinterest|tiktok|youtube|\byt\b|google\s+business|gbp)\b/i;
 
 const PUBLISH_RETRY_PATTERN =
   /\b(ai postat|s-a postat|a mers|re[iî]ncearc[aă]|(?:mai\s+)?(?:o\s+dat[aă]|din nou)|retry|post again|did it post|n-a mers|nu merge)\b/i;
@@ -372,7 +373,8 @@ export function findLatestPublishCommandMessage(
     if (
       userWantsPublishNow(content) ||
       PLATFORM_PUBLISH_PATTERN.test(content) ||
-      /\bposteaz[aă]?\s+poza\b/i.test(content)
+      /\bposteaz[aă]?\s+poza\b/i.test(content) ||
+      (userRequestsCaption(content) && messageWantsPublishAction(content))
     ) {
       return message;
     }
@@ -464,6 +466,17 @@ export function shouldAttemptPublish(
     return true;
   }
 
+  if (
+    messageWantsPublishAction(lastUserMessage) &&
+    findLatestPublishMedia(messages)
+  ) {
+    return true;
+  }
+
+  if (userRequestsCaption(lastUserMessage) && messageWantsPublishAction(lastUserMessage)) {
+    return true;
+  }
+
   if (userWantsRetryFailedOnly(lastUserMessage) && conversationReadyToPublish(messages)) {
     return findFailedPublishTargets(messages).length > 0;
   }
@@ -506,8 +519,9 @@ export function shouldAttemptPublish(
 export function extractPublishFromConversation(options: {
   messages: ChatMessage[];
   connectedAccounts: ConnectedAccount[];
+  overrideCaption?: string;
 }): PublishInput | null {
-  const { messages, connectedAccounts } = options;
+  const { messages, connectedAccounts, overrideCaption } = options;
   const connectedPlatforms = connectedAccounts
     .filter((account) => account.connected)
     .map((account) => account.platform);
@@ -526,7 +540,9 @@ export function extractPublishFromConversation(options: {
   const failedTargets = retryFailedOnly ? findFailedPublishTargets(messages) : [];
 
   const caption =
-    extractCaptionFromPublishText(publishText) ?? extractCaption(messages);
+    overrideCaption?.trim() ||
+    extractCaptionFromPublishText(publishText) ||
+    extractCaption(messages);
   if (!caption) {
     return null;
   }

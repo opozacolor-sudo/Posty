@@ -4,7 +4,13 @@ export const POST_NOW_VERB =
   /\b(?:posteaz[aă]?|postez|post)\s+acum\b|\b(?:publish|post)\s+now\b|\bpublic[aă]\s+acum\b|\btrimite\s+acum\b|\b(?:pune|pune-l|pune-o)\s+(?:acum|live)\b/i;
 
 export const POST_ACTION_VERB =
-  /\b(?:posteaz[aă]?|postez|post(?:ati|at|e)?|public[aă]|publica|trimite|pune(?:-l|-o|-le)?|upload(?:eaz[aă]?|ez)?|share|distribuie|bag[aă]|baga)\b/i;
+  /\b(?:posteaz[aă]?|postez|post(?:ati|at|e)?|public[aă]|publica|publică|trimite|pune(?:-l|-o|-le|-ti|-ți)?|upload(?:eaz[aă]?|ez)?|share|distribuie|distribu|bag[aă]|baga|urc[aă]|urca|publ(?:ic|ish)|post(?:ing)?)\b/i;
+
+export const CAPTION_REQUEST_VERB =
+  /\b(?:fa\s+(?:o\s+)?(?:descriere|caption|text)|fă\s+(?:o\s+)?(?:descriere|caption|text)|scrie\s+(?:o\s+)?(?:descriere|caption|text)|genereaz[aă]?\s+(?:o\s+)?(?:descriere|caption|text)|make\s+(?:a\s+)?(?:caption|description)|write\s+(?:a\s+)?(?:caption|description))\b/i;
+
+export const MEDIA_REFERENCE =
+  /\b(?:asta|ăsta|poz[aă]|poza|photo|video(?:ul)?|imagine(?:a)?|clip(?:ul)?|this|it)\b/i;
 
 export const SCHEDULE_TIME_HINT =
   /\b(?:mâine|maine|tomorrow|poimâine|poimaine|azi|today|săptămâna|saptamana|next week|luni|mar[tț]i|miercuri|joi|vineri|sâmbăt[aă]|sambata|duminic[aă]|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}[:h.]\d{2}|\bla\s+\d{1,2}|pe\s+\d{1,2}|în\s+calendar|in\s+calendar|ora\s+\d)\b/i;
@@ -29,8 +35,20 @@ export function messageMentionsScheduleTime(message: string): boolean {
   return SCHEDULE_TIME_HINT.test(message);
 }
 
+export function userRequestsCaption(message: string): boolean {
+  return CAPTION_REQUEST_VERB.test(message);
+}
+
 export function messageWantsPublishAction(message: string): boolean {
   if (POST_NOW_VERB.test(message)) {
+    return true;
+  }
+
+  const hasCaptionAndPublish =
+    userRequestsCaption(message) &&
+    (POST_ACTION_VERB.test(message) || PLATFORM_NAME_PATTERN.test(message));
+
+  if (hasCaptionAndPublish) {
     return true;
   }
 
@@ -49,6 +67,7 @@ export function messageWantsPublishAction(message: string): boolean {
   return (
     PLATFORM_NAME_PATTERN.test(message) ||
     ALL_PLATFORMS_PUBLISH_PATTERN.test(message) ||
+    (MEDIA_REFERENCE.test(message) && PLATFORM_NAME_PATTERN.test(message)) ||
     /\b(?:cu\s+(?:textul|caption|descrierea)|with\s+(?:the\s+)?(?:text|caption))\b/i.test(
       message,
     )

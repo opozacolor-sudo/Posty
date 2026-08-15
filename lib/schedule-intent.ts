@@ -4,6 +4,11 @@ import {
   POST_NOW_VERB,
   userConfirmsSchedule,
 } from "./chat-intent-triggers";
+import type { BrandProfile } from "./brand-profile";
+import {
+  generateCaptionForMedia,
+  shouldAutoGenerateCaption,
+} from "./caption-generate";
 import type { ConnectedAccount } from "./dashboard-data";
 import { PLATFORMS, type SocialPlatform } from "./dashboard-data";
 import type { ChatAttachment } from "./chat-upload";
@@ -255,14 +260,15 @@ export function parseScheduleHeuristic(options: {
   messages: ChatMessage[];
   connectedAccounts: ConnectedAccount[];
   locale: string;
+  overrideCaption?: string;
 }): CreateScheduledPostInput | null {
-  const { messages, connectedAccounts, locale } = options;
+  const { messages, connectedAccounts, locale, overrideCaption } = options;
   const connectedPlatforms = connectedAccounts
     .filter((account) => account.connected)
     .map((account) => account.platform);
   const allText = messages.map((message) => message.content).join("\n");
   const platform = detectPlatform(allText, connectedPlatforms);
-  const caption = extractCaption(messages);
+  const caption = overrideCaption ?? extractCaption(messages);
   const scheduledAt = parseScheduleTimeFromText(allText, locale);
 
   if (!platform || !caption || !scheduledAt) {
@@ -443,8 +449,11 @@ export async function extractScheduleFromConversation(options: {
   messages: ChatMessage[];
   connectedAccounts: ConnectedAccount[];
   locale: string;
+  brandContext?: string;
+  brandProfile?: BrandProfile;
 }): Promise<CreateScheduledPostInput | null> {
-  const { messages, connectedAccounts, locale } = options;
+  const { messages, connectedAccounts, locale, brandContext, brandProfile } =
+    options;
   const lastUserMessage =
     [...messages].reverse().find((message) => message.role === "user")?.content ??
     "";
@@ -457,7 +466,24 @@ export async function extractScheduleFromConversation(options: {
     .filter((account) => account.connected)
     .map((account) => account.platform);
 
-  const heuristic = parseScheduleHeuristic(options);
+  let autoCaption: string | null = null;
+  if (
+    !extractCaption(messages) &&
+    shouldAutoGenerateCaption(lastUserMessage, messages)
+  ) {
+    autoCaption = await generateCaptionForMedia({
+      messages,
+      locale,
+      brandContext,
+      brandProfile,
+      userHint: lastUserMessage,
+    });
+  }
+
+  const heuristic = parseScheduleHeuristic({
+    ...options,
+    overrideCaption: autoCaption ?? undefined,
+  });
   if (heuristic) {
     return heuristic;
   }
@@ -506,9 +532,14 @@ export async function extractScheduleFromConversation(options: {
   if (
     !extraction.platform ||
     !isSocialPlatform(extraction.platform) ||
-    !extraction.caption?.trim() ||
     !extraction.scheduledAt
   ) {
+    return null;
+  }
+
+  const caption =
+    extraction.caption?.trim() || autoCaption?.trim() || null;
+  if (!caption) {
     return null;
   }
 
@@ -529,10 +560,10 @@ export async function extractScheduleFromConversation(options: {
 
   return buildScheduledPostInput({
     platform: extraction.platform,
-    caption: extraction.caption.trim(),
+    caption,
     scheduledAt: scheduledAt.toISOString(),
     messages,
-    title: extraction.title?.trim() || extraction.caption.trim().slice(0, 80),
+    title: extraction.title?.trim() || caption.slice(0, 80),
   });
 }
 

@@ -2,42 +2,41 @@ export function formatPublishUserReply(
   summary: string,
   locale: string,
   anySuccess: boolean,
+  caption?: string,
 ): string {
   if (locale === "ro") {
     const lead = anySuccess
-      ? "Gata — publicarea s-a terminat. Rezultat pe fiecare platformă:"
-      : "Publicarea nu a reușit. Detalii pe fiecare platformă:";
-    return `${lead}\n\n---\n${summary}`;
+      ? "Gata! Am postat pentru tine ✨"
+      : "Nu a mers peste tot — iată detaliile:";
+    const captionBlock = caption?.trim()
+      ? `\n\n📝 Caption:\n${caption.trim()}`
+      : "";
+    return `${lead}${captionBlock}\n\n---\n${summary}`;
   }
 
   const lead = anySuccess
-    ? "Done — publishing finished. Per-platform results:"
-    : "Publishing did not succeed. Per-platform details:";
-  return `${lead}\n\n---\n${summary}`;
+    ? "Done! Posted for you ✨"
+    : "Didn't work everywhere — here's what happened:";
+  const captionBlock = caption?.trim()
+    ? `\n\n📝 Caption:\n${caption.trim()}`
+    : "";
+  return `${lead}${captionBlock}\n\n---\n${summary}`;
 }
 
 export function formatPublishMissingDetailsReply(locale: string): string {
   if (locale === "ro") {
     return [
-      "Nu am putut publica — îmi lipsesc detalii din conversație.",
+      "Nu am reușit să public — îmi lipsește poza sau platforma.",
       "",
-      "Verifică:",
-      "- ai atașat poza sau videoul cu 📎",
-      "- există un caption (text + hashtag-uri) în chat",
-      "",
-      "Pentru retry doar unde a eșuat: „reîncearcă doar unde nu s-a postat” (după un rezumat de publicare în chat).",
-      "Sau spune explicit: „postează doar pe tiktok, linkedin și facebook”.",
+      "Atașează 📎 o poză și spune de exemplu:",
+      "„postează pe instagram” sau „fa o descriere și postează pe ig”",
     ].join("\n");
   }
 
   return [
-    "Could not publish — missing details from the conversation.",
+    "Couldn't publish — missing a photo or platform.",
     "",
-    "Check:",
-    "- you attached a photo or video with 📎",
-    "- a caption exists in the chat",
-    "",
-    "To retry failed platforms only: “retry only where it failed” (after a publish summary in chat).",
-    "Or say explicitly: “post only on tiktok, linkedin and facebook”.",
+    "Attach 📎 a photo and say for example:",
+    "\"post on instagram\" or \"write a caption and post on ig\"",
   ].join("\n");
 }
