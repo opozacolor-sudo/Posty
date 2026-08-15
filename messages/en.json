@@ -127,8 +127,24 @@
     "backToLogin": "Back to login",
     "privacyLink": "Privacy Policy",
     "termsLink": "Terms of Service",
+    "howItWorksLink": "How it works",
     "contactTitle": "Contact",
     "contactBody": "Questions about Posty, privacy, or your data:"
+  },
+  "howItWorks": {
+    "lastUpdated": "Last updated",
+    "status": {
+      "live": "Live",
+      "review": "App Review",
+      "soon": "Coming soon",
+      "none": "N/A"
+    },
+    "table": {
+      "format": "Format",
+      "media": "Media",
+      "status": "Status",
+      "command": "Chat command"
+    }
   },
   "dashboard": {
     "greeting": "Good day, {name}",
@@ -232,6 +248,7 @@
     "backToDashboard": "Back to dashboard",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
+    "howItWorks": "How it works",
     "copyright": "© 2026 Posty",
     "legalPlaceholder": "Full legal content coming soon.",
     "platforms": {

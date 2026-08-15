@@ -49,6 +49,9 @@ export async function LandingPage() {
           <Link href="/terms" className="hover:text-foreground">
             {tLegal("termsLink")}
           </Link>
+          <Link href="/how-it-works" className="hover:text-foreground">
+            {tLegal("howItWorksLink")}
+          </Link>
         </footer>
       </div>
     </div>

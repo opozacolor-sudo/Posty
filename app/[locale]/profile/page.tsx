@@ -151,6 +151,10 @@ export default async function ProfilePage({ params }: Props) {
               href="/terms"
               label={tDashboard("termsOfService")}
             />
+            <MenuRow
+              href="/how-it-works"
+              label={tDashboard("howItWorks")}
+            />
           </div>
         </div>
 

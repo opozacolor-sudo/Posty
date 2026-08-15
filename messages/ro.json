@@ -127,8 +127,24 @@
     "backToLogin": "Înapoi la autentificare",
     "privacyLink": "Politica de confidențialitate",
     "termsLink": "Termeni și condiții",
+    "howItWorksLink": "Cum funcționează",
     "contactTitle": "Contact",
     "contactBody": "Întrebări despre Posty, confidențialitate sau datele tale:"
+  },
+  "howItWorks": {
+    "lastUpdated": "Ultima actualizare",
+    "status": {
+      "live": "Live",
+      "review": "App Review",
+      "soon": "În curând",
+      "none": "N/A"
+    },
+    "table": {
+      "format": "Format",
+      "media": "Media",
+      "status": "Status",
+      "command": "Comandă în chat"
+    }
   },
   "dashboard": {
     "greeting": "Bună ziua, {name}",
@@ -176,6 +192,7 @@
     "backToDashboard": "Înapoi la dashboard",
     "privacyPolicy": "Politica de confidențialitate",
     "termsOfService": "Termeni și condiții",
+    "howItWorks": "Cum funcționează",
     "copyright": "© 2026 Posty",
     "legalPlaceholder": "Conținut legal complet în curând.",
     "platforms": {

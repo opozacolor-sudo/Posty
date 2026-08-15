@@ -6,9 +6,10 @@ import { isSupabaseConfigured } from "@/lib/supabase-env";
 
 type LegalPageShellProps = {
   children: React.ReactNode;
+  wide?: boolean;
 };
 
-export async function LegalPageShell({ children }: LegalPageShellProps) {
+export async function LegalPageShell({ children, wide = false }: LegalPageShellProps) {
   const t = await getTranslations("legal");
 
   let backHref: "/login" | "/onboarding" | "/dashboard" = "/login";
@@ -33,7 +34,7 @@ export async function LegalPageShell({ children }: LegalPageShellProps) {
 
   return (
     <div className="min-h-screen bg-background px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-2xl">
+      <div className={`mx-auto ${wide ? "max-w-4xl" : "max-w-2xl"}`}>
         <Link href={backHref} className="text-sm font-medium text-coral hover:underline">
           ← {backLabel}
         </Link>
@@ -44,6 +45,9 @@ export async function LegalPageShell({ children }: LegalPageShellProps) {
           </Link>
           <Link href="/terms" className="hover:text-foreground">
             {t("termsLink")}
+          </Link>
+          <Link href="/how-it-works" className="hover:text-foreground">
+            {t("howItWorksLink")}
           </Link>
         </footer>
       </div>

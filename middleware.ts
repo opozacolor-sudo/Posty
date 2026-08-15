@@ -46,6 +46,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/privacy",
+    "/terms",
+    "/how-it-works",
     "/(en|ro|es|fr|de|it|pt|ru|ar|zh|ja|ko|hi)/:path*",
     "/auth/:path*",
     "/api/auth/:path*",

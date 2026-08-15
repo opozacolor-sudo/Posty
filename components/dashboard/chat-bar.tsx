@@ -567,6 +567,10 @@ export function ChatBar({
           {t("termsOfService")}
         </Link>
         <span className="mx-1.5">·</span>
+        <Link href="/how-it-works" className="hover:text-foreground">
+          {t("howItWorks")}
+        </Link>
+        <span className="mx-1.5">·</span>
         <span>{t("copyright")}</span>
       </footer>
     </div>
